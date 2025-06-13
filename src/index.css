@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* カスタムスタイル */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden; /* デスクトップアプリではスクロールバーを隠す */
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* カスタムコンポーネント */
+.toolbar-button {
+  @apply px-3 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
+}
+
+.toolbar-button.active {
+  @apply bg-blue-500 text-white border-blue-500 hover:bg-blue-600;
+}
+
+.sidebar {
+  @apply w-64 bg-gray-100 border-r border-gray-300 overflow-y-auto;
+}
+
+.canvas-container {
+  @apply flex-1 relative overflow-hidden bg-gray-50;
+}
+
+/* テキスト省略 */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
