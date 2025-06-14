@@ -469,8 +469,8 @@ const App: React.FC = () => {
         const maxY = centerLineY + 10 // 205 + 10 = 215px
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
-        // 反転時ディフェンスは210px以下（フィールドの下半分）
-        const minY = 210
+        // 反転時ディフェンスは220px以上（フィールドの下半分）
+        const minY = 220
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       }
     } else {
