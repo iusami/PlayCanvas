@@ -18,7 +18,6 @@ type SortType = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc'
 const PlaylistWorkspace: React.FC<PlaylistWorkspaceProps> = ({
   plays,
   playlists,
-  currentPlaylist,
   onCreatePlaylist,
   onUpdatePlaylist,
   onDeletePlaylist,
@@ -250,18 +249,6 @@ const PlaylistWorkspace: React.FC<PlaylistWorkspaceProps> = ({
     setSelectedPlayIds(newSelected)
   }
 
-  const removePlayFromPlaylist = (playId: string) => {
-    if (!viewingPlaylist) return
-    
-    const updatedPlaylist = {
-      ...viewingPlaylist,
-      playIds: viewingPlaylist.playIds.filter(id => id !== playId),
-      updatedAt: new Date()
-    }
-    
-    setViewingPlaylist(updatedPlaylist)
-    onUpdatePlaylist(updatedPlaylist)
-  }
 
   const getPlayCategoryBadge = (play: Play) => {
     const playType = (play.metadata as any).playType || 'offense'

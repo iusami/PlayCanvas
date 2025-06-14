@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import { Play, Player, Arrow, TextElement } from '../types'
 

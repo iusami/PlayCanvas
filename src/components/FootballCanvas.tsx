@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, forwardRef, useMemo, useCallback } from 'react'
+import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import Konva from 'konva'
 import { AppState, Play, Player, Arrow, TextElement, ArrowSegment } from '../types'
@@ -153,33 +153,6 @@ const buildPointsFromSegments = (segments: ArrowSegment[]): number[] => {
   }
 }
 
-// パフォーマンステスト用関数
-const performanceTest = (segments: ArrowSegment[], iterations = 1000) => {
-  console.group('🚀 パフォーマンステスト開始')
-  
-  const startTime = performance.now()
-  
-  for (let i = 0; i < iterations; i++) {
-    optimizeSegments(segments)
-    buildPointsFromSegments(segments)
-  }
-  
-  const endTime = performance.now()
-  const duration = endTime - startTime
-  
-  console.log(`実行回数: ${iterations}回`)
-  console.log(`総実行時間: ${duration.toFixed(2)}ms`)
-  console.log(`平均実行時間: ${(duration / iterations).toFixed(4)}ms`)
-  console.log(`1秒あたりの実行可能回数: ${Math.round(1000 / (duration / iterations))}回`)
-  
-  console.groupEnd()
-  
-  return {
-    totalTime: duration,
-    averageTime: duration / iterations,
-    operationsPerSecond: 1000 / (duration / iterations)
-  }
-}
 
 interface FootballCanvasProps {
   play: Play
@@ -216,7 +189,7 @@ const FootballCanvas = forwardRef(({
       const isInputFocused = activeElement && (
         activeElement.tagName === 'INPUT' || 
         activeElement.tagName === 'TEXTAREA' || 
-        activeElement.contentEditable === 'true'
+        (activeElement as HTMLElement).contentEditable === 'true'
       )
       
       // 矢印描画中のキーイベント処理
@@ -338,7 +311,9 @@ const FootballCanvas = forwardRef(({
         // 短時間待機してリトライ（同期的に）
         if (attempt < 2) {
           const start = Date.now()
-          while (Date.now() - start < 10) {} // 10ms待機
+          while (Date.now() - start < 10) {
+            // 10ms待機のためのビジーループ
+          }
         }
       }
       
@@ -380,7 +355,9 @@ const FootballCanvas = forwardRef(({
       // 短時間待機してリトライ（同期的に）
       if (attempt < 2) {
         const start = Date.now()
-        while (Date.now() - start < 10) {} // 10ms待機
+        while (Date.now() - start < 10) {
+          // 10ms待機のためのビジーループ
+        }
       }
     }
     
@@ -436,46 +413,7 @@ const FootballCanvas = forwardRef(({
     return flipped
   }
 
-  const validatePlayerPosition = (x: number, y: number, team: 'offense' | 'defense', playerSize: number = 20) => {
-    const centerLineY = getCenterLineY()
-    const flipped = isFieldFlipped()
-    const halfSize = playerSize / 2
-    
-    if (flipped) {
-      // 反転時: オフェンスが上、ディフェンスが下
-      if (team === 'offense') {
-        // オフェンスは中央線より上（アイコン下端が中央線に接するまで）
-        return (y - halfSize) >= 0 && (y + halfSize) <= centerLineY
-      } else {
-        // ディフェンスは中央線より下（アイコン上端が中央線に接するまで）
-        return (y - halfSize) >= centerLineY && (y + halfSize) <= play.field.height
-      }
-    } else {
-      // 通常時: オフェンスが下、ディフェンスが上
-      if (team === 'offense') {
-        // オフェンスは中央線より下（アイコン上端が中央線に接するまで）
-        return (y - halfSize) >= centerLineY && (y + halfSize) <= play.field.height
-      } else {
-        // ディフェンスは中央線より上（アイコン下端が中央線に接するまで）
-        return (y - halfSize) >= 0 && (y + halfSize) <= centerLineY
-      }
-    }
-  }
 
-  // 座標変換ヘルパー関数
-  const screenToWorld = (screenX: number, screenY: number) => {
-    // 表示座標（ズーム・パン適用済み）→ 実座標（ワールド座標）
-    const worldX = (screenX - appState.panX) / appState.zoom
-    const worldY = (screenY - appState.panY) / appState.zoom
-    return { x: worldX, y: worldY }
-  }
-
-  const worldToScreen = (worldX: number, worldY: number) => {
-    // 実座標（ワールド座標）→ 表示座標（ズーム・パン適用済み）
-    const screenX = worldX * appState.zoom + appState.panX
-    const screenY = worldY * appState.zoom + appState.panY
-    return { x: screenX, y: screenY }
-  }
 
   const constrainPlayerPosition = (x: number, y: number, team: 'offense' | 'defense', playerSize: number = 20) => {
     const centerLineY = getCenterLineY()
@@ -568,7 +506,7 @@ const FootballCanvas = forwardRef(({
       const isInputFocused = activeElement && (
         activeElement.tagName === 'INPUT' || 
         activeElement.tagName === 'TEXTAREA' || 
-        activeElement.contentEditable === 'true'
+        (activeElement as HTMLElement).contentEditable === 'true'
       )
       
       // Delete/Backspaceキーで選択された要素を削除（テキスト編集中や入力フィールドにフォーカス中は除外）
@@ -669,12 +607,12 @@ const FootballCanvas = forwardRef(({
   }, [appState.selectedArrowType, appState.isDrawingArrow, appState.currentDrawingSegmentType, updateAppState])
 
   // スナップ機能 - 近い位置の計算
-  const getSnappedPosition = (targetX: number, targetY: number, excludeIds: string[] = [], targetTeam?: 'offense' | 'defense', playerSize: number = 20) => {
+  const getSnappedPosition = (targetX: number, targetY: number, targetTeam?: 'offense' | 'defense') => {
     if (!appState.snapToObjects) {
       return { x: targetX, y: targetY, guides: [] }
     }
 
-    let snappedX = targetX
+    const snappedX = targetX
     let snappedY = targetY
     const guides: Array<{ type: 'horizontal' | 'vertical', position: number, playerIds: string[] }> = []
 
@@ -682,7 +620,6 @@ const FootballCanvas = forwardRef(({
     if (targetTeam) {
       const centerLineY = getCenterLineY()
       const flipped = isFieldFlipped()
-      const halfSize = playerSize / 2
       
       let distanceToCenter = 0
       let snapTargetY = 0
@@ -941,7 +878,7 @@ const FootballCanvas = forwardRef(({
     })
   }
 
-  const handleStageMouseMove = (e: any) => {
+  const handleStageMouseMove = () => {
     // 座標変換を1回だけ実行（統一化）
     const stage = stageRef.current
     if (!stage) return
@@ -1037,7 +974,7 @@ const FootballCanvas = forwardRef(({
     }
   }
 
-  const handleStageClick = (e: any) => {
+  const handleStageClick = () => {
     // テキスト編集中の場合、他の場所をクリックしたら編集を終了
     if (appState.isEditingText && appState.editingTextId) {
       const player = play.players.find(p => p.id === appState.editingTextId)
@@ -1090,7 +1027,7 @@ const FootballCanvas = forwardRef(({
 
     if (appState.selectedTool === 'player') {
       // スナップ機能を適用（同じチーム間でのみ）
-      const snapped = getSnappedPosition(adjustedPos.x, adjustedPos.y, [], appState.selectedTeam, 20)
+      const snapped = getSnappedPosition(adjustedPos.x, adjustedPos.y, appState.selectedTeam)
       
       // 配置制限を適用
       console.log(`🔍 新規プレーヤー配置: スナップ後(${snapped.x.toFixed(1)}, ${snapped.y.toFixed(1)}) チーム=${appState.selectedTeam}`)
@@ -1206,8 +1143,8 @@ const FootballCanvas = forwardRef(({
       if (!draggedPlayer) return
 
       // 移動量を計算
-      const deltaX = e.target.x() - draggedPlayer.x
-      const deltaY = e.target.y() - draggedPlayer.y
+      const deltaX = (e.target as any).x() - draggedPlayer.x
+      const deltaY = (e.target as any).y() - draggedPlayer.y
 
       // 他のプレイヤーのKonvaオブジェクトも移動
       const stage = e.target.getStage()
@@ -1233,14 +1170,13 @@ const FootballCanvas = forwardRef(({
               if (arrowGroup) {
                 const player = play.players.find(p => p.id === selectedId)
                 if (player) {
-                  const playerDeltaX = selectedId === playerId ? deltaX : deltaX
-                  const playerDeltaY = selectedId === playerId ? deltaY : deltaY
+                  const playerDeltaX = deltaX
+                  const playerDeltaY = deltaY as number
                   
                   // 矢印の各線の点を直接更新
-                  let linePoints: number[] = []
                   
                   // まず線の部分を更新して新しい終点を取得
-                  arrowGroup.getChildren().forEach((child: any) => {
+                  (arrowGroup as any).getChildren().forEach((child: any) => {
                     if (child.getClassName() === 'Line' && !child.fill()) {
                       // 線の部分
                       if (!child.attrs.originalPoints) {
@@ -1253,12 +1189,11 @@ const FootballCanvas = forwardRef(({
                         newPoints.push(child.attrs.originalPoints[i + 1] + playerDeltaY)
                       }
                       child.points(newPoints)
-                      linePoints = newPoints
                     }
-                  })
+                  });
                   
                   // 次に矢印の先端を新しい終点に合わせて更新
-                  arrowGroup.getChildren().forEach((child: any) => {
+                  (arrowGroup as any).getChildren().forEach((child: any) => {
                     if (child.getClassName() === 'Line' && child.fill()) {
                       // 矢印の先端部分（fillがあるもの = 矢印の先端、T字型も含む）
                       if (!child.attrs.originalPoints) {
@@ -1298,10 +1233,9 @@ const FootballCanvas = forwardRef(({
             const arrowGroup = stage.findOne(`#arrow-${arrow.id}`)
             if (arrowGroup) {
               // 矢印の各線の点を直接更新
-              let linePoints: number[] = []
               
               // まず線の部分を更新して新しい終点を取得
-              arrowGroup.getChildren().forEach((child: any) => {
+              (arrowGroup as any).getChildren().forEach((child: any) => {
                 if (child.getClassName() === 'Line' && !child.fill()) {
                   // 線の部分
                   if (!child.attrs.originalPoints) {
@@ -1314,12 +1248,11 @@ const FootballCanvas = forwardRef(({
                     newPoints.push(child.attrs.originalPoints[i + 1] + deltaY)
                   }
                   child.points(newPoints)
-                  linePoints = newPoints
                 }
-              })
+              });
               
               // 次に矢印の先端を新しい終点に合わせて更新
-              arrowGroup.getChildren().forEach((child: any) => {
+              (arrowGroup as any).getChildren().forEach((child: any) => {
                 if (child.getClassName() === 'Line' && child.fill()) {
                   // 矢印の先端部分（fillがあるもの = 矢印の先端、T字型も含む）
                   if (!child.attrs.originalPoints) {
@@ -1361,7 +1294,7 @@ const FootballCanvas = forwardRef(({
           const newY = player.y + deltaY
           // スナップ機能は主導プレイヤーのみに適用（グループ移動時の混乱を避けるため）
           if (player.id === playerId) {
-            const snapped = getSnappedPosition(newX, newY, appState.selectedElementIds, player.team, player.size)
+            const snapped = getSnappedPosition(newX, newY, player.team)
             // 配置制限を適用
             const constrained = constrainPlayerPosition(snapped.x, snapped.y, player.team, player.size)
             return { ...player, x: constrained.x, y: constrained.y }
@@ -1435,7 +1368,7 @@ const FootballCanvas = forwardRef(({
               const arrowGroup = stage.findOne(`#arrow-${arrow.id}`)
               if (arrowGroup) {
                 // 各線の一時的な記録を削除
-                arrowGroup.getChildren().forEach((child: any) => {
+                (arrowGroup as any).getChildren().forEach((child: any) => {
                   if (child.getClassName() === 'Line' && child.attrs.originalPoints) {
                     delete child.attrs.originalPoints
                   }
@@ -1465,7 +1398,7 @@ const FootballCanvas = forwardRef(({
       e.target.y(constrained.y)
       
       // 次にスナップ機能を適用
-      const snapped = getSnappedPosition(constrained.x, constrained.y, [playerId], draggedPlayer?.team, draggedPlayer?.size || 20)
+      const snapped = getSnappedPosition(constrained.x, constrained.y, draggedPlayer?.team)
       console.log(`🎯 handlePlayerDragEnd: スナップ適用後 (${snapped.x.toFixed(1)}, ${snapped.y.toFixed(1)})`)
       
       newPlayers = play.players.map(player => {
@@ -1544,7 +1477,7 @@ const FootballCanvas = forwardRef(({
           const arrowGroup = stage.findOne(`#arrow-${arrow.id}`)
           if (arrowGroup) {
             // 各線の一時的な記録を削除
-            arrowGroup.getChildren().forEach((child: any) => {
+            (arrowGroup as any).getChildren().forEach((child: any) => {
               if (child.getClassName() === 'Line' && child.attrs.originalPoints) {
                 delete child.attrs.originalPoints
               }
@@ -1608,7 +1541,7 @@ const FootballCanvas = forwardRef(({
       const startPoint = calculatePreviewStartPoint()
       
       // プレビュー用の座標を作成（開始点からマウス位置まで）
-      let previewPoints = [startPoint.x, startPoint.y, mousePos.x, mousePos.y]
+      const previewPoints = [startPoint.x, startPoint.y, mousePos.x, mousePos.y]
       
       // リンクされたプレイヤーがある場合、始点を最新の位置に更新
       if (appState.linkedPlayerId && appState.currentArrowSegments.length === 0) {
@@ -1777,7 +1710,7 @@ const FootballCanvas = forwardRef(({
       onClick: !isPreview ? (e: any) => handleArrowClick(arrow.id, e) : undefined,
       onDblClick: !isPreview ? () => handleArrowDoubleClick(arrow.id) : undefined,
       onDragStart: !isPreview ? (e: any) => handleArrowDragStart(arrow.id, e) : undefined,
-      onDragMove: !isPreview ? (e: any) => handleArrowDragMove(arrow.id, e) : undefined,
+      onDragMove: !isPreview ? () => handleArrowDragMove() : undefined,
       onDragEnd: !isPreview ? (e: any) => handleArrowDragEnd(arrow.id, e) : undefined
     }
 
@@ -2003,7 +1936,7 @@ const FootballCanvas = forwardRef(({
       onClick: !isPreview ? (e: any) => handleArrowClick(arrow.id, e) : undefined,
       onDblClick: !isPreview ? () => handleArrowDoubleClick(arrow.id) : undefined,
       onDragStart: !isPreview ? (e: any) => handleArrowDragStart(arrow.id, e) : undefined,
-      onDragMove: !isPreview ? (e: any) => handleArrowDragMove(arrow.id, e) : undefined,
+      onDragMove: !isPreview ? () => handleArrowDragMove() : undefined,
       onDragEnd: !isPreview ? (e: any) => handleArrowDragEnd(arrow.id, e) : undefined
     }
 
@@ -2162,7 +2095,7 @@ const FootballCanvas = forwardRef(({
     }
   }, [])
 
-  const handleArrowDragMove = useCallback((arrowId: string, e: Konva.KonvaEventObject<DragEvent>) => {
+  const handleArrowDragMove = useCallback(() => {
     // ドラッグ中はGroup Transformのみで視覚的な移動を表現
     // state更新はしない（累積加算問題を回避）
     // 実際のデータ更新はhandleArrowDragEndで行う
@@ -2180,7 +2113,7 @@ const FootballCanvas = forwardRef(({
     const deltaY = e.target.y() - startPos.y
 
     // 矢印のすべての点を移動
-    const newPoints = []
+    const newPoints: number[] = []
     for (let i = 0; i < draggedArrow.points.length; i += 2) {
       newPoints.push(draggedArrow.points[i] + deltaX)
       newPoints.push(draggedArrow.points[i + 1] + deltaY)
@@ -2327,184 +2260,7 @@ const FootballCanvas = forwardRef(({
     ))
   }
 
-  // 矢印編集ハンドルをレンダリング（Group外用、座標補正あり、廃止予定）
-  const renderArrowEditHandles = (arrow: Arrow) => {
-    if (!appState.selectedElementIds.includes(arrow.id)) return null
 
-    // Group Transform考慮: 矢印のGroup位置を取得
-    let groupOffsetX = 0
-    let groupOffsetY = 0
-    
-    const stage = stageRef.current
-    if (stage) {
-      const arrowGroup = stage.findOne(`#arrow-${arrow.id}`)
-      if (arrowGroup) {
-        groupOffsetX = arrowGroup.x()
-        groupOffsetY = arrowGroup.y()
-      }
-    }
-
-    // 📊 マルチセグメント矢印のデータ構造を詳細ログ出力
-    console.group(`🔍 矢印データ構造分析: ${arrow.id}`)
-    console.log('📏 arrow.points:', arrow.points)
-    console.log('📏 points数:', arrow.points.length / 2, '点')
-    console.log(`🎯 Group位置: (${groupOffsetX}, ${groupOffsetY})`)
-    
-    if (arrow.segments && arrow.segments.length > 0) {
-      console.log('🧩 セグメント数:', arrow.segments.length)
-      arrow.segments.forEach((segment, index) => {
-        console.log(`  セグメント${index}:`, {
-          type: segment.type,
-          points: segment.points,
-          pointCount: segment.points.length / 2
-        })
-      })
-      
-      // セグメントから再構築したpointsと実際のarrow.pointsを比較
-      const rebuiltPoints = buildPointsFromSegments(arrow.segments)
-      console.log('🔄 セグメントから再構築したpoints:', rebuiltPoints)
-      console.log('⚖️ 元のpointsと一致:', JSON.stringify(arrow.points) === JSON.stringify(rebuiltPoints))
-    } else {
-      console.log('🧩 セグメントなし（単一タイプ矢印）')
-    }
-    console.groupEnd()
-
-    const handles = []
-    
-    // 全体のpoints配列から全ての点を表示（マルチセグメント対応）
-    for (let i = 0; i < arrow.points.length; i += 2) {
-      const x = arrow.points[i]
-      const y = arrow.points[i + 1]
-      const pointIndex = i / 2 // 点のインデックス（0, 1, 2...）
-      
-      // セグメントがある場合、どのセグメントに属するかを特定
-      let segmentInfo = null
-      if (arrow.segments && arrow.segments.length > 0) {
-        console.log(`🎯 点${pointIndex} (${x.toFixed(1)}, ${y.toFixed(1)}) のセグメント帰属を計算中...`)
-        
-        let currentPointIndex = 0
-        for (let segmentIndex = 0; segmentIndex < arrow.segments.length; segmentIndex++) {
-          const segment = arrow.segments[segmentIndex]
-          const segmentPointCount = segment.points.length / 2
-          
-          console.log(`  セグメント${segmentIndex}: pointCount=${segmentPointCount}, currentPointIndex=${currentPointIndex}`)
-          
-          if (segmentIndex === 0) {
-            // 最初のセグメントは全ての点を含む
-            if (pointIndex < segmentPointCount) {
-              segmentInfo = {
-                segmentIndex: segmentIndex,
-                pointIndexInSegment: pointIndex * 2 // points配列内でのインデックス
-              }
-              console.log(`    ✅ 最初のセグメントに帰属: pointIndexInSegment=${pointIndex * 2}`)
-              break
-            }
-            currentPointIndex = segmentPointCount
-          } else {
-            // 2番目以降のセグメントは開始点を除く（前のセグメントと共有）
-            if (pointIndex === currentPointIndex) {
-              segmentInfo = {
-                segmentIndex: segmentIndex,
-                pointIndexInSegment: segment.points.length - 2 // 終点
-              }
-              console.log(`    ✅ セグメント${segmentIndex}の終点に帰属: pointIndexInSegment=${segment.points.length - 2}`)
-              break
-            }
-            currentPointIndex++
-          }
-        }
-        
-        if (!segmentInfo) {
-          console.log(`    ❌ どのセグメントにも帰属せず`)
-        }
-      }
-      
-      handles.push({
-        x: x + groupOffsetX, // Group位置を考慮した座標補正
-        y: y + groupOffsetY, // Group位置を考慮した座標補正
-        overallPointIndex: i, // 全体のpoints配列での位置
-        pointIndex: pointIndex,
-        segmentInfo: segmentInfo,
-        type: i === 0 ? 'start' : i === arrow.points.length - 2 ? 'end' : 'middle'
-      })
-    }
-
-    return handles.map((handle, index) => (
-      <Circle
-        key={`handle-${arrow.id}-${index}`}
-        x={handle.x}
-        y={handle.y}
-        radius={6}
-        fill={handle.type === 'start' ? '#22c55e' : handle.type === 'end' ? '#ef4444' : '#3b82f6'}
-        stroke="#ffffff"
-        strokeWidth={2}
-        draggable={true}
-        listening={true}
-        onClick={(e) => {
-          console.log(`🖱️ ハンドル${handle.pointIndex}がクリックされました`)
-          e.cancelBubble = true
-          e.evt.stopPropagation()
-        }}
-        onMouseDown={(e) => {
-          console.log(`⬇️ ハンドル${handle.pointIndex}でマウスダウン`)
-          e.cancelBubble = true
-          e.evt.stopPropagation()
-        }}
-        onDragStart={(e) => {
-          // ドラッグ開始時にもイベント伝播を制御
-          e.cancelBubble = true
-          e.evt.stopPropagation()
-          console.log(`🎯 ハンドル${handle.pointIndex}のドラッグ開始`)
-        }}
-        onDragMove={(e) => {
-          // ドラッグ中のリアルタイム更新
-          e.cancelBubble = true
-          e.evt.stopPropagation()
-          
-          const newX = e.target.x()
-          const newY = e.target.y()
-          
-          // リアルタイム更新を実行
-          handleEditHandleDragMove(arrow.id, handle, newX, newY)
-        }}
-        onDragEnd={(e) => {
-          // イベント伝播を停止して他のハンドラーとの干渉を防ぐ
-          e.cancelBubble = true
-          e.evt.stopPropagation()
-          
-          // ドラッグ後の新しい位置を取得
-          const newX = e.target.x()
-          const newY = e.target.y()
-          
-          console.log(`🎯 ハンドル${handle.pointIndex}をドラッグ完了: (${newX.toFixed(1)}, ${newY.toFixed(1)})`)
-          
-          // 矢印の更新
-          handleEditHandleDragEnd(arrow.id, handle, newX, newY)
-          
-          // ハンドル位置は手動設定せず、Reactの再レンダリングに任せる
-          // これにより更新された arrow.points から正しい位置が計算される
-        }}
-        onMouseEnter={(e) => {
-          const target = e.target as any
-          target.strokeWidth(3)
-          target.radius(8)
-          const stage = target.getStage()
-          if (stage && stage.container()) {
-            stage.container().style.cursor = 'pointer'
-          }
-        }}
-        onMouseLeave={(e) => {
-          const target = e.target as any
-          target.strokeWidth(2)
-          target.radius(6)
-          const stage = target.getStage()
-          if (stage && stage.container()) {
-            stage.container().style.cursor = 'default'
-          }
-        }}
-      />
-    ))
-  }
 
   // 編集ハンドルのリアルタイムドラッグ処理（軽量版）
   const handleEditHandleDragMove = useCallback((arrowId: string, handle: any, newX: number, newY: number) => {
@@ -2844,9 +2600,6 @@ const FootballCanvas = forwardRef(({
     const lineColor = play.field.lineColor
     
     // フィールドは120ヤード（エンドゾーン10ヤード + プレイングフィールド100ヤード + エンドゾーン10ヤード）
-    const totalYards = 120
-    const endZoneYards = 10
-    const playingFieldYards = 100
     
     const elements = []
 
@@ -3047,7 +2800,7 @@ const FootballCanvas = forwardRef(({
     }
   }, [play.center?.y])
 
-  const handleCenterDragStart = (e: Konva.KonvaEventObject<DragEvent>) => {
+  const handleCenterDragStart = () => {
     if (!play.center) return
     // ドラッグ開始時のY座標を保存
     centerDragStartY.current = play.center.y
@@ -3062,7 +2815,6 @@ const FootballCanvas = forwardRef(({
     
     // X座標のみの移動量を計算（Y座標は dragBoundFunc で制限）
     const deltaX = e.target.x() - play.center.x
-    const deltaY = 0 // Y方向は移動しない
     
     // 全てのプレイヤーをX方向のみ移動
     const stage = e.target.getStage()
@@ -3080,10 +2832,9 @@ const FootballCanvas = forwardRef(({
         const arrowGroup = stage.findOne(`#arrow-${arrow.id}`)
         if (arrowGroup) {
           // 矢印の各線の点を直接更新
-          let linePoints: number[] = []
           
           // まず線の部分を更新
-          arrowGroup.getChildren().forEach((child: any) => {
+          (arrowGroup as any).getChildren().forEach((child: any) => {
             if (child.getClassName() === 'Line' && !child.fill()) {
               // 線の部分
               if (!child.attrs.originalPoints) {
@@ -3093,15 +2844,14 @@ const FootballCanvas = forwardRef(({
               const newPoints = []
               for (let i = 0; i < child.attrs.originalPoints.length; i += 2) {
                 newPoints.push(child.attrs.originalPoints[i] + deltaX)
-                newPoints.push(child.attrs.originalPoints[i + 1] + deltaY) // deltaY = 0
+                newPoints.push(child.attrs.originalPoints[i + 1]) // Y方向は移動しない
               }
               child.points(newPoints)
-              linePoints = newPoints
             }
-          })
+          });
           
           // 次に矢印の先端を更新
-          arrowGroup.getChildren().forEach((child: any) => {
+          (arrowGroup as any).getChildren().forEach((child: any) => {
             if (child.getClassName() === 'Line' && child.fill()) {
               // 矢印の先端部分（fillがあるもの = 矢印の先端、T字型も含む）
               if (!child.attrs.originalPoints) {
@@ -3112,7 +2862,7 @@ const FootballCanvas = forwardRef(({
               const newArrowPoints = []
               for (let i = 0; i < child.attrs.originalPoints.length; i += 2) {
                 newArrowPoints.push(child.attrs.originalPoints[i] + deltaX)
-                newArrowPoints.push(child.attrs.originalPoints[i + 1] + deltaY) // deltaY = 0
+                newArrowPoints.push(child.attrs.originalPoints[i + 1]) // Y方向は移動しない
               }
               child.points(newArrowPoints)
             }
@@ -3129,7 +2879,6 @@ const FootballCanvas = forwardRef(({
     
     // X座標のみの移動量を計算
     const deltaX = e.target.x() - play.center.x
-    const deltaY = 0 // Y方向は移動しない
     
     // 全てのプレイヤーをX方向のみ移動
     const newPlayers = play.players.map(player => ({
@@ -3191,7 +2940,7 @@ const FootballCanvas = forwardRef(({
         const arrowGroup = stage.findOne(`#arrow-${arrow.id}`)
         if (arrowGroup) {
           // 各線の一時的な記録を削除
-          arrowGroup.getChildren().forEach((child: any) => {
+          (arrowGroup as any).getChildren().forEach((child: any) => {
             if (child.getClassName() === 'Line' && child.attrs.originalPoints) {
               delete child.attrs.originalPoints
             }
@@ -3372,7 +3121,7 @@ const FootballCanvas = forwardRef(({
             shadowEnabled={shadowEnabled}
           />
         )
-      case 'text':
+      case 'text': {
         // 編集中の場合は編集中のテキストを表示、空欄なら'A'を表示
         const displayText = appState.isEditingText && appState.editingTextId === player.id
           ? (appState.selectedText || 'A') 
@@ -3397,6 +3146,7 @@ const FootballCanvas = forwardRef(({
             offsetY={player.size / 2}
           />
         )
+      }
       default:
         return null
     }

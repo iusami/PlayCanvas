@@ -333,7 +333,7 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
                     <input
                       type="checkbox"
                       checked={selectedPlayIds.has(play.id)}
-                      onChange={(e) => handleTogglePlay(play.id, e.shiftKey)}
+                      onChange={(e) => handleTogglePlay(play.id, (e.nativeEvent as any).shiftKey || false)}
                       className="w-5 h-5 text-green-600 bg-white border-2 border-gray-300 rounded focus:ring-green-500"
                       onClick={(e) => e.stopPropagation()}
                     />
@@ -452,7 +452,7 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
                     <input
                       type="checkbox"
                       checked={selectedPlayIds.has(play.id)}
-                      onChange={(e) => handleTogglePlay(play.id, e.shiftKey)}
+                      onChange={(e) => handleTogglePlay(play.id, (e.nativeEvent as any).shiftKey || false)}
                       className="w-5 h-5 text-green-600 bg-white border-2 border-gray-300 rounded focus:ring-green-500"
                       onClick={(e) => e.stopPropagation()}
                     />

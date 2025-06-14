@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { AppState, Play, PlayerType, PlayerPosition, Playlist, FormationTemplate } from '../types'
+import React, { useState } from 'react'
+import { AppState, Play, PlayerType, Playlist, FormationTemplate } from '../types'
 import PlayListView from './PlayListView'
 import PlaylistManager from './PlaylistManager'
 import PlaylistEditor from './PlaylistEditor'
@@ -56,22 +56,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     { value: 'text', label: 'A' }
   ]
 
-  const offensePositions: { value: PlayerPosition; label: string }[] = [
-    { value: '', label: '選択なし' },
-    { value: 'QB', label: 'QB' },
-    { value: 'RB', label: 'RB' },
-    { value: 'WR', label: 'WR' },
-    { value: 'TE', label: 'TE' },
-    { value: 'OL', label: 'OL' }
-  ]
-
-  const defensePositions: { value: PlayerPosition; label: string }[] = [
-    { value: '', label: '選択なし' },
-    { value: 'DL', label: 'DL' },
-    { value: 'LB', label: 'LB' },
-    { value: 'DB', label: 'DB' },
-    { value: 'S', label: 'S' }
-  ]
 
   const tools = [
     { value: 'select', label: '選択', icon: '↖' },
@@ -420,7 +404,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                               : player
                           )
                           
-                          onUpdatePlay({ players: updatedPlayers })
+                          onUpdatePlay?.({ players: updatedPlayers })
                         }
                       }}
                       className="flex-1 px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -440,7 +424,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                               : player
                           )
                           
-                          onUpdatePlay({ players: updatedPlayers })
+                          onUpdatePlay?.({ players: updatedPlayers })
                         }
                       }}
                       className="flex-1 px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600"
@@ -758,7 +742,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   for (let i = 0; i < 100; i++) {
                                     // optimizeSegments と buildPointsFromSegments のシミュレート
                                     const optimized = testSegments.filter(s => s.points.length >= 4)
-                                    const points = optimized.flatMap((s, i) => 
+                                    // パフォーマンステスト用処理のシミュレート
+                                    optimized.flatMap((s, i) => 
                                       i === 0 ? s.points : s.points.slice(2)
                                     )
                                   }
