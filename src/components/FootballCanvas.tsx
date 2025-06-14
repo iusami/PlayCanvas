@@ -385,8 +385,8 @@ const FootballCanvas = forwardRef(({
   }
 
   // プレーヤー配置制限関連の基本関数
-  const getCenterLineY = () => {
-    return (play.field.height * 5) / 8
+  const getCenterLineY = (fieldHeight: number) => {
+    return (fieldHeight * 5) / 8
   }
 
   const isFieldFlipped = () => {
@@ -397,7 +397,7 @@ const FootballCanvas = forwardRef(({
       return false
     }
     
-    const centerLineY = getCenterLineY()
+    const centerLineY = getCenterLineY(play.field.height)
     const thirdLineY = (play.field.height * 3) / 8 - 20
     const fifthLineY = (play.field.height * 5) / 8 + 2
     
@@ -420,7 +420,7 @@ const FootballCanvas = forwardRef(({
     const halfSize = playerSize / 2
     
     // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
-    const centerLineY = flipped && play.center ? play.center.y : getCenterLineY()
+    const centerLineY = flipped && play.center ? play.center.y : getCenterLineY(play.field.height)
     
     console.log(`🔍 constrainPlayerPosition: 入力(${x.toFixed(1)}, ${y.toFixed(1)}) ${team} centerLineY=${centerLineY.toFixed(1)} flipped=${flipped}`)
     console.log(`🔍 フィールドサイズ: width=${play.field.width}, height=${play.field.height}`)
@@ -622,7 +622,7 @@ const FootballCanvas = forwardRef(({
     if (targetTeam) {
       const flipped = isFieldFlipped()
       // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
-      const centerLineY = flipped && play.center ? play.center.y : getCenterLineY()
+      const centerLineY = flipped && play.center ? play.center.y : getCenterLineY(play.field.height)
       
       let distanceToCenter = 0
       let snapTargetY = 0
