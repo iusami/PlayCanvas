@@ -2486,53 +2486,42 @@ const FootballCanvas = forwardRef(({
   const renderText = (textElement: TextElement) => {
     const isSelected = appState.selectedElementIds.includes(textElement.id)
     const isEditing = appState.isEditingText && appState.editingTextId === textElement.id
+    
+    // テキストの実際のサイズを測定するため、一時的なテキストオブジェクトを作成
+    const measureText = new Konva.Text({
+      text: textElement.text || (isEditing ? '' : 'テキスト'),
+      fontSize: textElement.fontSize,
+      fontFamily: textElement.fontFamily,
+      fontStyle: appState.selectedFontStyle,
+      fontVariant: appState.selectedFontWeight,
+    })
+    
+    const textWidth = measureText.width()
+    const textHeight = measureText.height()
+    
+    // パディング設定
+    const padding = 4
 
     return (
-      <Text
+      <Group
         key={textElement.id}
         x={textElement.x}
         y={textElement.y}
-        text={textElement.text || (isEditing ? '' : 'テキスト')}
-        fontSize={textElement.fontSize}
-        fontFamily={textElement.fontFamily}
-        fill={isEditing ? '#2563eb' : textElement.color}
-        fontStyle={appState.selectedFontStyle}
-        fontVariant={appState.selectedFontWeight}
         draggable={appState.selectedTool === 'select' && !isEditing}
-        stroke={isSelected || isEditing ? '#2563eb' : undefined}
-        strokeWidth={isSelected || isEditing ? 1 : 0}
-        shadowColor={isSelected || isEditing ? '#2563eb' : undefined}
-        shadowBlur={isSelected || isEditing ? 5 : 0}
-        shadowEnabled={isSelected || isEditing}
         // ホバー効果のためのスタイル
         onMouseEnter={(e) => {
           if (appState.selectedTool === 'select' || appState.selectedTool === 'text') {
-            const target = e.target as any
-            target.strokeWidth(1)
-            target.stroke('#60a5fa')
-            target.shadowEnabled(true)
-            target.shadowColor('#60a5fa')
-            target.shadowBlur(3)
-            
             // カーソルを手に変更
-            const stage = target.getStage()
+            const stage = e.target.getStage()
             if (stage && stage.container()) {
               stage.container().style.cursor = 'pointer'
             }
           }
         }}
         onMouseLeave={(e) => {
-          if (!isSelected && !isEditing) {
-            const target = e.target as any
-            target.strokeWidth(0)
-            target.stroke(undefined)
-            target.shadowEnabled(false)
-          }
-          
           // カーソルをデフォルトに戻す
           if (appState.selectedTool === 'select' || appState.selectedTool === 'text') {
-            const target = e.target as any
-            const stage = target.getStage()
+            const stage = e.target.getStage()
             if (stage && stage.container()) {
               stage.container().style.cursor = 'default'
             }
@@ -2541,7 +2530,34 @@ const FootballCanvas = forwardRef(({
         onClick={(e) => handleTextClick(textElement.id, e)}
         onDblClick={() => handleTextDoubleClick(textElement.id)}
         onDragEnd={(e) => handleTextDragEnd(textElement.id, e)}
-      />
+      >
+        {/* 背景矩形 */}
+        <Rect
+          x={-padding}
+          y={-padding}
+          width={textWidth + padding * 2}
+          height={textHeight + padding * 2}
+          fill="rgba(128, 128, 128, 0.3)" // 透過した薄灰色背景
+          stroke="#000000" // 黒色外枠
+          strokeWidth={1}
+          cornerRadius={2}
+          shadowColor={isSelected || isEditing ? '#2563eb' : undefined}
+          shadowBlur={isSelected || isEditing ? 5 : 0}
+          shadowEnabled={isSelected || isEditing}
+        />
+        
+        {/* テキスト本体 */}
+        <Text
+          x={0}
+          y={0}
+          text={textElement.text || (isEditing ? '' : 'テキスト')}
+          fontSize={textElement.fontSize}
+          fontFamily={textElement.fontFamily}
+          fill={isEditing ? '#2563eb' : textElement.color}
+          fontStyle={appState.selectedFontStyle}
+          fontVariant={appState.selectedFontWeight}
+        />
+      </Group>
     )
   }
 
