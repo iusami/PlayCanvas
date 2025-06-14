@@ -103,11 +103,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (flipped) {
       if (team === 'offense') {
         // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
-        const maxY = centerLineY + offenseSnapOffset
+        const maxY = centerLineY + 10 // 205 + 10 = 215px
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
-        // 反転時ディフェンスは中央線より少し上から（フィールドの下半分）
-        const minY = centerLineY - defenseSnapOffset
+        // 反転時ディフェンスは210px以下（フィールドの下半分）
+        const minY = 210
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       }
     } else {
