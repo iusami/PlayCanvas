@@ -1,5 +1,5 @@
 // プレイヤーの種類
-export type PlayerType = 'circle' | 'triangle' | 'square' | 'text' | 'chevron'
+export type PlayerType = 'circle' | 'triangle' | 'square' | 'text' | 'chevron' | 'x'
 
 // フィールド制約定数
 export const FIELD_CONSTRAINTS = {

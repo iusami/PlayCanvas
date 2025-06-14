@@ -3176,6 +3176,33 @@ const FootballCanvas = forwardRef(({
           />
         )
       }
+      case 'x':
+        return (
+          <Group {...baseProps}>
+            <Line
+              points={[
+                -player.size / 2, -player.size / 2,
+                player.size / 2, player.size / 2
+              ]}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              shadowColor={isSelected ? '#2563eb' : undefined}
+              shadowBlur={isSelected ? 10 : 0}
+              shadowEnabled={shadowEnabled}
+            />
+            <Line
+              points={[
+                player.size / 2, -player.size / 2,
+                -player.size / 2, player.size / 2
+              ]}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              shadowColor={isSelected ? '#2563eb' : undefined}
+              shadowBlur={isSelected ? 10 : 0}
+              shadowEnabled={shadowEnabled}
+            />
+          </Group>
+        )
       default:
         return null
     }
