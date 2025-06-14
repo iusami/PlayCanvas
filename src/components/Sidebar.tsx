@@ -5,6 +5,13 @@ import PlaylistManager from './PlaylistManager'
 import PlaylistEditor from './PlaylistEditor'
 import FormationTemplateManager from './FormationTemplateManager'
 
+// デバッグログヘルパー関数
+const debugLog = (appState: AppState, ...args: any[]) => {
+  if (appState.debugMode) {
+    console.log(...args)
+  }
+}
+
 interface SidebarProps {
   appState: AppState
   updateAppState: (updates: Partial<AppState>) => void
@@ -85,7 +92,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     fieldWidth: number, 
     fieldHeight: number, 
     center: { x: number; y: number } | undefined,
-    playerSize: number = 20
+    playerSize: number = 20,
+    appState: AppState
   ) => {
     const flipped = isFieldFlipped(center, fieldHeight)
     // 反転時は実際の中央線位置（center.y）を使用、通常時は固定値を使用
@@ -107,28 +115,28 @@ const Sidebar: React.FC<SidebarProps> = ({
         // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
         const maxY = centerLineY + 10 // 205 + 10 = 215px
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
-        console.log(`🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
+        debugLog(appState, `🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
         const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-        console.log(`🔧 反転時ディフェンス: minY=${minY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
+        debugLog(appState, `🔧 反転時ディフェンス: minY=${minY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       }
     } else {
       if (team === 'offense') {
         // 通常時オフェンスは中央線より少し下から
         const minY = centerLineY + offenseSnapOffset
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-        console.log(`🔧 通常時オフェンス: minY=${minY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
+        debugLog(appState, `🔧 通常時オフェンス: minY=${minY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
         // 通常時ディフェンスは中央線より少し上まで
         const maxY = centerLineY - defenseSnapOffset
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
-        console.log(`🔧 通常時ディフェンス: maxY=${maxY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
+        debugLog(appState, `🔧 通常時ディフェンス: maxY=${maxY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       }
     }
     
-    console.log(`🔧 最終結果: (${constrainedX.toFixed(1)}, ${constrainedY.toFixed(1)})`)
+    debugLog(appState, `🔧 最終結果: (${constrainedX.toFixed(1)}, ${constrainedY.toFixed(1)})`)
     return { x: constrainedX, y: constrainedY }
   }
 
@@ -280,15 +288,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   onClick={() => {
                     if (appState.currentPlay && onUpdatePlay) {
-                      console.log('🔄 上下反転ボタンが押されました')
+                      debugLog(appState, '🔄 上下反転ボタンが押されました')
                       
                       // 上下反転（上から4番目の線を軸）
                       const flipAxisY = (appState.currentPlay.field.height * 4) / 8
-                      console.log(`🔄 flipAxisY: ${flipAxisY}`)
+                      debugLog(appState, `🔄 flipAxisY: ${flipAxisY}`)
                       
                       // センターを現在位置に応じて反転（プレーヤー処理の前に実行）
                       let updatedCenter = appState.currentPlay.center
-                      console.log(`🔄 現在のcenter:`, appState.currentPlay.center)
+                      debugLog(appState, `🔄 現在のcenter:`, appState.currentPlay.center)
                       if (appState.currentPlay.center) {
                         const currentY = appState.currentPlay.center.y
                         
@@ -310,7 +318,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           ...appState.currentPlay.center,
                           y: newY
                         }
-                        console.log(`🔄 センターを更新: ${currentY} → ${newY}`)
+                        debugLog(appState, `🔄 センターを更新: ${currentY} → ${newY}`)
                       } else {
                         // センターが存在しない場合は3番目の線に配置
                         const thirdLineY = (appState.currentPlay.field.height * 3) / 8 - 20
@@ -319,17 +327,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                           x: appState.currentPlay.field.width / 2,
                           y: thirdLineY
                         }
-                        console.log(`🔄 センターを新規作成: y=${thirdLineY}`)
+                        debugLog(appState, `🔄 センターを新規作成: y=${thirdLineY}`)
                       }
                       
-                      console.log(`🔄 更新されたセンター:`, updatedCenter)
+                      debugLog(appState, `🔄 更新されたセンター:`, updatedCenter)
                       
                       const updatedPlayers = appState.currentPlay.players.map((player, index) => {
                         const flippedY = flipAxisY + (flipAxisY - player.y)
                         
                         // isFieldFlipped関数の動作確認
                         const isFlipped = isFieldFlipped(updatedCenter, appState.currentPlay!.field.height)
-                        console.log(`🔄 プレーヤー${index} (${player.team}): 元位置=${player.y.toFixed(1)} → 反転後=${flippedY.toFixed(1)}, isFlipped=${isFlipped}`)
+                        debugLog(appState, `🔄 プレーヤー${index} (${player.team}): 元位置=${player.y.toFixed(1)} → 反転後=${flippedY.toFixed(1)}, isFlipped=${isFlipped}`)
                         
                         // 反転後の位置に配置制限を適用（更新されたセンターを考慮）
                         const constrained = constrainPlayerPosition(
@@ -339,10 +347,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                           appState.currentPlay!.field.width, 
                           appState.currentPlay!.field.height, 
                           updatedCenter,
-                          player.size
+                          player.size,
+                          appState
                         )
                         
-                        console.log(`🔄 プレーヤー${index} (${player.team}): 制限後=${constrained.y.toFixed(1)}`)
+                        debugLog(appState, `🔄 プレーヤー${index} (${player.team}): 制限後=${constrained.y.toFixed(1)}`)
                         
                         return {
                           ...player,
