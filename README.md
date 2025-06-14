@@ -14,14 +14,6 @@
 - **エクスポート機能**: 画像保存・印刷対応
 - **オフライン対応**: インターネット接続不要で動作
 
-## 🖼️ スクリーンショット
-
-### メインキャンバス
-![キャンバス画面](docs/images/canvas-image.png)
-
-### プレイ一覧
-![プレイ一覧](docs/images/list-of-plays.png)
-
 ## 📋 システム要件
 
 - **Windows**: Windows 10以降
@@ -42,17 +34,18 @@
 ### 開発環境のセットアップ
 
 1. **リポジトリのクローン**
+
    ```bash
    git clone <repository-url>
    cd playCanvas
    ```
-
 2. **依存関係のインストール**
+
    ```bash
    npm install
    ```
-
 3. **アプリケーションの起動**
+
    ```bash
    npm run dev
    ```
@@ -60,26 +53,27 @@
 ### プロダクションビルド
 
 1. **アプリケーションのビルド**
+
    ```bash
    npm run build
    ```
-
 2. **Electronアプリケーションのパッケージ化**
+
    ```bash
    npm run electron:build
    ```
 
 ## 🛠️ 開発用コマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `npm run dev` | 開発サーバーの起動 |
-| `npm run build` | プロダクションビルド |
-| `npm run preview` | ビルド結果のプレビュー |
-| `npm run electron:dev` | Electron開発モード |
+| コマンド                   | 説明                   |
+| -------------------------- | ---------------------- |
+| `npm run dev`            | 開発サーバーの起動     |
+| `npm run build`          | プロダクションビルド   |
+| `npm run preview`        | ビルド結果のプレビュー |
+| `npm run electron:dev`   | Electron開発モード     |
 | `npm run electron:build` | Electronアプリのビルド |
-| `npm run typecheck` | TypeScript型チェック |
-| `npm run lint` | ESLintによるコード検査 |
+| `npm run typecheck`      | TypeScript型チェック   |
+| `npm run lint`           | ESLintによるコード検査 |
 
 ## 🧪 テスト実行手順
 
@@ -93,6 +87,7 @@
 ### ユニットテスト（Vitest）
 
 #### 基本実行
+
 ```bash
 # 全てのユニットテストを実行
 npm test
@@ -108,11 +103,13 @@ npm test -- --coverage
 ```
 
 #### テスト対象
+
 - **ストレージ機能**: プレイ・プレイリスト・設定の保存/読み込み
 - **Reactコンポーネント**: App、PlayListView等の基本動作
 - **ユーティリティ関数**: データ変換、バリデーション機能
 
 #### テスト結果の確認
+
 ```bash
 # 最新のテスト実行結果
 ✓ test/utils/storage.test.ts (30 tests)
@@ -126,6 +123,7 @@ Tests       65 passed (65)
 ### E2Eテスト（Playwright）
 
 #### 事前準備
+
 ```bash
 # Playwright依存関係のインストール（初回のみ）
 npm install --save-dev @playwright/test
@@ -135,6 +133,7 @@ npx playwright install
 ```
 
 #### 基本実行
+
 ```bash
 # 全てのE2Eテストを実行（Chrome + Firefox）
 npm run test:e2e
@@ -150,6 +149,7 @@ npm run test:e2e -- --grep="キャンバスエリア"
 ```
 
 #### UIモードでの実行
+
 ```bash
 # Playwright Test UIを起動（ブラウザで視覚的にテスト実行）
 npm run test:e2e:ui
@@ -159,6 +159,7 @@ npm run test:e2e:debug
 ```
 
 #### テスト結果とレポート
+
 ```bash
 # HTMLレポートを表示
 npm run test:e2e:report
@@ -168,6 +169,7 @@ npx playwright show-report
 ```
 
 #### E2Eテスト内容
+
 - **アプリケーション起動**: React アプリの正常読み込み
 - **UI要素表示**: ヘッダー、サイドバー、キャンバスの表示確認
 - **キャンバス操作**: React-Konvaキャンバスの存在と操作性
@@ -176,15 +178,15 @@ npx playwright show-report
 
 ### テストコマンド一覧
 
-| コマンド | 説明 |
-|---------|------|
-| `npm test` | ユニットテスト実行 |
-| `npm test -- --watch` | ユニットテスト（watch モード） |
-| `npm test -- --coverage` | カバレッジ付きユニットテスト |
-| `npm run test:e2e` | E2Eテスト実行（全ブラウザ） |
-| `npm run test:e2e:ui` | E2EテストUI モード |
-| `npm run test:e2e:debug` | E2Eテストデバッグモード |
-| `npm run test:e2e:report` | E2Eテストレポート表示 |
+| コマンド                    | 説明                           |
+| --------------------------- | ------------------------------ |
+| `npm test`                | ユニットテスト実行             |
+| `npm test -- --watch`     | ユニットテスト（watch モード） |
+| `npm test -- --coverage`  | カバレッジ付きユニットテスト   |
+| `npm run test:e2e`        | E2Eテスト実行（全ブラウザ）    |
+| `npm run test:e2e:ui`     | E2EテストUI モード             |
+| `npm run test:e2e:debug`  | E2Eテストデバッグモード        |
+| `npm run test:e2e:report` | E2Eテストレポート表示          |
 
 ### CI/CD でのテスト実行
 
@@ -199,6 +201,7 @@ npm run test:e2e -- --headed=false
 ### トラブルシューティング
 
 #### ユニットテストが失敗する場合
+
 ```bash
 # テストキャッシュをクリア
 npx vitest run --reporter=verbose
@@ -208,6 +211,7 @@ npm test -- test/utils/storage.test.ts --reporter=verbose
 ```
 
 #### E2Eテストが失敗する場合
+
 ```bash
 # 開発サーバーが起動しているか確認
 npm run dev
@@ -222,17 +226,18 @@ npm run test:e2e:debug -- --grep="アプリケーション起動"
 #### よくあるエラーと対処法
 
 1. **「開発サーバーに接続できない」エラー**
+
    ```bash
    # ポート5173が使用可能か確認
    lsof -i :5173
    # 他のプロセスが使用している場合は終了してから再実行
    ```
-
 2. **「キャンバス要素が見つからない」エラー**
+
    - React-Konvaの初期化に時間がかかる場合があります
    - テストは自動的にリトライするため、通常は解決されます
-
 3. **ブラウザ固有のエラー**
+
    ```bash
    # 特定のブラウザでのみテスト実行
    npm run test:e2e -- --project=chromium
@@ -243,20 +248,21 @@ npm run test:e2e:debug -- --grep="アプリケーション起動"
 ### 基本操作
 
 1. **新しいプレイの作成**
-   - ヘッダーの「新しいプレイ」ボタンをクリック
 
+   - ヘッダーの「新しいプレイ」ボタンをクリック
 2. **プレイヤーの配置**
+
    - サイドバーから「プレイヤー」ツールを選択
    - チーム（オフェンス/ディフェンス）を選択
    - アイコンの種類を選択
    - キャンバス上でクリックして配置
-
 3. **矢印の描画**
+
    - サイドバーから「矢印」ツールを選択
    - 線の種類と矢印の形を設定
    - キャンバス上でドラッグして描画
-
 4. **テキストの追加**
+
    - サイドバーから「テキスト」ツールを選択
    - フォントとサイズを設定
    - キャンバス上でクリックしてテキストを配置
@@ -264,23 +270,25 @@ npm run test:e2e:debug -- --grep="アプリケーション起動"
 ### プレイの管理
 
 1. **保存**
+
    - ヘッダーの「保存」ボタンで現在のプレイを保存
    - 「名前を付けて保存」で新しいプレイとして保存
-
 2. **プレイ一覧**
+
    - サイドバーの「プレイ一覧」タブで過去のプレイを表示
    - 検索・フィルター機能で目的のプレイを見つける
-
 3. **プレイリスト**
+
    - サイドバーの「プレイリスト」タブでプレイをグループ化
    - ドラッグ&ドロップで順序を変更
 
 ### エクスポート
 
 1. **画像として保存**
-   - ヘッダーの「エクスポート」ボタンでPNG形式で保存
 
+   - ヘッダーの「エクスポート」ボタンでPNG形式で保存
 2. **印刷**
+
    - ヘッダーの「印刷」ボタンで印刷プレビューを表示
 
 ## 🏗️ 技術スタック
@@ -349,26 +357,27 @@ PORT=5173
 ### よくある問題
 
 1. **npm install でエラーが発生する**
+
    ```bash
    # キャッシュをクリアして再実行
    npm cache clean --force
    npm install
    ```
-
 2. **Electronアプリが起動しない**
+
    ```bash
    # 依存関係を再インストール
    rm -rf node_modules package-lock.json
    npm install
    ```
-
 3. **型エラーが発生する**
+
    ```bash
    # 型チェックを実行
    npm run typecheck
    ```
-
 4. **ビルドが失敗する**
+
    ```bash
    # プロジェクトをクリーンして再ビルド
    npm run clean
