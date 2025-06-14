@@ -72,7 +72,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     { value: 'triangle', label: '▽' },
     { value: 'square', label: '□' },
     { value: 'chevron', label: '∨' },
-    { value: 'text', label: 'A' }
+    { value: 'text', label: 'A' },
+    { value: 'x', label: '✕' }
   ]
 
 
