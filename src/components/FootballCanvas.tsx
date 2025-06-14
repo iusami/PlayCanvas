@@ -441,8 +441,8 @@ const FootballCanvas = forwardRef(({
     if (flipped) {
       // 反転時: オフェンスが上、ディフェンスが下
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し上まで（フィールドの上半分）
-        const maxY = centerLineY - offenseSnapOffset
+        // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
+        const maxY = centerLineY + offenseSnapOffset
         const fieldTopLimit = halfSize
         
         // オフェンスの有効範囲：フィールド上端からmaxYまで
@@ -451,8 +451,8 @@ const FootballCanvas = forwardRef(({
         console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
         console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
       } else {
-        // 反転時ディフェンスは中央線より少し下から（フィールドの下半分）
-        const minY = centerLineY + defenseSnapOffset
+        // 反転時ディフェンスは中央線より少し上から（フィールドの下半分）
+        const minY = centerLineY - defenseSnapOffset
         const fieldBottomLimit = play.field.height - halfSize
         
         // ディフェンスの有効範囲：minYからフィールド下端まで
