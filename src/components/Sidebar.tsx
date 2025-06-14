@@ -105,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (flipped) {
       if (team === 'offense') {
         // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
-        const maxY = centerLineY + 10 // 205 + 10 = 215px
+        const maxY = centerLineY + offenseSnapOffset // 205 + offenseSnapOffset = 215px
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
         console.log(`🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
