@@ -1,6 +1,12 @@
 // プレイヤーの種類
 export type PlayerType = 'circle' | 'triangle' | 'square' | 'text' | 'chevron'
 
+// フィールド制約定数
+export const FIELD_CONSTRAINTS = {
+  // 反転時のディフェンス最小Y座標（フィールド下半分の制限）
+  DEFENSE_MIN_Y_FLIPPED: 240,
+} as const
+
 // プレイヤーのポジション
 export type PlayerPosition = 
   | 'QB' | 'RB' | 'WR' | 'TE' | 'OL' // オフェンス

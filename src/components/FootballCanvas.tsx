@@ -1,7 +1,23 @@
 import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import Konva from 'konva'
-import { AppState, Play, Player, Arrow, TextElement, ArrowSegment } from '../types'
+import { AppState, Play, Player, Arrow, TextElement, ArrowSegment, FIELD_CONSTRAINTS } from '../types'
+
+// テキスト測定用のグローバルインスタンス（パフォーマンス最適化）
+let textMeasurer: Konva.Text | null = null
+const getTextMeasurer = () => {
+  if (!textMeasurer) {
+    textMeasurer = new Konva.Text({})
+  }
+  return textMeasurer
+}
+
+// デバッグログヘルパー関数
+const debugLog = (appState: AppState, ...args: any[]) => {
+  if (appState.debugMode) {
+    console.log(...args)
+  }
+}
 
 // セグメント配列最適化関数
 const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
@@ -34,7 +50,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
       // 開始点と終了点が同じ場合（距離が1px未満）はスキップ
       const distance = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2)
       if (distance < 1) {
-        console.log(`セグメント ${i} をスキップ: 開始点と終了点が同じ (距離: ${distance.toFixed(2)}px)`)
+        // 無効なセグメントは無視（デバッグログは削除）
         continue
       }
       
@@ -43,11 +59,6 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
         const prevSegment = optimized[optimized.length - 1]
         const prevEndX = prevSegment.points[prevSegment.points.length - 2]
         const prevEndY = prevSegment.points[prevSegment.points.length - 1]
-        
-        // 接続点の距離をチェック（デバッグ用）
-        const connectionDistance = Math.sqrt(
-          (startX - prevEndX) ** 2 + (startY - prevEndY) ** 2
-        )
         
         // 現在のセグメントの開始点を前のセグメントの終点に合わせる
         const adjustedSegment = {
@@ -59,9 +70,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
         }
         optimized.push(adjustedSegment)
         
-        if (connectionDistance > 5) {
-          console.log(`セグメント ${i} の接続点を調整: 距離 ${connectionDistance.toFixed(2)}px`)
-        }
+        // 接続点調整の詳細ログは削除（不要な詳細情報）
       } else {
         optimized.push(currentSegment)
       }
@@ -85,7 +94,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
             ...prev,
             points: mergedPoints
           }
-          console.log(`セグメント ${i-1} と ${i} を結合: 同じタイプ (${current.type})`)
+          // セグメント結合ログは削除（不要な詳細情報）
         } else {
           merged.push(current)
         }
@@ -94,7 +103,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
       }
     }
     
-    console.log(`セグメント最適化完了: ${segments.length} → ${merged.length}`)
+    // セグメント最適化ログは削除（不要な詳細情報）
     return merged
   } catch (error) {
     console.error('セグメント最適化でエラーが発生:', error)
@@ -207,7 +216,7 @@ const FootballCanvas = forwardRef(({
             linkedPlayerId: undefined,
             segmentLimitWarning: null
           })
-          console.log('矢印描画をキャンセルしました')
+          debugLog(appState, '矢印描画をキャンセルしました')
         } else if (e.key === 'Backspace' && appState.currentArrowSegments.length > 0) {
           // Backspaceキーで最後のセグメントを削除
           e.preventDefault()
@@ -385,8 +394,8 @@ const FootballCanvas = forwardRef(({
   }
 
   // プレーヤー配置制限関連の基本関数
-  const getCenterLineY = () => {
-    return (play.field.height * 5) / 8
+  const getCenterLineY = (fieldHeight: number) => {
+    return (fieldHeight * 5) / 8
   }
 
   const isFieldFlipped = () => {
@@ -397,7 +406,7 @@ const FootballCanvas = forwardRef(({
       return false
     }
     
-    const centerLineY = getCenterLineY()
+    const centerLineY = getCenterLineY(play.field.height)
     const thirdLineY = (play.field.height * 3) / 8 - 20
     const fifthLineY = (play.field.height * 5) / 8 + 2
     
@@ -416,15 +425,17 @@ const FootballCanvas = forwardRef(({
 
 
   const constrainPlayerPosition = (x: number, y: number, team: 'offense' | 'defense', playerSize: number = 20) => {
-    const centerLineY = getCenterLineY()
     const flipped = isFieldFlipped()
     const halfSize = playerSize / 2
+    
+    // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
+    const centerLineY = flipped && play.center ? play.center.y : getCenterLineY(play.field.height)
     
     console.log(`🔍 constrainPlayerPosition: 入力(${x.toFixed(1)}, ${y.toFixed(1)}) ${team} centerLineY=${centerLineY.toFixed(1)} flipped=${flipped}`)
     console.log(`🔍 フィールドサイズ: width=${play.field.width}, height=${play.field.height}`)
     console.log(`🔍 プレーヤーサイズ: ${playerSize}, halfSize=${halfSize}`)
     console.log(`🔍 センター位置: ${play.center ? `(${play.center.x}, ${play.center.y})` : 'なし'}`)
-    console.log(`🔍 3番目の線: ${((play.field.height * 3) / 8 - 20).toFixed(1)}, 5番目の線: ${((play.field.height * 5) / 8 + 2).toFixed(1)}`)
+    console.log(`🔍 使用する中央線: ${flipped ? '実際の中央線位置' : '固定の中央線位置'} = ${centerLineY.toFixed(1)}`)
     
     // 中央線から少し離した位置で制限
     const offenseSnapOffset = 15 // オフェンス用の距離（中央線より下に）
@@ -439,8 +450,8 @@ const FootballCanvas = forwardRef(({
     if (flipped) {
       // 反転時: オフェンスが上、ディフェンスが下
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し上まで（ディフェンス用オフセット適用）
-        const maxY = centerLineY - defenseSnapOffset  // 375 - 10 = 365
+        // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
+        const maxY = centerLineY + 10 // 205 + 10 = 215px
         const fieldTopLimit = halfSize
         
         // オフェンスの有効範囲：フィールド上端からmaxYまで
@@ -449,15 +460,15 @@ const FootballCanvas = forwardRef(({
         console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
         console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
       } else {
-        // 反転時ディフェンスは中央線より少し下から（オフェンス用オフセット適用）
-        const minY = centerLineY + offenseSnapOffset  // 375 + 10 = 385
+        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
+        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
         const fieldBottomLimit = play.field.height - halfSize
         
         // ディフェンスの有効範囲：minYからフィールド下端まで
         constrainedY = Math.max(minY, Math.min(fieldBottomLimit, y))
         
-        console.log(`🔍 反転ディフェンス: centerLineY=${centerLineY.toFixed(1)}, minY=${minY.toFixed(1)}, fieldBottomLimit=${fieldBottomLimit}`)
-        console.log(`🔍 反転ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${minY.toFixed(1)}〜${fieldBottomLimit})`)
+        console.log(`🔍 反転ディフェンス: minY=${minY}, fieldBottomLimit=${fieldBottomLimit}`)
+        console.log(`🔍 反転ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${minY}〜${fieldBottomLimit})`)
       }
     } else {
       // 通常時: オフェンスが下、ディフェンスが上
@@ -618,8 +629,9 @@ const FootballCanvas = forwardRef(({
 
     // チームが指定されている場合のみ中央線スナップを実行
     if (targetTeam) {
-      const centerLineY = getCenterLineY()
       const flipped = isFieldFlipped()
+      // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
+      const centerLineY = flipped && play.center ? play.center.y : getCenterLineY(play.field.height)
       
       let distanceToCenter = 0
       let snapTargetY = 0
@@ -637,8 +649,8 @@ const FootballCanvas = forwardRef(({
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         } else {
-          // 反転ディフェンス：中央線より少し下にスナップ
-          const snapLineY = centerLineY + offenseSnapOffset  // 375 + 10 = 385
+          // 反転ディフェンス：定数で定義された位置にスナップ（制限値と一致）
+          const snapLineY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         }
@@ -1386,12 +1398,12 @@ const FootballCanvas = forwardRef(({
       const draggedX = e.target.x()
       const draggedY = e.target.y()
       
-      console.log(`🎯 handlePlayerDragEnd: プレーヤー ${playerId} (${draggedPlayer?.team})`)
-      console.log(`🎯 handlePlayerDragEnd: ドラッグ終了座標 (${draggedX.toFixed(1)}, ${draggedY.toFixed(1)})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: プレーヤー ${playerId} (${draggedPlayer?.team})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: ドラッグ終了座標 (${draggedX.toFixed(1)}, ${draggedY.toFixed(1)})`)
       
       // まず配置制限を適用
       const constrained = constrainPlayerPosition(draggedX, draggedY, draggedPlayer?.team || 'offense', draggedPlayer?.size || 20)
-      console.log(`🎯 handlePlayerDragEnd: 制限適用後 (${constrained.x.toFixed(1)}, ${constrained.y.toFixed(1)})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: 制限適用後 (${constrained.x.toFixed(1)}, ${constrained.y.toFixed(1)})`)
       
       // 制限された座標をKonvaオブジェクトに反映
       e.target.x(constrained.x)
@@ -1399,7 +1411,7 @@ const FootballCanvas = forwardRef(({
       
       // 次にスナップ機能を適用
       const snapped = getSnappedPosition(constrained.x, constrained.y, draggedPlayer?.team)
-      console.log(`🎯 handlePlayerDragEnd: スナップ適用後 (${snapped.x.toFixed(1)}, ${snapped.y.toFixed(1)})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: スナップ適用後 (${snapped.x.toFixed(1)}, ${snapped.y.toFixed(1)})`)
       
       newPlayers = play.players.map(player => {
         if (player.id === playerId) {
@@ -2483,53 +2495,43 @@ const FootballCanvas = forwardRef(({
   const renderText = (textElement: TextElement) => {
     const isSelected = appState.selectedElementIds.includes(textElement.id)
     const isEditing = appState.isEditingText && appState.editingTextId === textElement.id
+    
+    // テキストの実際のサイズを測定（再利用可能なインスタンスを使用してパフォーマンス向上）
+    const measureText = getTextMeasurer()
+    measureText.setAttrs({
+      text: textElement.text || (isEditing ? '' : 'テキスト'),
+      fontSize: textElement.fontSize,
+      fontFamily: textElement.fontFamily,
+      fontStyle: appState.selectedFontStyle,
+      fontVariant: appState.selectedFontWeight,
+    })
+    
+    const textWidth = measureText.width()
+    const textHeight = measureText.height()
+    
+    // パディング設定
+    const padding = 4
 
     return (
-      <Text
+      <Group
         key={textElement.id}
         x={textElement.x}
         y={textElement.y}
-        text={textElement.text || (isEditing ? '' : 'テキスト')}
-        fontSize={textElement.fontSize}
-        fontFamily={textElement.fontFamily}
-        fill={isEditing ? '#2563eb' : textElement.color}
-        fontStyle={appState.selectedFontStyle}
-        fontVariant={appState.selectedFontWeight}
         draggable={appState.selectedTool === 'select' && !isEditing}
-        stroke={isSelected || isEditing ? '#2563eb' : undefined}
-        strokeWidth={isSelected || isEditing ? 1 : 0}
-        shadowColor={isSelected || isEditing ? '#2563eb' : undefined}
-        shadowBlur={isSelected || isEditing ? 5 : 0}
-        shadowEnabled={isSelected || isEditing}
         // ホバー効果のためのスタイル
         onMouseEnter={(e) => {
           if (appState.selectedTool === 'select' || appState.selectedTool === 'text') {
-            const target = e.target as any
-            target.strokeWidth(1)
-            target.stroke('#60a5fa')
-            target.shadowEnabled(true)
-            target.shadowColor('#60a5fa')
-            target.shadowBlur(3)
-            
             // カーソルを手に変更
-            const stage = target.getStage()
+            const stage = e.target.getStage()
             if (stage && stage.container()) {
               stage.container().style.cursor = 'pointer'
             }
           }
         }}
         onMouseLeave={(e) => {
-          if (!isSelected && !isEditing) {
-            const target = e.target as any
-            target.strokeWidth(0)
-            target.stroke(undefined)
-            target.shadowEnabled(false)
-          }
-          
           // カーソルをデフォルトに戻す
           if (appState.selectedTool === 'select' || appState.selectedTool === 'text') {
-            const target = e.target as any
-            const stage = target.getStage()
+            const stage = e.target.getStage()
             if (stage && stage.container()) {
               stage.container().style.cursor = 'default'
             }
@@ -2538,7 +2540,34 @@ const FootballCanvas = forwardRef(({
         onClick={(e) => handleTextClick(textElement.id, e)}
         onDblClick={() => handleTextDoubleClick(textElement.id)}
         onDragEnd={(e) => handleTextDragEnd(textElement.id, e)}
-      />
+      >
+        {/* 背景矩形 */}
+        <Rect
+          x={-padding}
+          y={-padding}
+          width={textWidth + padding * 2}
+          height={textHeight + padding * 2}
+          fill="rgba(128, 128, 128, 0.3)" // 透過した薄灰色背景
+          stroke="#000000" // 黒色外枠
+          strokeWidth={1}
+          cornerRadius={2}
+          shadowColor={isSelected || isEditing ? '#2563eb' : undefined}
+          shadowBlur={isSelected || isEditing ? 5 : 0}
+          shadowEnabled={isSelected || isEditing}
+        />
+        
+        {/* テキスト本体 */}
+        <Text
+          x={0}
+          y={0}
+          text={textElement.text || (isEditing ? '' : 'テキスト')}
+          fontSize={textElement.fontSize}
+          fontFamily={textElement.fontFamily}
+          fill={isEditing ? '#2563eb' : textElement.color}
+          fontStyle={appState.selectedFontStyle}
+          fontVariant={appState.selectedFontWeight}
+        />
+      </Group>
     )
   }
 

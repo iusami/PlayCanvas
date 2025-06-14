@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player } from './types'
+import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player, FIELD_CONSTRAINTS } from './types'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import CanvasArea, { CanvasAreaRef } from './components/CanvasArea'
@@ -450,8 +450,9 @@ const App: React.FC = () => {
     center: { x: number; y: number } | undefined,
     playerSize: number = 20
   ) => {
-    const centerLineY = getCenterLineY(fieldHeight)
     const flipped = isFieldFlipped(center, fieldHeight)
+    // 反転時は実際の中央線位置（center.y）を使用、通常時は固定値を使用
+    const centerLineY = flipped && center ? center.y : getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
     // オフセット距離設定（中央線から少し離した位置）
@@ -464,12 +465,12 @@ const App: React.FC = () => {
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し上まで
-        const maxY = centerLineY - defenseSnapOffset
+        // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
+        const maxY = centerLineY + 10 // 205 + 10 = 215px
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
-        // 反転時ディフェンスは中央線より少し下から
-        const minY = centerLineY + offenseSnapOffset
+        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
+        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       }
     } else {
