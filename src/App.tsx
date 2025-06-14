@@ -450,8 +450,9 @@ const App: React.FC = () => {
     center: { x: number; y: number } | undefined,
     playerSize: number = 20
   ) => {
-    const centerLineY = getCenterLineY(fieldHeight)
     const flipped = isFieldFlipped(center, fieldHeight)
+    // 反転時は実際の中央線位置（center.y）を使用、通常時は固定値を使用
+    const centerLineY = flipped && center ? center.y : getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
     // オフセット距離設定（中央線から少し離した位置）

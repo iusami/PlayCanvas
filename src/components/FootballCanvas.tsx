@@ -416,15 +416,17 @@ const FootballCanvas = forwardRef(({
 
 
   const constrainPlayerPosition = (x: number, y: number, team: 'offense' | 'defense', playerSize: number = 20) => {
-    const centerLineY = getCenterLineY()
     const flipped = isFieldFlipped()
     const halfSize = playerSize / 2
+    
+    // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
+    const centerLineY = flipped && play.center ? play.center.y : getCenterLineY()
     
     console.log(`🔍 constrainPlayerPosition: 入力(${x.toFixed(1)}, ${y.toFixed(1)}) ${team} centerLineY=${centerLineY.toFixed(1)} flipped=${flipped}`)
     console.log(`🔍 フィールドサイズ: width=${play.field.width}, height=${play.field.height}`)
     console.log(`🔍 プレーヤーサイズ: ${playerSize}, halfSize=${halfSize}`)
     console.log(`🔍 センター位置: ${play.center ? `(${play.center.x}, ${play.center.y})` : 'なし'}`)
-    console.log(`🔍 3番目の線: ${((play.field.height * 3) / 8 - 20).toFixed(1)}, 5番目の線: ${((play.field.height * 5) / 8 + 2).toFixed(1)}`)
+    console.log(`🔍 使用する中央線: ${flipped ? '実際の中央線位置' : '固定の中央線位置'} = ${centerLineY.toFixed(1)}`)
     
     // 中央線から少し離した位置で制限
     const offenseSnapOffset = 15 // オフェンス用の距離（中央線より下に）
@@ -618,8 +620,9 @@ const FootballCanvas = forwardRef(({
 
     // チームが指定されている場合のみ中央線スナップを実行
     if (targetTeam) {
-      const centerLineY = getCenterLineY()
       const flipped = isFieldFlipped()
+      // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
+      const centerLineY = flipped && play.center ? play.center.y : getCenterLineY()
       
       let distanceToCenter = 0
       let snapTargetY = 0
