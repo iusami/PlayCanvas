@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { AppState, Play, PlayerType, Playlist, FormationTemplate } from '../types'
+import { AppState, Play, PlayerType, Playlist, FormationTemplate, FIELD_CONSTRAINTS } from '../types'
 import PlayListView from './PlayListView'
 import PlaylistManager from './PlaylistManager'
 import PlaylistEditor from './PlaylistEditor'
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const centerLineY = flipped && center ? center.y : getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
-    console.log(`🔧 constrainPlayerPosition: team=${team}, y=${y.toFixed(1)}, flipped=${flipped}, centerLineY=${centerLineY.toFixed(1)}`)
+    // プレイヤー制限の詳細ログは削除（不要な詳細情報）
     
     // オフセット距離設定（中央線から少し離した位置）
     const offenseSnapOffset = 15 // オフェンス用の距離（中央線より下に）
@@ -109,8 +109,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
         console.log(`🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
-        // 反転時ディフェンスは240px以上（フィールドの下半分）
-        const minY = 240
+        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
+        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
         console.log(`🔧 反転時ディフェンス: minY=${minY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       }

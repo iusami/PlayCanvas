@@ -1,7 +1,23 @@
 import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import Konva from 'konva'
-import { AppState, Play, Player, Arrow, TextElement, ArrowSegment } from '../types'
+import { AppState, Play, Player, Arrow, TextElement, ArrowSegment, FIELD_CONSTRAINTS } from '../types'
+
+// テキスト測定用のグローバルインスタンス（パフォーマンス最適化）
+let textMeasurer: Konva.Text | null = null
+const getTextMeasurer = () => {
+  if (!textMeasurer) {
+    textMeasurer = new Konva.Text({})
+  }
+  return textMeasurer
+}
+
+// デバッグログヘルパー関数
+const debugLog = (appState: AppState, ...args: any[]) => {
+  if (appState.debugMode) {
+    console.log(...args)
+  }
+}
 
 // セグメント配列最適化関数
 const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
@@ -34,7 +50,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
       // 開始点と終了点が同じ場合（距離が1px未満）はスキップ
       const distance = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2)
       if (distance < 1) {
-        console.log(`セグメント ${i} をスキップ: 開始点と終了点が同じ (距離: ${distance.toFixed(2)}px)`)
+        // 無効なセグメントは無視（デバッグログは削除）
         continue
       }
       
@@ -43,11 +59,6 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
         const prevSegment = optimized[optimized.length - 1]
         const prevEndX = prevSegment.points[prevSegment.points.length - 2]
         const prevEndY = prevSegment.points[prevSegment.points.length - 1]
-        
-        // 接続点の距離をチェック（デバッグ用）
-        const connectionDistance = Math.sqrt(
-          (startX - prevEndX) ** 2 + (startY - prevEndY) ** 2
-        )
         
         // 現在のセグメントの開始点を前のセグメントの終点に合わせる
         const adjustedSegment = {
@@ -59,9 +70,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
         }
         optimized.push(adjustedSegment)
         
-        if (connectionDistance > 5) {
-          console.log(`セグメント ${i} の接続点を調整: 距離 ${connectionDistance.toFixed(2)}px`)
-        }
+        // 接続点調整の詳細ログは削除（不要な詳細情報）
       } else {
         optimized.push(currentSegment)
       }
@@ -85,7 +94,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
             ...prev,
             points: mergedPoints
           }
-          console.log(`セグメント ${i-1} と ${i} を結合: 同じタイプ (${current.type})`)
+          // セグメント結合ログは削除（不要な詳細情報）
         } else {
           merged.push(current)
         }
@@ -94,7 +103,7 @@ const optimizeSegments = (segments: ArrowSegment[]): ArrowSegment[] => {
       }
     }
     
-    console.log(`セグメント最適化完了: ${segments.length} → ${merged.length}`)
+    // セグメント最適化ログは削除（不要な詳細情報）
     return merged
   } catch (error) {
     console.error('セグメント最適化でエラーが発生:', error)
@@ -207,7 +216,7 @@ const FootballCanvas = forwardRef(({
             linkedPlayerId: undefined,
             segmentLimitWarning: null
           })
-          console.log('矢印描画をキャンセルしました')
+          debugLog(appState, '矢印描画をキャンセルしました')
         } else if (e.key === 'Backspace' && appState.currentArrowSegments.length > 0) {
           // Backspaceキーで最後のセグメントを削除
           e.preventDefault()
@@ -451,8 +460,8 @@ const FootballCanvas = forwardRef(({
         console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
         console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
       } else {
-        // 反転時ディフェンスは240px以上（フィールドの下半分）
-        const minY = 240
+        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
+        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
         const fieldBottomLimit = play.field.height - halfSize
         
         // ディフェンスの有効範囲：minYからフィールド下端まで
@@ -640,8 +649,8 @@ const FootballCanvas = forwardRef(({
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         } else {
-          // 反転ディフェンス：240px位置にスナップ（制限値と一致）
-          const snapLineY = 240
+          // 反転ディフェンス：定数で定義された位置にスナップ（制限値と一致）
+          const snapLineY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         }
@@ -1389,12 +1398,12 @@ const FootballCanvas = forwardRef(({
       const draggedX = e.target.x()
       const draggedY = e.target.y()
       
-      console.log(`🎯 handlePlayerDragEnd: プレーヤー ${playerId} (${draggedPlayer?.team})`)
-      console.log(`🎯 handlePlayerDragEnd: ドラッグ終了座標 (${draggedX.toFixed(1)}, ${draggedY.toFixed(1)})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: プレーヤー ${playerId} (${draggedPlayer?.team})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: ドラッグ終了座標 (${draggedX.toFixed(1)}, ${draggedY.toFixed(1)})`)
       
       // まず配置制限を適用
       const constrained = constrainPlayerPosition(draggedX, draggedY, draggedPlayer?.team || 'offense', draggedPlayer?.size || 20)
-      console.log(`🎯 handlePlayerDragEnd: 制限適用後 (${constrained.x.toFixed(1)}, ${constrained.y.toFixed(1)})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: 制限適用後 (${constrained.x.toFixed(1)}, ${constrained.y.toFixed(1)})`)
       
       // 制限された座標をKonvaオブジェクトに反映
       e.target.x(constrained.x)
@@ -1402,7 +1411,7 @@ const FootballCanvas = forwardRef(({
       
       // 次にスナップ機能を適用
       const snapped = getSnappedPosition(constrained.x, constrained.y, draggedPlayer?.team)
-      console.log(`🎯 handlePlayerDragEnd: スナップ適用後 (${snapped.x.toFixed(1)}, ${snapped.y.toFixed(1)})`)
+      debugLog(appState, `🎯 handlePlayerDragEnd: スナップ適用後 (${snapped.x.toFixed(1)}, ${snapped.y.toFixed(1)})`)
       
       newPlayers = play.players.map(player => {
         if (player.id === playerId) {
@@ -2487,8 +2496,9 @@ const FootballCanvas = forwardRef(({
     const isSelected = appState.selectedElementIds.includes(textElement.id)
     const isEditing = appState.isEditingText && appState.editingTextId === textElement.id
     
-    // テキストの実際のサイズを測定するため、一時的なテキストオブジェクトを作成
-    const measureText = new Konva.Text({
+    // テキストの実際のサイズを測定（再利用可能なインスタンスを使用してパフォーマンス向上）
+    const measureText = getTextMeasurer()
+    measureText.setAttrs({
       text: textElement.text || (isEditing ? '' : 'テキスト'),
       fontSize: textElement.fontSize,
       fontFamily: textElement.fontFamily,

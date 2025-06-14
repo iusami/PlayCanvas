@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player } from './types'
+import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player, FIELD_CONSTRAINTS } from './types'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import CanvasArea, { CanvasAreaRef } from './components/CanvasArea'
@@ -469,8 +469,8 @@ const App: React.FC = () => {
         const maxY = centerLineY + 10 // 205 + 10 = 215px
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
-        // 反転時ディフェンスは240px以上（フィールドの下半分）
-        const minY = 240
+        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
+        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       }
     } else {
