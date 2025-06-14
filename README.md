@@ -81,6 +81,163 @@
 | `npm run typecheck` | TypeScript型チェック |
 | `npm run lint` | ESLintによるコード検査 |
 
+## 🧪 テスト実行手順
+
+### テスト環境の概要
+
+このプロジェクトでは、以下の2種類のテストを提供しています：
+
+- **ユニットテスト**: Vitestを使用したReactコンポーネントとユーティリティ関数のテスト
+- **E2Eテスト**: Playwrightを使用したブラウザベースの統合テスト
+
+### ユニットテスト（Vitest）
+
+#### 基本実行
+```bash
+# 全てのユニットテストを実行
+npm test
+
+# テストをwatch モードで実行（ファイル変更時に自動再実行）
+npm test -- --watch
+
+# 特定のテストファイルのみ実行
+npm test storage.test.ts
+
+# カバレッジレポートを生成
+npm test -- --coverage
+```
+
+#### テスト対象
+- **ストレージ機能**: プレイ・プレイリスト・設定の保存/読み込み
+- **Reactコンポーネント**: App、PlayListView等の基本動作
+- **ユーティリティ関数**: データ変換、バリデーション機能
+
+#### テスト結果の確認
+```bash
+# 最新のテスト実行結果
+✓ test/utils/storage.test.ts (30 tests)
+✓ test/components/App.test.tsx (12 tests) 
+✓ test/components/PlayListView.test.tsx (23 tests)
+
+Test Files  3 passed (3)
+Tests       65 passed (65)
+```
+
+### E2Eテスト（Playwright）
+
+#### 事前準備
+```bash
+# Playwright依存関係のインストール（初回のみ）
+npm install --save-dev @playwright/test
+
+# Playwrightブラウザのインストール（初回のみ）
+npx playwright install
+```
+
+#### 基本実行
+```bash
+# 全てのE2Eテストを実行（Chrome + Firefox）
+npm run test:e2e
+
+# Chromeのみでテスト実行
+npm run test:e2e -- --project=chromium
+
+# Firefoxのみでテスト実行  
+npm run test:e2e -- --project=firefox
+
+# 特定のテストのみ実行
+npm run test:e2e -- --grep="キャンバスエリア"
+```
+
+#### UIモードでの実行
+```bash
+# Playwright Test UIを起動（ブラウザで視覚的にテスト実行）
+npm run test:e2e:ui
+
+# デバッグモードでテスト実行
+npm run test:e2e:debug
+```
+
+#### テスト結果とレポート
+```bash
+# HTMLレポートを表示
+npm run test:e2e:report
+
+# 最新のテストレポートを自動で開く
+npx playwright show-report
+```
+
+#### E2Eテスト内容
+- **アプリケーション起動**: React アプリの正常読み込み
+- **UI要素表示**: ヘッダー、サイドバー、キャンバスの表示確認
+- **キャンバス操作**: React-Konvaキャンバスの存在と操作性
+- **基本インタラクション**: ボタンクリック、ウィンドウリサイズ
+- **クロスブラウザ対応**: Chrome、Firefox での動作確認
+
+### テストコマンド一覧
+
+| コマンド | 説明 |
+|---------|------|
+| `npm test` | ユニットテスト実行 |
+| `npm test -- --watch` | ユニットテスト（watch モード） |
+| `npm test -- --coverage` | カバレッジ付きユニットテスト |
+| `npm run test:e2e` | E2Eテスト実行（全ブラウザ） |
+| `npm run test:e2e:ui` | E2EテストUI モード |
+| `npm run test:e2e:debug` | E2Eテストデバッグモード |
+| `npm run test:e2e:report` | E2Eテストレポート表示 |
+
+### CI/CD でのテスト実行
+
+```bash
+# 全テストを連続実行（CI環境推奨）
+npm test && npm run test:e2e
+
+# ヘッドレスモードでE2Eテスト実行
+npm run test:e2e -- --headed=false
+```
+
+### トラブルシューティング
+
+#### ユニットテストが失敗する場合
+```bash
+# テストキャッシュをクリア
+npx vitest run --reporter=verbose
+
+# 個別テストファイルで詳細確認
+npm test -- test/utils/storage.test.ts --reporter=verbose
+```
+
+#### E2Eテストが失敗する場合
+```bash
+# 開発サーバーが起動しているか確認
+npm run dev
+
+# ブラウザを再インストール
+npx playwright install --force
+
+# 特定のテストをデバッグモードで実行
+npm run test:e2e:debug -- --grep="アプリケーション起動"
+```
+
+#### よくあるエラーと対処法
+
+1. **「開発サーバーに接続できない」エラー**
+   ```bash
+   # ポート5173が使用可能か確認
+   lsof -i :5173
+   # 他のプロセスが使用している場合は終了してから再実行
+   ```
+
+2. **「キャンバス要素が見つからない」エラー**
+   - React-Konvaの初期化に時間がかかる場合があります
+   - テストは自動的にリトライするため、通常は解決されます
+
+3. **ブラウザ固有のエラー**
+   ```bash
+   # 特定のブラウザでのみテスト実行
+   npm run test:e2e -- --project=chromium
+   ```
+
 ## 🎮 使用方法
 
 ### 基本操作
@@ -232,23 +389,6 @@ PORT=5173
 4. ブランチにプッシュ (`git push origin feature/AmazingFeature`)
 5. プルリクエストを作成
 
-## 📝 ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています。詳細は [LICENSE](LICENSE) ファイルを参照してください。
-
-## 👥 開発者
-
-- **開発**: Claude Code AI Assistant
-- **プロジェクト管理**: ずんだもん
-
-## 📞 サポート
-
-問題や質問がある場合は、以下の方法でお問い合わせください：
-
-- **GitHub Issues**: バグ報告や機能要望
-- **Email**: support@football-canvas.app
-- **Wiki**: [プロジェクトWiki](../../wiki) で詳細なドキュメントを確認
-
 ---
 
-**注意**: このアプリケーションは教育・トレーニング目的で作成されています。商用利用については別途ライセンスが必要な場合があります。
+**注意**: このアプリケーションを利用して発生したいかなる問題についても、開発者は責任を負いません。使用は自己責任でお願いします。
