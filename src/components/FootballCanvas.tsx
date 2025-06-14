@@ -451,8 +451,8 @@ const FootballCanvas = forwardRef(({
         console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
         console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
       } else {
-        // 反転時ディフェンスは235px以上（フィールドの下半分）
-        const minY = 235
+        // 反転時ディフェンスは240px以上（フィールドの下半分）
+        const minY = 240
         const fieldBottomLimit = play.field.height - halfSize
         
         // ディフェンスの有効範囲：minYからフィールド下端まで
@@ -640,8 +640,8 @@ const FootballCanvas = forwardRef(({
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         } else {
-          // 反転ディフェンス：235px位置にスナップ（制限値と一致）
-          const snapLineY = 235
+          // 反転ディフェンス：240px位置にスナップ（制限値と一致）
+          const snapLineY = 240
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         }

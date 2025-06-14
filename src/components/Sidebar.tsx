@@ -109,8 +109,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
         console.log(`🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
-        // 反転時ディフェンスは235px以上（フィールドの下半分）
-        const minY = 235
+        // 反転時ディフェンスは240px以上（フィールドの下半分）
+        const minY = 240
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
         console.log(`🔧 反転時ディフェンス: minY=${minY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       }
