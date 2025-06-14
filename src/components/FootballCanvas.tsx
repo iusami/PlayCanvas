@@ -640,8 +640,8 @@ const FootballCanvas = forwardRef(({
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         } else {
-          // 反転ディフェンス：中央線より少し下にスナップ
-          const snapLineY = centerLineY + offenseSnapOffset  // 375 + 10 = 385
+          // 反転ディフェンス：235px位置にスナップ（制限値と一致）
+          const snapLineY = 235
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         }
