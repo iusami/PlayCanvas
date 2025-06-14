@@ -465,13 +465,13 @@ const App: React.FC = () => {
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し下から（フィールドの下半分）
-        const minY = centerLineY + offenseSnapOffset
-        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-      } else {
-        // 反転時ディフェンスは中央線より少し上まで（フィールドの上半分）
-        const maxY = centerLineY - defenseSnapOffset
+        // 反転時オフェンスは中央線より少し上まで（フィールドの上半分）
+        const maxY = centerLineY - offenseSnapOffset
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
+      } else {
+        // 反転時ディフェンスは中央線より少し下から（フィールドの下半分）
+        const minY = centerLineY + defenseSnapOffset
+        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       }
     } else {
       if (team === 'offense') {
