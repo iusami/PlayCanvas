@@ -47,7 +47,7 @@ const PlayListView: React.FC<PlayListViewProps> = ({
 
   // フィルタリングとソート
   const filteredAndSortedPlays = useMemo(() => {
-    let filtered = plays.filter(play => {
+    const filtered = plays.filter(play => {
       // 検索クエリでフィルタ
       const query = searchQuery.toLowerCase()
       const matchesSearch = 

@@ -82,9 +82,7 @@ const App: React.FC = () => {
 
   // 現在のプレイの自動保存（一時的に無効化してテスト）
   useEffect(() => {
-    // TODO: 自動保存を一時的に無効化（デバッグ用）
-    return
-    
+    // 自動保存機能
     if (appState.currentPlay) {
       setIsSaving(true)
       
@@ -556,7 +554,8 @@ const App: React.FC = () => {
       name,
       description,
       type,
-      players: teamPlayers.map(({ id, ...player }) => player), // idを除く
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      players: teamPlayers.map(({ id, ...player }) => ({ ...player })), // idを除く
       center: appState.currentPlay.center ? { ...appState.currentPlay.center } : undefined, // センターの位置も保存
       createdAt: new Date(),
       updatedAt: new Date()
