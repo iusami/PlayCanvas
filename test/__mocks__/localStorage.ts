@@ -1,24 +1,26 @@
 // localStorage のモック実装
 // test/setup.ts で既に設定済みですが、個別に使用したい場合のために提供
 
+import { vi } from 'vitest'
+
 export const createLocalStorageMock = () => {
   const store: Record<string, string> = {}
 
   return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
       store[key] = value
     }),
-    removeItem: jest.fn((key: string) => {
+    removeItem: vi.fn((key: string) => {
       delete store[key]
     }),
-    clear: jest.fn(() => {
+    clear: vi.fn(() => {
       Object.keys(store).forEach(key => delete store[key])
     }),
     get length() {
       return Object.keys(store).length
     },
-    key: jest.fn((index: number) => {
+    key: vi.fn((index: number) => {
       const keys = Object.keys(store)
       return keys[index] || null
     }),
