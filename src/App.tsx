@@ -239,7 +239,7 @@ const App: React.FC = () => {
     // updateCurrentPlay実行
     
     // 履歴に現在の状態を追加（変更前の状態を保存）
-    // addToHistory(appState.currentPlay) // 一時的に無効化
+    addToHistory(appState.currentPlay)
     
     const updatedPlay = {
       ...appState.currentPlay,
