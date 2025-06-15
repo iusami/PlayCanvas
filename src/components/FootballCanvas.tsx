@@ -2547,7 +2547,7 @@ const FootballCanvas = forwardRef(({
           y={-padding}
           width={textWidth + padding * 2}
           height={textHeight + padding * 2}
-          fill="rgba(128, 128, 128, 0.3)" // 透過した薄灰色背景
+          fill="#ffffff" // 白色背景
           stroke="#000000" // 黒色外枠
           strokeWidth={1}
           cornerRadius={2}
@@ -3492,7 +3492,7 @@ const FootballCanvas = forwardRef(({
                 fontSize: isTextPlayer ? `${20 * 0.8 * appState.zoom}px` : `${(displayElement as any).fontSize * appState.zoom}px`,
                 fontFamily: isTextPlayer ? 'Arial' : (displayElement as any).fontFamily,
                 color: isTextPlayer ? player?.strokeColor || '#000' : (displayElement as any).color,
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: '#ffffff',
                 border: '2px solid #2563eb',
                 borderRadius: '4px',
                 padding: '4px 8px',
