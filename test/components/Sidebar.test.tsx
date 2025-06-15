@@ -1,0 +1,531 @@
+import React from 'react'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import '@testing-library/jest-dom'
+import Sidebar from '../../src/components/Sidebar'
+import { AppState, Play, PlayerType } from '../../src/types'
+
+// テスト用のモックデータ
+const createMockPlay = (): Play => ({
+  id: 'test-play-1',
+  metadata: {
+    title: 'テストプレイ',
+    description: 'テスト用プレイ',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    tags: ['test'],
+    playName: 'Test Play',
+    offFormation: 'I-Formation',
+    defFormation: '4-3',
+    playType: 'offense'
+  },
+  field: {
+    width: 800,
+    height: 600,
+    backgroundColor: '#4F7942',
+    lineColor: '#FFFFFF',
+    yardLines: true,
+    hashMarks: true
+  },
+  players: [
+    {
+      id: 'player-1',
+      x: 400,
+      y: 300,
+      type: 'circle',
+      position: 'QB',
+      color: '#000000',
+      fillColor: '#ffffff',
+      strokeColor: '#000000',
+      size: 20,
+      team: 'offense'
+    },
+    {
+      id: 'player-2',
+      x: 200,
+      y: 200,
+      type: 'triangle',
+      position: 'RB',
+      color: '#000000',
+      fillColor: '#ffffff',
+      strokeColor: '#000000',
+      size: 20,
+      team: 'offense'
+    }
+  ],
+  arrows: [
+    {
+      id: 'arrow-1',
+      points: [100, 100, 300, 300],
+      type: 'straight',
+      headType: 'normal',
+      color: '#000000',
+      strokeWidth: 2
+    }
+  ],
+  texts: [
+    {
+      id: 'text-1',
+      x: 150,
+      y: 150,
+      text: 'Test Text',
+      fontSize: 16,
+      fontFamily: 'Arial',
+      color: '#000000'
+    }
+  ],
+  center: { x: 400, y: 300 }
+})
+
+const createMockAppState = (): AppState => ({
+  currentPlay: createMockPlay(),
+  selectedTool: 'select',
+  selectedPlayerType: 'circle',
+  selectedPlayerPosition: 'QB',
+  selectedTeam: 'offense',
+  selectedArrowType: 'straight',
+  selectedArrowHead: 'normal',
+  selectedStrokeWidth: 2,
+  selectedColor: '#000000',
+  selectedFillColor: '#ffffff',
+  selectedStrokeColor: '#000000',
+  selectedElementIds: [],
+  isDrawingArrow: false,
+  currentArrowPoints: [],
+  currentArrowPreviewPoints: [],
+  currentArrowSegments: [],
+  currentDrawingSegmentType: 'straight',
+  initialArrowType: 'straight',
+  maxSegments: 10,
+  segmentLimitWarning: null,
+  debugMode: false,
+  selectedFontFamily: 'Arial',
+  selectedFontSize: 16,
+  selectedFontWeight: 'normal',
+  selectedFontStyle: 'normal',
+  selectedText: 'テキスト',
+  isEditingText: false,
+  editingTextId: null,
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  snapToObjects: true,
+  snapTolerance: 15,
+  isRangeSelecting: false,
+  rangeSelectStart: null,
+  rangeSelectEnd: null,
+  history: [],
+  historyIndex: -1,
+  maxHistorySize: 50
+})
+
+describe('Sidebar Component', () => {
+  const mockUpdateAppState = vi.fn()
+  const mockOnSelectPlay = vi.fn()
+  const mockOnDeletePlay = vi.fn()
+  const mockOnDuplicatePlay = vi.fn()
+  const mockOnUpdatePlay = vi.fn()
+  const mockOnCreatePlaylist = vi.fn()
+  const mockOnUpdatePlaylist = vi.fn()
+  const mockOnDeletePlaylist = vi.fn()
+  const mockOnApplyFormation = vi.fn()
+  const mockOnSaveFormationTemplate = vi.fn()
+  const mockOnDeleteFormationTemplate = vi.fn()
+
+  const defaultProps = {
+    appState: createMockAppState(),
+    updateAppState: mockUpdateAppState,
+    plays: [createMockPlay()],
+    onSelectPlay: mockOnSelectPlay,
+    onDeletePlay: mockOnDeletePlay,
+    onDuplicatePlay: mockOnDuplicatePlay,
+    onUpdatePlay: mockOnUpdatePlay,
+    playlists: [],
+    onCreatePlaylist: mockOnCreatePlaylist,
+    onUpdatePlaylist: mockOnUpdatePlaylist,
+    onDeletePlaylist: mockOnDeletePlaylist,
+    formations: [],
+    onApplyFormation: mockOnApplyFormation,
+    onSaveFormationTemplate: mockOnSaveFormationTemplate,
+    onDeleteFormationTemplate: mockOnDeleteFormationTemplate
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('初期レンダリング', () => {
+    it('Sidebarが正常にレンダリングされること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      // 基本的なレンダリングの確認
+      expect(screen.getByRole('button', { name: /選択/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /プレイヤー/ })).toBeInTheDocument()
+    })
+
+    it('デフォルトでツールタブが選択されていること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      // プレイヤータイプ選択が表示されている（ツールタブの証拠）
+      expect(screen.getByText('○')).toBeInTheDocument()
+    })
+  })
+
+  describe('プレイヤータイプ選択', () => {
+    it('全てのプレイヤータイプが表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('○')).toBeInTheDocument() // circle
+      expect(screen.getByText('▽')).toBeInTheDocument() // triangle
+      expect(screen.getByText('□')).toBeInTheDocument() // square
+      expect(screen.getByText('∨')).toBeInTheDocument() // chevron
+      expect(screen.getByText('A')).toBeInTheDocument() // text
+      expect(screen.getByText('✕')).toBeInTheDocument() // x
+    })
+
+    it('プレイヤータイプを選択するとupdateAppStateが呼ばれること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const triangleButton = screen.getByText('▽')
+      await user.click(triangleButton)
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        selectedPlayerType: 'triangle'
+      })
+    })
+  })
+
+  describe('ツール選択', () => {
+    it('全てのツールが表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('選択')).toBeInTheDocument()
+      expect(screen.getByText('プレイヤー')).toBeInTheDocument()
+      expect(screen.getByText('矢印')).toBeInTheDocument()
+      expect(screen.getByText('テキスト')).toBeInTheDocument()
+    })
+
+    it('ツールを選択するとupdateAppStateが呼ばれること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const playerButton = screen.getByText('プレイヤー')
+      await user.click(playerButton)
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        selectedTool: 'player'
+      })
+    })
+  })
+
+  describe('チーム選択', () => {
+    it('オフェンス・ディフェンス選択ボタンが表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('オフェンス')).toBeInTheDocument()
+      expect(screen.getByText('ディフェンス')).toBeInTheDocument()
+    })
+
+    it('チームを選択するとupdateAppStateが呼ばれること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const defenseButton = screen.getByText('ディフェンス')
+      await user.click(defenseButton)
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        selectedTeam: 'defense'
+      })
+    })
+  })
+
+  describe('左右反転機能', () => {
+    it('左右反転ボタンが表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('↔ 左右反転')).toBeInTheDocument()
+    })
+
+    it('左右反転ボタンをクリックするとonUpdatePlayが呼ばれること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const flipButton = screen.getByText('↔ 左右反転')
+      await user.click(flipButton)
+      
+      expect(mockOnUpdatePlay).toHaveBeenCalled()
+    })
+
+    it('現在のプレイがない場合は何も起こらないこと', async () => {
+      const user = userEvent.setup()
+      const appStateWithoutPlay = { ...createMockAppState(), currentPlay: null }
+      
+      render(<Sidebar {...defaultProps} appState={appStateWithoutPlay} />)
+      
+      const flipButton = screen.getByText('↔ 左右反転')
+      await user.click(flipButton)
+      
+      expect(mockOnUpdatePlay).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('上下反転機能', () => {
+    it('上下反転ボタンが表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('↕ 上下反転')).toBeInTheDocument()
+    })
+
+    it('上下反転ボタンをクリックするとonUpdatePlayが呼ばれること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const flipButton = screen.getByText('↕ 上下反転')
+      await user.click(flipButton)
+      
+      expect(mockOnUpdatePlay).toHaveBeenCalled()
+    })
+  })
+
+  describe('デバッグモード', () => {
+    it('デバッグモード切り替えボタンが表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('デバッグモード')).toBeInTheDocument()
+    })
+
+    it('デバッグモードを切り替えるとupdateAppStateが呼ばれること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const debugToggle = screen.getByLabelText('デバッグモード')
+      await user.click(debugToggle)
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        debugMode: true
+      })
+    })
+  })
+
+  describe('タブ切り替え', () => {
+    it('プレイタブに切り替えられること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const playTab = screen.getByText('プレイ')
+      await user.click(playTab)
+      
+      expect(playTab).toHaveClass('border-blue-500', 'text-blue-600')
+    })
+
+    it('プレイリストタブに切り替えられること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const playlistTab = screen.getByText('プレイリスト')
+      await user.click(playlistTab)
+      
+      expect(playlistTab).toHaveClass('border-blue-500', 'text-blue-600')
+    })
+
+    it('フォーメーションタブに切り替えられること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const formationTab = screen.getByText('フォーメーション')
+      await user.click(formationTab)
+      
+      expect(formationTab).toHaveClass('border-blue-500', 'text-blue-600')
+    })
+  })
+
+  describe('プレイヤーポジション選択', () => {
+    it('ポジション選択ドロップダウンが表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByDisplayValue('QB')).toBeInTheDocument()
+    })
+
+    it('ポジションを変更するとupdateAppStateが呼ばれること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const positionSelect = screen.getByDisplayValue('QB')
+      await user.selectOptions(positionSelect, 'RB')
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        selectedPlayerPosition: 'RB'
+      })
+    })
+  })
+
+  describe('色選択', () => {
+    it('塗りつぶし色選択が表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      const fillColorInput = screen.getByDisplayValue('#ffffff')
+      expect(fillColorInput).toHaveAttribute('type', 'color')
+    })
+
+    it('枠線色選択が表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      const strokeColorInput = screen.getByDisplayValue('#000000')
+      expect(strokeColorInput).toHaveAttribute('type', 'color')
+    })
+
+    it('色を変更するとupdateAppStateが呼ばれること', async () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      const fillColorInput = screen.getByDisplayValue('#ffffff')
+      fireEvent.change(fillColorInput, { target: { value: '#ff0000' } })
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        selectedFillColor: '#ff0000'
+      })
+    })
+  })
+})
+
+// 座標反転ヘルパー関数のテスト（Sidebarから抽出したもの）
+describe('座標反転ヘルパー関数', () => {
+  // テスト用に関数を抽出（実際の実装では別ファイルに移動することを推奨）
+  const flipXCoordinate = (center: number, coordinate: number): number => {
+    return center + (center - coordinate)
+  }
+
+  const flipYCoordinate = (center: number, coordinate: number): number => {
+    return center + (center - coordinate)
+  }
+
+  describe('flipXCoordinate', () => {
+    it('中央基準でX座標を正しく反転すること', () => {
+      expect(flipXCoordinate(400, 300)).toBe(500) // 400 + (400 - 300) = 500
+      expect(flipXCoordinate(400, 100)).toBe(700) // 400 + (400 - 100) = 700
+      expect(flipXCoordinate(400, 600)).toBe(200) // 400 + (400 - 600) = 200
+    })
+
+    it('中央の座標では変化しないこと', () => {
+      expect(flipXCoordinate(400, 400)).toBe(400)
+      expect(flipXCoordinate(0, 0)).toBe(0)
+    })
+
+    it('負の座標でも正しく計算されること', () => {
+      expect(flipXCoordinate(0, -100)).toBe(100) // 0 + (0 - (-100)) = 100
+      expect(flipXCoordinate(100, -50)).toBe(250) // 100 + (100 - (-50)) = 250
+    })
+  })
+
+  describe('flipYCoordinate', () => {
+    it('中央基準でY座標を正しく反転すること', () => {
+      expect(flipYCoordinate(300, 200)).toBe(400) // 300 + (300 - 200) = 400
+      expect(flipYCoordinate(300, 100)).toBe(500) // 300 + (300 - 100) = 500
+      expect(flipYCoordinate(300, 500)).toBe(100) // 300 + (300 - 500) = 100
+    })
+
+    it('中央の座標では変化しないこと', () => {
+      expect(flipYCoordinate(300, 300)).toBe(300)
+      expect(flipYCoordinate(0, 0)).toBe(0)
+    })
+
+    it('負の座標でも正しく計算されること', () => {
+      expect(flipYCoordinate(0, -200)).toBe(200) // 0 + (0 - (-200)) = 200
+      expect(flipYCoordinate(150, -75)).toBe(375) // 150 + (150 - (-75)) = 375
+    })
+  })
+})
+
+// デバッグログヘルパー関数のテスト
+describe('デバッグログヘルパー関数', () => {
+  // コンソールのスパイを設定
+  const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+  const consoleGroupSpy = vi.spyOn(console, 'group').mockImplementation(() => {})
+  const consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {})
+
+  beforeEach(() => {
+    consoleSpy.mockClear()
+    consoleGroupSpy.mockClear()
+    consoleGroupEndSpy.mockClear()
+  })
+
+  afterAll(() => {
+    consoleSpy.mockRestore()
+    consoleGroupSpy.mockRestore()
+    consoleGroupEndSpy.mockRestore()
+  })
+
+  // テスト用に関数を抽出（実際の実装では別ファイルに移動することを推奨）
+  const debugLog = (appState: AppState, ...args: any[]) => {
+    if (appState.debugMode) {
+      console.log(...args)
+    }
+  }
+
+  const debugGroup = (appState: AppState, label: string) => {
+    if (appState.debugMode) {
+      console.group(label)
+    }
+  }
+
+  const debugGroupEnd = (appState: AppState) => {
+    if (appState.debugMode) {
+      console.groupEnd()
+    }
+  }
+
+  describe('debugLog', () => {
+    it('debugModeがtrueの場合、console.logが呼ばれること', () => {
+      const appState = { ...createMockAppState(), debugMode: true }
+      
+      debugLog(appState, 'test message', 123)
+      
+      expect(consoleSpy).toHaveBeenCalledWith('test message', 123)
+    })
+
+    it('debugModeがfalseの場合、console.logが呼ばれないこと', () => {
+      const appState = { ...createMockAppState(), debugMode: false }
+      
+      debugLog(appState, 'test message')
+      
+      expect(consoleSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('debugGroup', () => {
+    it('debugModeがtrueの場合、console.groupが呼ばれること', () => {
+      const appState = { ...createMockAppState(), debugMode: true }
+      
+      debugGroup(appState, 'Test Group')
+      
+      expect(consoleGroupSpy).toHaveBeenCalledWith('Test Group')
+    })
+
+    it('debugModeがfalseの場合、console.groupが呼ばれないこと', () => {
+      const appState = { ...createMockAppState(), debugMode: false }
+      
+      debugGroup(appState, 'Test Group')
+      
+      expect(consoleGroupSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('debugGroupEnd', () => {
+    it('debugModeがtrueの場合、console.groupEndが呼ばれること', () => {
+      const appState = { ...createMockAppState(), debugMode: true }
+      
+      debugGroupEnd(appState)
+      
+      expect(consoleGroupEndSpy).toHaveBeenCalled()
+    })
+
+    it('debugModeがfalseの場合、console.groupEndが呼ばれないこと', () => {
+      const appState = { ...createMockAppState(), debugMode: false }
+      
+      debugGroupEnd(appState)
+      
+      expect(consoleGroupEndSpy).not.toHaveBeenCalled()
+    })
+  })
+})
