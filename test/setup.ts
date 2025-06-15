@@ -81,6 +81,11 @@ Object.defineProperty(window, 'matchMedia', {
   }))
 })
 
+// DOM環境の初期化
+Object.defineProperty(window, 'HTMLElement', {
+  value: global.HTMLElement
+})
+
 // テスト前の共通セットアップ
 beforeEach(() => {
   // localStorage をクリア
