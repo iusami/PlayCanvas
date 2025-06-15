@@ -24,6 +24,15 @@ const debugGroupEnd = (appState: AppState) => {
   }
 }
 
+// 座標反転ヘルパー関数
+const flipXCoordinate = (center: number, coordinate: number): number => {
+  return center + (center - coordinate)
+}
+
+const flipYCoordinate = (center: number, coordinate: number): number => {
+  return center + (center - coordinate)
+}
+
 interface SidebarProps {
   appState: AppState
   updateAppState: (updates: Partial<AppState>) => void
@@ -244,14 +253,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                       const fieldCenterX = appState.currentPlay.field.width / 2
                       const updatedPlayers = appState.currentPlay.players.map(player => ({
                         ...player, 
-                        x: fieldCenterX + (fieldCenterX - player.x)
+                        x: flipXCoordinate(fieldCenterX, player.x)
                       }))
                       
                       // 全ての矢印も反転（セグメントも含む）
                       const updatedArrows = appState.currentPlay.arrows.map(arrow => {
                         const newPoints = []
                         for (let i = 0; i < arrow.points.length; i += 2) {
-                          newPoints.push(fieldCenterX + (fieldCenterX - arrow.points[i]))     // x座標を反転
+                          newPoints.push(flipXCoordinate(fieldCenterX, arrow.points[i]))     // x座標を反転
                           newPoints.push(arrow.points[i + 1]) // y座標はそのまま
                         }
                         
@@ -261,7 +270,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           newSegments = arrow.segments.map(segment => {
                             const newSegmentPoints = []
                             for (let i = 0; i < segment.points.length; i += 2) {
-                              newSegmentPoints.push(fieldCenterX + (fieldCenterX - segment.points[i]))     // x座標を反転
+                              newSegmentPoints.push(flipXCoordinate(fieldCenterX, segment.points[i]))     // x座標を反転
                               newSegmentPoints.push(segment.points[i + 1]) // y座標はそのまま
                             }
                             return { ...segment, points: newSegmentPoints }
@@ -274,7 +283,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       // 全てのテキスト要素も反転（位置のみ、向きは変更しない）
                       const updatedTexts = appState.currentPlay.texts.map(text => ({
                         ...text,
-                        x: fieldCenterX + (fieldCenterX - text.x) // x座標を反転
+                        x: flipXCoordinate(fieldCenterX, text.x) // x座標を反転
                       }))
                       
                       // センターも現在位置から反転（リセットしない）
@@ -282,7 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       if (appState.currentPlay.center) {
                         updatedCenter = {
                           ...appState.currentPlay.center,
-                          x: fieldCenterX + (fieldCenterX - appState.currentPlay.center.x)
+                          x: flipXCoordinate(fieldCenterX, appState.currentPlay.center.x)
                         }
                       } else {
                         // センターが存在しない場合はデフォルト位置から反転
@@ -386,7 +395,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         const newPoints = []
                         for (let i = 0; i < arrow.points.length; i += 2) {
                           newPoints.push(arrow.points[i])     // x座標はそのまま
-                          newPoints.push(flipAxisY + (flipAxisY - arrow.points[i + 1])) // y座標を反転
+                          newPoints.push(flipYCoordinate(flipAxisY, arrow.points[i + 1])) // y座標を反転
                         }
                         
                         // セグメントがある場合はセグメントも反転
@@ -396,7 +405,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             const newSegmentPoints = []
                             for (let i = 0; i < segment.points.length; i += 2) {
                               newSegmentPoints.push(segment.points[i])     // x座標はそのまま
-                              newSegmentPoints.push(flipAxisY + (flipAxisY - segment.points[i + 1])) // y座標を反転
+                              newSegmentPoints.push(flipYCoordinate(flipAxisY, segment.points[i + 1])) // y座標を反転
                             }
                             return { ...segment, points: newSegmentPoints }
                           })
@@ -408,7 +417,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       // 全てのテキスト要素も反転（位置のみ、向きは変更しない）
                       const updatedTexts = appState.currentPlay.texts.map(text => ({
                         ...text,
-                        y: flipAxisY + (flipAxisY - text.y) // y座標を反転
+                        y: flipYCoordinate(flipAxisY, text.y) // y座標を反転
                       }))
                       
                       const updateData = { 
