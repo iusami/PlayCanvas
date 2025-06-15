@@ -2,10 +2,10 @@
 export type PlayerType = 'circle' | 'triangle' | 'square' | 'text' | 'chevron' | 'x'
 
 // フィールド制約定数
-export const FIELD_CONSTRAINTS = {
+export const FIELD_CONSTRAINTS = Object.freeze({
   // 反転時のディフェンス最小Y座標（フィールド下半分の制限）
   DEFENSE_MIN_Y_FLIPPED: 240,
-} as const
+} as const)
 
 // プレイヤーのポジション
 export type PlayerPosition = 

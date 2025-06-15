@@ -401,7 +401,7 @@ const FootballCanvas = forwardRef(({
   const isFieldFlipped = () => {
     // フィールドが上下反転されているかを判定
     // センターの位置とプレーヤーの分布から判定
-    if (!play.center) {
+    if (!play?.center) {
       console.log(`🔍 isFieldFlipped: センターなし → false`)
       return false
     }
@@ -592,7 +592,7 @@ const FootballCanvas = forwardRef(({
       window.removeEventListener('resize', updateDimensions)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [appState.selectedElementIds, appState.isDrawingArrow, play.players, play.arrows, play.texts, onUpdatePlay, updateAppState, onUndo, onRedo])
+  }, [appState.selectedElementIds, appState.isDrawingArrow, play?.players, play?.arrows, play?.texts, onUpdatePlay, updateAppState, onUndo, onRedo])
 
   // テキスト編集開始時にinputにフォーカス
   useEffect(() => {
@@ -2339,7 +2339,7 @@ const FootballCanvas = forwardRef(({
 
     // リアルタイム更新を実行
     onUpdatePlay({ arrows: newArrows })
-  }, [play.arrows, onUpdatePlay])
+  }, [play?.arrows, onUpdatePlay])
 
   // 編集ハンドルのドラッグ処理
   const handleEditHandleDragEnd = (arrowId: string, handle: any, newX: number, newY: number) => {
@@ -2827,20 +2827,20 @@ const FootballCanvas = forwardRef(({
 
   // センターのY座標が変更された時にrefを更新
   useEffect(() => {
-    if (play.center) {
+    if (play?.center) {
       centerDragStartY.current = play.center.y
     }
-  }, [play.center?.y])
+  }, [play?.center?.y])
 
   const handleCenterDragStart = () => {
-    if (!play.center) return
+    if (!play?.center) return
     // ドラッグ開始時のY座標を保存
     centerDragStartY.current = play.center.y
   }
 
   // センター関連のハンドラー
   const handleCenterDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
-    if (!play.center) return
+    if (!play?.center) return
     
     // Y座標を正しい位置に強制的に設定
     e.target.y(centerDragStartY.current || play.center.y)
@@ -2907,7 +2907,7 @@ const FootballCanvas = forwardRef(({
   }
 
   const handleCenterDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    if (!play.center) return
+    if (!play?.center) return
     
     // X座標のみの移動量を計算
     const deltaX = e.target.x() - play.center.x
@@ -2988,7 +2988,7 @@ const FootballCanvas = forwardRef(({
   }
 
   const renderCenter = () => {
-    if (!play.center) return null
+    if (!play?.center) return null
     
     return (
       <Rect
@@ -3243,6 +3243,10 @@ const FootballCanvas = forwardRef(({
       panX: newPos.x,
       panY: newPos.y
     })
+  }
+
+  if (!play) {
+    return <div className="w-full h-full flex items-center justify-center text-gray-500">プレイが読み込まれていません</div>
   }
 
   return (
