@@ -271,6 +271,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                         return { ...arrow, points: newPoints, segments: newSegments }
                       })
                       
+                      // 全てのテキスト要素も反転（位置のみ、向きは変更しない）
+                      const updatedTexts = appState.currentPlay.texts.map(text => ({
+                        ...text,
+                        x: fieldCenterX + (fieldCenterX - text.x) // x座標を反転
+                      }))
+                      
                       // センターも現在位置から反転（リセットしない）
                       let updatedCenter = appState.currentPlay.center
                       if (appState.currentPlay.center) {
@@ -290,6 +296,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       onUpdatePlay({ 
                         players: updatedPlayers, 
                         arrows: updatedArrows, 
+                        texts: updatedTexts,
                         center: updatedCenter 
                       })
                     }
@@ -398,9 +405,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                         return { ...arrow, points: newPoints, segments: newSegments }
                       })
                       
+                      // 全てのテキスト要素も反転（位置のみ、向きは変更しない）
+                      const updatedTexts = appState.currentPlay.texts.map(text => ({
+                        ...text,
+                        y: flipAxisY + (flipAxisY - text.y) // y座標を反転
+                      }))
+                      
                       const updateData = { 
                         players: updatedPlayers, 
                         arrows: updatedArrows, 
+                        texts: updatedTexts,
                         center: updatedCenter 
                       }
                       
