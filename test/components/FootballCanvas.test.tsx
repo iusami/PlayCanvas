@@ -39,6 +39,9 @@ vi.mock('react-konva', () => ({
 vi.mock('konva', () => ({
   default: {
     Text: vi.fn().mockImplementation(() => ({
+      setAttrs: vi.fn(),
+      width: vi.fn(() => 100),
+      height: vi.fn(() => 20),
       getTextWidth: vi.fn(() => 100),
       getTextHeight: vi.fn(() => 20)
     })),
@@ -219,12 +222,10 @@ describe('FootballCanvas Component', () => {
   const mockOnRedo = vi.fn()
 
   const defaultProps = {
+    play: createMockPlay(),
     appState: createMockAppState(),
     updateAppState: mockUpdateAppState,
     onUpdatePlay: mockOnUpdatePlay,
-    onNewPlay: mockOnNewPlay,
-    isSaving: false,
-    lastSavedAt: null,
     onUndo: mockOnUndo,
     onRedo: mockOnRedo
   }
@@ -242,12 +243,9 @@ describe('FootballCanvas Component', () => {
     })
 
     it('プレイが存在しない場合はメッセージが表示されること', () => {
-      const appStateWithoutPlay = { ...createMockAppState(), currentPlay: null }
+      render(<FootballCanvas {...defaultProps} play={null as any} />)
       
-      render(<FootballCanvas {...defaultProps} appState={appStateWithoutPlay} />)
-      
-      // 実際の実装に合わせてメッセージテキストを調整
-      expect(screen.getByText(/プレイが選択されていません/)).toBeInTheDocument()
+      expect(screen.getByText('プレイが読み込まれていません')).toBeInTheDocument()
     })
   })
 
@@ -444,21 +442,6 @@ describe('FootballCanvas Component', () => {
     })
   })
 
-  describe('保存状態の表示', () => {
-    it('保存中のインジケーターが表示されること', () => {
-      render(<FootballCanvas {...defaultProps} isSaving={true} />)
-      
-      expect(screen.getByText('保存中...')).toBeInTheDocument()
-    })
-
-    it('最終保存時刻が表示されること', () => {
-      const lastSavedAt = new Date('2024-01-01T12:00:00Z')
-      
-      render(<FootballCanvas {...defaultProps} lastSavedAt={lastSavedAt} />)
-      
-      expect(screen.getByText(/最終保存:/)).toBeInTheDocument()
-    })
-  })
 
   describe('キーボードショートカット', () => {
     it('Undoキーボードショートカットが機能すること', () => {

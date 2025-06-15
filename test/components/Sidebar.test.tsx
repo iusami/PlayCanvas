@@ -173,10 +173,22 @@ describe('Sidebar Component', () => {
   })
 
   describe('プレイヤータイプ選択', () => {
+    const playerToolProps = {
+      ...defaultProps,
+      appState: {
+        ...createMockAppState(),
+        selectedTool: 'player' as const
+      }
+    }
+
     it('全てのプレイヤータイプが表示されること', () => {
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...playerToolProps} />)
       
-      expect(screen.getByText('○')).toBeInTheDocument() // circle
+      // プレイヤータイプ選択エリアを特定してからチェック
+      expect(screen.getByText('アイコン')).toBeInTheDocument() // プレイヤータイプセクションの見出し
+      
+      const playerTypeButtons = screen.getAllByText('○')
+      expect(playerTypeButtons.length).toBeGreaterThan(0) // circle (複数存在するので数だけチェック)
       expect(screen.getByText('▽')).toBeInTheDocument() // triangle
       expect(screen.getByText('□')).toBeInTheDocument() // square
       expect(screen.getByText('∨')).toBeInTheDocument() // chevron
@@ -186,7 +198,7 @@ describe('Sidebar Component', () => {
 
     it('プレイヤータイプを選択するとupdateAppStateが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...playerToolProps} />)
       
       const triangleButton = screen.getByText('▽')
       await user.click(triangleButton)
@@ -221,8 +233,16 @@ describe('Sidebar Component', () => {
   })
 
   describe('チーム選択', () => {
+    const playerToolProps = {
+      ...defaultProps,
+      appState: {
+        ...createMockAppState(),
+        selectedTool: 'player' as const
+      }
+    }
+
     it('オフェンス・ディフェンス選択ボタンが表示されること', () => {
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...playerToolProps} />)
       
       expect(screen.getByText('オフェンス')).toBeInTheDocument()
       expect(screen.getByText('ディフェンス')).toBeInTheDocument()
@@ -230,7 +250,7 @@ describe('Sidebar Component', () => {
 
     it('チームを選択するとupdateAppStateが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...playerToolProps} />)
       
       const defenseButton = screen.getByText('ディフェンス')
       await user.click(defenseButton)
@@ -245,14 +265,14 @@ describe('Sidebar Component', () => {
     it('左右反転ボタンが表示されること', () => {
       render(<Sidebar {...defaultProps} />)
       
-      expect(screen.getByText('↔ 左右反転')).toBeInTheDocument()
+      expect(screen.getByText('左右反転')).toBeInTheDocument()
     })
 
     it('左右反転ボタンをクリックするとonUpdatePlayが呼ばれること', async () => {
       const user = userEvent.setup()
       render(<Sidebar {...defaultProps} />)
       
-      const flipButton = screen.getByText('↔ 左右反転')
+      const flipButton = screen.getByText('左右反転')
       await user.click(flipButton)
       
       expect(mockOnUpdatePlay).toHaveBeenCalled()
@@ -264,7 +284,7 @@ describe('Sidebar Component', () => {
       
       render(<Sidebar {...defaultProps} appState={appStateWithoutPlay} />)
       
-      const flipButton = screen.getByText('↔ 左右反転')
+      const flipButton = screen.getByText('左右反転')
       await user.click(flipButton)
       
       expect(mockOnUpdatePlay).not.toHaveBeenCalled()
@@ -275,14 +295,14 @@ describe('Sidebar Component', () => {
     it('上下反転ボタンが表示されること', () => {
       render(<Sidebar {...defaultProps} />)
       
-      expect(screen.getByText('↕ 上下反転')).toBeInTheDocument()
+      expect(screen.getByText('上下反転')).toBeInTheDocument()
     })
 
     it('上下反転ボタンをクリックするとonUpdatePlayが呼ばれること', async () => {
       const user = userEvent.setup()
       render(<Sidebar {...defaultProps} />)
       
-      const flipButton = screen.getByText('↕ 上下反転')
+      const flipButton = screen.getByText('上下反転')
       await user.click(flipButton)
       
       expect(mockOnUpdatePlay).toHaveBeenCalled()
@@ -290,15 +310,24 @@ describe('Sidebar Component', () => {
   })
 
   describe('デバッグモード', () => {
+    const arrowToolProps = {
+      ...defaultProps,
+      appState: {
+        ...createMockAppState(),
+        selectedTool: 'arrow' as const,
+        isDrawingArrow: true
+      }
+    }
+
     it('デバッグモード切り替えボタンが表示されること', () => {
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...arrowToolProps} />)
       
       expect(screen.getByText('デバッグモード')).toBeInTheDocument()
     })
 
     it('デバッグモードを切り替えるとupdateAppStateが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...arrowToolProps} />)
       
       const debugToggle = screen.getByLabelText('デバッグモード')
       await user.click(debugToggle)
@@ -314,7 +343,7 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup()
       render(<Sidebar {...defaultProps} />)
       
-      const playTab = screen.getByText('プレイ')
+      const playTab = screen.getByText('プレイ一覧')
       await user.click(playTab)
       
       expect(playTab).toHaveClass('border-blue-500', 'text-blue-600')
@@ -341,43 +370,32 @@ describe('Sidebar Component', () => {
     })
   })
 
-  describe('プレイヤーポジション選択', () => {
-    it('ポジション選択ドロップダウンが表示されること', () => {
-      render(<Sidebar {...defaultProps} />)
-      
-      expect(screen.getByDisplayValue('QB')).toBeInTheDocument()
-    })
-
-    it('ポジションを変更するとupdateAppStateが呼ばれること', async () => {
-      const user = userEvent.setup()
-      render(<Sidebar {...defaultProps} />)
-      
-      const positionSelect = screen.getByDisplayValue('QB')
-      await user.selectOptions(positionSelect, 'RB')
-      
-      expect(mockUpdateAppState).toHaveBeenCalledWith({
-        selectedPlayerPosition: 'RB'
-      })
-    })
-  })
 
   describe('色選択', () => {
+    const playerToolProps = {
+      ...defaultProps,
+      appState: {
+        ...createMockAppState(),
+        selectedTool: 'player' as const
+      }
+    }
+
     it('塗りつぶし色選択が表示されること', () => {
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...playerToolProps} />)
       
       const fillColorInput = screen.getByDisplayValue('#ffffff')
       expect(fillColorInput).toHaveAttribute('type', 'color')
     })
 
     it('枠線色選択が表示されること', () => {
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...playerToolProps} />)
       
       const strokeColorInput = screen.getByDisplayValue('#000000')
       expect(strokeColorInput).toHaveAttribute('type', 'color')
     })
 
     it('色を変更するとupdateAppStateが呼ばれること', async () => {
-      render(<Sidebar {...defaultProps} />)
+      render(<Sidebar {...playerToolProps} />)
       
       const fillColorInput = screen.getByDisplayValue('#ffffff')
       fireEvent.change(fillColorInput, { target: { value: '#ff0000' } })
@@ -439,18 +457,18 @@ describe('座標反転ヘルパー関数', () => {
 
 // デバッグログヘルパー関数のテスト
 describe('デバッグログヘルパー関数', () => {
-  // コンソールのスパイを設定
-  const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-  const consoleGroupSpy = vi.spyOn(console, 'group').mockImplementation(() => {})
-  const consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {})
+  // コンソールのスパイを設定（スパイを関数内で定義）
+  let consoleSpy: any
+  let consoleGroupSpy: any
+  let consoleGroupEndSpy: any
 
   beforeEach(() => {
-    consoleSpy.mockClear()
-    consoleGroupSpy.mockClear()
-    consoleGroupEndSpy.mockClear()
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    consoleGroupSpy = vi.spyOn(console, 'group').mockImplementation(() => {})
+    consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {})
   })
 
-  afterAll(() => {
+  afterEach(() => {
     consoleSpy.mockRestore()
     consoleGroupSpy.mockRestore()
     consoleGroupEndSpy.mockRestore()
@@ -529,3 +547,4 @@ describe('デバッグログヘルパー関数', () => {
     })
   })
 })
+

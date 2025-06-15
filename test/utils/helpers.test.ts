@@ -193,17 +193,17 @@ describe('座標反転ヘルパー関数', () => {
 })
 
 describe('デバッグログヘルパー関数', () => {
-  const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-  const consoleGroupSpy = vi.spyOn(console, 'group').mockImplementation(() => {})
-  const consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {})
+  let consoleSpy: any
+  let consoleGroupSpy: any
+  let consoleGroupEndSpy: any
 
   beforeEach(() => {
-    consoleSpy.mockClear()
-    consoleGroupSpy.mockClear()
-    consoleGroupEndSpy.mockClear()
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    consoleGroupSpy = vi.spyOn(console, 'group').mockImplementation(() => {})
+    consoleGroupEndSpy = vi.spyOn(console, 'groupEnd').mockImplementation(() => {})
   })
 
-  afterAll(() => {
+  afterEach(() => {
     consoleSpy.mockRestore()
     consoleGroupSpy.mockRestore()
     consoleGroupEndSpy.mockRestore()

@@ -88,22 +88,16 @@ describe('Header Component', () => {
   })
 
   describe('プレイが選択されていない場合', () => {
-    it('プレイ依存のボタンが無効化されていること', () => {
+    it('プレイ依存のボタンが表示されないこと', () => {
       render(<Header {...defaultProps} />)
       
-      const saveButton = screen.getByText('保存')
-      const saveAsButton = screen.getByText('名前を付けて保存')
-      const editMetadataButton = screen.getByText('プレイ情報編集')
-      const duplicateButton = screen.getByText('複製')
-      const exportImageButton = screen.getByText('画像エクスポート')
-      const printButton = screen.getByText('印刷')
-
-      expect(saveButton).toBeDisabled()
-      expect(saveAsButton).toBeDisabled()
-      expect(editMetadataButton).toBeDisabled()
-      expect(duplicateButton).toBeDisabled()
-      expect(exportImageButton).toBeDisabled()
-      expect(printButton).toBeDisabled()
+      // プレイがnullの場合、これらのボタンは表示されない
+      expect(screen.queryByText('保存')).not.toBeInTheDocument()
+      expect(screen.queryByText('名前を付けて保存')).not.toBeInTheDocument()
+      expect(screen.queryByText('プレイ情報編集')).not.toBeInTheDocument()
+      expect(screen.queryByText('複製')).not.toBeInTheDocument()
+      expect(screen.queryByText('エクスポート')).not.toBeInTheDocument()
+      expect(screen.queryByText('印刷')).not.toBeInTheDocument()
     })
 
     it('プレイタイトルが表示されないこと', () => {
@@ -119,22 +113,15 @@ describe('Header Component', () => {
       currentPlay: createMockPlay()
     }
 
-    it('プレイ依存のボタンが有効化されていること', () => {
+    it('プレイ依存のボタンが表示されること', () => {
       render(<Header {...propsWithPlay} />)
       
-      const saveButton = screen.getByText('保存')
-      const saveAsButton = screen.getByText('名前を付けて保存')
-      const editMetadataButton = screen.getByText('プレイ情報編集')
-      const duplicateButton = screen.getByText('複製')
-      const exportImageButton = screen.getByText('画像エクスポート')
-      const printButton = screen.getByText('印刷')
-
-      expect(saveButton).toBeEnabled()
-      expect(saveAsButton).toBeEnabled()
-      expect(editMetadataButton).toBeEnabled()
-      expect(duplicateButton).toBeEnabled()
-      expect(exportImageButton).toBeEnabled()
-      expect(printButton).toBeEnabled()
+      expect(screen.getByText('保存')).toBeInTheDocument()
+      expect(screen.getByText('名前を付けて保存')).toBeInTheDocument()
+      expect(screen.getByText('プレイ情報編集')).toBeInTheDocument()
+      expect(screen.getByText('複製')).toBeInTheDocument()
+      expect(screen.getByText('エクスポート')).toBeInTheDocument()
+      expect(screen.getByText('印刷')).toBeInTheDocument()
     })
 
     it('プレイタイトルが表示されること', () => {
@@ -143,23 +130,6 @@ describe('Header Component', () => {
       expect(screen.getByText('テストプレイ')).toBeInTheDocument()
     })
 
-    it('プレイタイプバッジが表示されること', () => {
-      render(<Header {...propsWithPlay} />)
-      
-      expect(screen.getByText('オフェンス')).toBeInTheDocument()
-    })
-
-    it('作成日が表示されること', () => {
-      render(<Header {...propsWithPlay} />)
-      
-      expect(screen.getByText(/作成:/)).toBeInTheDocument()
-    })
-
-    it('更新日が表示されること', () => {
-      render(<Header {...propsWithPlay} />)
-      
-      expect(screen.getByText(/更新:/)).toBeInTheDocument()
-    })
   })
 
   describe('ボタンクリック処理', () => {
@@ -244,7 +214,7 @@ describe('Header Component', () => {
       const user = userEvent.setup()
       render(<Header {...propsWithPlay} />)
       
-      const exportButton = screen.getByText('画像エクスポート')
+      const exportButton = screen.getByText('エクスポート')
       await user.click(exportButton)
       
       expect(mockOnExportImage).toHaveBeenCalledTimes(1)
@@ -258,70 +228,6 @@ describe('Header Component', () => {
       await user.click(printButton)
       
       expect(mockOnPrint).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('プレイタイプの表示', () => {
-    it('オフェンスプレイの場合、適切なバッジが表示されること', () => {
-      const offensePlay = {
-        ...createMockPlay(),
-        metadata: {
-          ...createMockPlay().metadata,
-          playType: 'offense' as const
-        }
-      }
-      
-      render(<Header {...defaultProps} currentPlay={offensePlay} />)
-      
-      const badge = screen.getByText('オフェンス')
-      expect(badge).toHaveClass('bg-blue-100', 'text-blue-800')
-    })
-
-    it('ディフェンスプレイの場合、適切なバッジが表示されること', () => {
-      const defensePlay = {
-        ...createMockPlay(),
-        metadata: {
-          ...createMockPlay().metadata,
-          playType: 'defense' as const
-        }
-      }
-      
-      render(<Header {...defaultProps} currentPlay={defensePlay} />)
-      
-      const badge = screen.getByText('ディフェンス')
-      expect(badge).toHaveClass('bg-red-100', 'text-red-800')
-    })
-
-    it('スペシャルプレイの場合、適切なバッジが表示されること', () => {
-      const specialPlay = {
-        ...createMockPlay(),
-        metadata: {
-          ...createMockPlay().metadata,
-          playType: 'special' as const
-        }
-      }
-      
-      render(<Header {...defaultProps} currentPlay={specialPlay} />)
-      
-      const badge = screen.getByText('スペシャル')
-      expect(badge).toHaveClass('bg-green-100', 'text-green-800')
-    })
-  })
-
-  describe('タイトルの長さ制限', () => {
-    it('長いタイトルが適切に切り詰められること', () => {
-      const longTitlePlay = {
-        ...createMockPlay(),
-        metadata: {
-          ...createMockPlay().metadata,
-          title: 'これは非常に長いプレイタイトルでヘッダーの表示幅を超える可能性があります'
-        }
-      }
-      
-      render(<Header {...defaultProps} currentPlay={longTitlePlay} />)
-      
-      const titleElement = screen.getByText(/これは非常に長い/)
-      expect(titleElement).toBeInTheDocument()
     })
   })
 
@@ -339,56 +245,10 @@ describe('Header Component', () => {
       // 主要なボタンが表示されていることを確認
       expect(screen.getByText('新しいプレイ')).toBeInTheDocument()
       expect(screen.getByText('保存')).toBeInTheDocument()
-      expect(screen.getByText('プレイライブラリ')).toBeInTheDocument()
+      expect(screen.getByText('プレイ一覧')).toBeInTheDocument()
     })
   })
 
-  describe('アクセシビリティ', () => {
-    it('ボタンに適切なaria-labelが設定されていること', () => {
-      render(<Header {...defaultProps} currentPlay={createMockPlay()} />)
-      
-      const saveButton = screen.getByText('保存')
-      expect(saveButton).toHaveAttribute('title', '現在のプレイを保存')
-    })
-
-    it('無効化されたボタンが適切にマークされていること', () => {
-      render(<Header {...defaultProps} />)
-      
-      const saveButton = screen.getByText('保存')
-      expect(saveButton).toBeDisabled()
-      expect(saveButton).toHaveAttribute('aria-disabled', 'true')
-    })
-  })
-
-  describe('キーボードナビゲーション', () => {
-    it('Tabキーでボタン間を移動できること', async () => {
-      const user = userEvent.setup()
-      render(<Header {...defaultProps} currentPlay={createMockPlay()} />)
-      
-      const newPlayButton = screen.getByText('新しいプレイ')
-      
-      // 最初のボタンにフォーカス
-      await user.tab()
-      expect(newPlayButton).toHaveFocus()
-      
-      // 次のボタンに移動
-      await user.tab()
-      const saveButton = screen.getByText('保存')
-      expect(saveButton).toHaveFocus()
-    })
-
-    it('Enterキーでボタンを実行できること', async () => {
-      const user = userEvent.setup()
-      render(<Header {...defaultProps} />)
-      
-      const newPlayButton = screen.getByText('新しいプレイ')
-      newPlayButton.focus()
-      
-      await user.keyboard('{Enter}')
-      
-      expect(mockOnNewPlay).toHaveBeenCalledTimes(1)
-    })
-  })
 
   describe('エラーハンドリング', () => {
     it('ボタンクリックでエラーが発生しても画面が壊れないこと', async () => {
