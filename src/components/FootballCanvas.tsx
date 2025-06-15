@@ -2648,13 +2648,16 @@ const FootballCanvas = forwardRef(({
     )
 
     if (play.field.yardLines) {
+      // フィールド反転状態を判定
+      const flipped = isFieldFlipped()
+      
       // 7本の水平線を均等に配置（フィールドを8等分）
       for (let i = 1; i <= 7; i++) {
         const y = (fieldHeight * i) / 8
         let strokeWidth = 2
         
-        // 上から5番目の線は太く
-        if (i === 5) {
+        // 反転時は3番目、通常時は5番目の線を太く
+        if ((flipped && i === 3) || (!flipped && i === 5)) {
           strokeWidth = 4
         }
         
