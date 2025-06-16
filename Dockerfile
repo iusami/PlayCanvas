@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install dependencies with package-lock for reproducible builds
 COPY package*.json ./
-RUN npm ci --only=production --silent && npm cache clean --force
+RUN npm ci --only=production && npm cache clean --force
 
 # Stage 2: Development dependencies and build tools
 FROM node:18-alpine AS dev-deps
@@ -17,7 +17,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies including devDependencies
-RUN npm ci --silent && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Stage 3: Builder - Build the application
 FROM dev-deps AS builder

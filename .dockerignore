@@ -69,8 +69,7 @@ release-builds
 tmp/
 temp/
 
-# Package manager
-package-lock.json
+# Package manager (keep package-lock.json for npm ci)
 yarn.lock
 pnpm-lock.yaml
 
