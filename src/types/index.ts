@@ -88,6 +88,13 @@ export interface PlayMetadata {
   playType: PlayType
 }
 
+// テキストボックスエントリ
+export interface TextBoxEntry {
+  id: string
+  shortText: string // 1列目（2文字まで）
+  longText: string  // 2列目（長いテキスト）
+}
+
 // プレイオブジェクト
 export interface Play {
   id: string
@@ -97,6 +104,7 @@ export interface Play {
   arrows: Arrow[]
   texts: TextElement[]
   center?: { x: number; y: number } // センターの位置
+  textBoxEntries: TextBoxEntry[] // プレイ紐づきテキストボックス
 }
 
 // プレイリスト

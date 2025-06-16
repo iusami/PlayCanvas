@@ -83,7 +83,8 @@ const createMockPlay = (): Play => ({
       color: '#000000'
     }
   ],
-  center: { x: 400, y: 300 }
+  center: { x: 400, y: 300 },
+  textBoxEntries: []
 })
 
 const createMockAppState = (): AppState => ({
@@ -328,7 +329,8 @@ describe('CanvasArea Component', () => {
         ...createMockPlay(),
         players: [],
         arrows: [],
-        texts: []
+        texts: [],
+        textBoxEntries: []
       }
       
       const appStateWithEmptyPlay = {

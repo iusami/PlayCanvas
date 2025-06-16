@@ -1,5 +1,5 @@
 // テスト用のサンプルデータ
-import { Play, Playlist, FormationTemplate, Player, PlayMetadata } from '../../src/types'
+import { Play, Playlist, FormationTemplate, Player, PlayMetadata, TextBoxEntry } from '../../src/types'
 
 // プレイヤーのサンプルデータ
 export const createSamplePlayer = (overrides: Partial<Player> = {}): Player => ({
@@ -30,6 +30,15 @@ export const createSamplePlayMetadata = (overrides: Partial<PlayMetadata> = {}):
   ...overrides
 })
 
+// テキストボックスエントリのサンプルデータ
+export const createSampleTextBoxEntries = (): TextBoxEntry[] => {
+  return Array.from({ length: 10 }, (_, index) => ({
+    id: `textbox-${index + 1}`,
+    shortText: index < 2 ? `${index + 1}` : '', // 最初の2つは番号入り
+    longText: index < 2 ? `テストメモ${index + 1}` : ''
+  }))
+}
+
 // プレイのサンプルデータ
 export const createSamplePlay = (overrides: Partial<Play> = {}): Play => ({
   id: 'play-1',
@@ -47,6 +56,7 @@ export const createSamplePlay = (overrides: Partial<Play> = {}): Play => ({
   arrows: [],
   texts: [],
   center: { x: 400, y: 300 },
+  textBoxEntries: createSampleTextBoxEntries(),
   ...overrides
 })
 

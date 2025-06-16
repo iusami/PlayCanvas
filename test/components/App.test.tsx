@@ -212,7 +212,8 @@ describe('App Component', () => {
           field: { width: 800, height: 600, backgroundColor: '#4F7942', lineColor: '#FFFFFF', yardLines: true, hashMarks: true },
           players: [],
           arrows: [],
-          texts: []
+          texts: [],
+          textBoxEntries: []
         }
       ]
       

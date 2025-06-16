@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player, FIELD_CONSTRAINTS } from './types'
+import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player, FIELD_CONSTRAINTS, TextBoxEntry } from './types'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import CanvasArea, { CanvasAreaRef } from './components/CanvasArea'
+import TextBoxPanel from './components/TextBoxPanel'
 import PlayMetadataForm from './components/PlayMetadataForm'
 import PlayLibrary from './components/PlayLibrary'
 import PlaylistWorkspace from './components/PlaylistWorkspace'
@@ -189,6 +190,15 @@ const App: React.FC = () => {
     setTimeout(() => setSaveMessage(null), 3000)
   }
 
+  // 空のテキストボックス配列を生成する関数
+  const createEmptyTextBoxEntries = (): TextBoxEntry[] => {
+    return Array.from({ length: 10 }, (_, index) => ({
+      id: crypto.randomUUID(),
+      shortText: '',
+      longText: ''
+    }))
+  }
+
   const createNewPlay = () => {
     const fieldWidth = 800
     const fieldHeight = 600
@@ -219,7 +229,8 @@ const App: React.FC = () => {
       players: [],
       arrows: [],
       texts: [],
-      center: { x: fieldWidth / 2, y: centerLineY } // センターを太い線上に配置
+      center: { x: fieldWidth / 2, y: centerLineY }, // センターを太い線上に配置
+      textBoxEntries: createEmptyTextBoxEntries() // 空のテキストボックス10行を初期化
     }
     
     setPlays(prev => [...prev, newPlay])
@@ -278,7 +289,8 @@ const App: React.FC = () => {
         title: `${appState.currentPlay.metadata.title} (コピー)`,
         createdAt: new Date(),
         updatedAt: new Date()
-      }
+      },
+      textBoxEntries: appState.currentPlay.textBoxEntries || createEmptyTextBoxEntries() // 既存のテキストボックスまたは空配列
     }
     
     try {
@@ -326,9 +338,15 @@ const App: React.FC = () => {
   }
 
   const selectPlay = (play: Play) => {
+    // 古いプレイでtextBoxEntriesが存在しない場合は初期化
+    const playWithTextBoxes = {
+      ...play,
+      textBoxEntries: play.textBoxEntries || createEmptyTextBoxEntries()
+    }
+    
     updateAppState({ 
-      currentPlay: play,
-      history: [JSON.parse(JSON.stringify(play))], // 選択されたプレイを履歴に追加
+      currentPlay: playWithTextBoxes,
+      history: [JSON.parse(JSON.stringify(playWithTextBoxes))], // 選択されたプレイを履歴に追加
       historyIndex: 0
     })
   }
@@ -624,6 +642,16 @@ const App: React.FC = () => {
           lastSavedAt={lastSavedAt}
           onUndo={undo}
           onRedo={redo}
+        />
+        
+        <TextBoxPanel
+          textBoxEntries={appState.currentPlay?.textBoxEntries || []}
+          onUpdateTextBoxEntries={(entries) => {
+            if (appState.currentPlay) {
+              updateCurrentPlay({ textBoxEntries: entries })
+            }
+          }}
+          disabled={!appState.currentPlay}
         />
       </div>
 
