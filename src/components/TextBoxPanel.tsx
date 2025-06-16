@@ -43,7 +43,7 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
 
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = 'auto'
-    textarea.style.height = `${Math.max(textarea.scrollHeight, 32)}px`
+    textarea.style.height = `${Math.max(textarea.scrollHeight, MIN_TEXTAREA_HEIGHT)}px`
   }
 
   const handleTextareaInput = (index: number, value: string, textarea: HTMLTextAreaElement) => {
