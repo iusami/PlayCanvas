@@ -32,12 +32,22 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
     onUpdateTextBoxEntries(updatedEntries)
   }
 
-  const handleLongTextKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleLongTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey && e.key === 'a') {
       e.preventDefault()
-      const target = e.target as HTMLInputElement
+      const target = e.target as HTMLTextAreaElement
       target.select()
     }
+  }
+
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.max(textarea.scrollHeight, 32)}px`
+  }
+
+  const handleTextareaInput = (index: number, value: string, textarea: HTMLTextAreaElement) => {
+    handleLongTextChange(index, value)
+    adjustTextareaHeight(textarea)
   }
 
   if (disabled) {
@@ -63,9 +73,9 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
       
       <div className="space-y-2">
         {textBoxEntries.map((entry, index) => (
-          <div key={entry.id} className="flex gap-2 items-center">
+          <div key={entry.id} className="flex gap-2 items-start">
             {/* 行番号 */}
-            <div className="w-6 text-xs text-gray-400 text-right">
+            <div className="w-6 text-xs text-gray-400 text-right pt-2">
               {index + 1}
             </div>
             
@@ -79,14 +89,14 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
               maxLength={3}
             />
             
-            {/* 2列目: 長いテキスト */}
-            <input
-              type="text"
+            {/* 2列目: 長いテキスト（textarea） */}
+            <textarea
               value={entry.longText}
-              onChange={(e) => handleLongTextChange(index, e.target.value)}
+              onChange={(e) => handleTextareaInput(index, e.target.value, e.target)}
               onKeyDown={handleLongTextKeyDown}
-              className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 mr-2"
+              className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 mr-2 resize-none overflow-hidden min-h-[32px]"
               placeholder="説明・メモ"
+              rows={1}
             />
           </div>
         ))}
