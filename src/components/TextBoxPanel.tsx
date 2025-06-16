@@ -33,7 +33,7 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
   }
 
   const handleLongTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.ctrlKey && e.key === 'a') {
+    if (e.ctrlKey && e.key.toLowerCase() === 'a') {
       e.preventDefault()
       e.stopPropagation()
       const target = e.target as HTMLTextAreaElement
