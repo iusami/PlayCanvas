@@ -218,8 +218,9 @@ describe('TextBoxPanel Component', () => {
       expect(shortTextBoxes[0]).toHaveAttribute('type', 'text')
       expect(shortTextBoxes[0]).toHaveAttribute('maxLength', '3')
       
-      // 長いテキストボックスの属性確認
-      expect(longTextBoxes[0]).toHaveAttribute('type', 'text')
+      // 長いテキストボックス（textarea）の属性確認
+      expect(longTextBoxes[0].tagName).toBe('TEXTAREA')
+      expect(longTextBoxes[0]).toHaveAttribute('rows', '1')
     })
   })
 
@@ -239,6 +240,145 @@ describe('TextBoxPanel Component', () => {
       // パネル全体の幅が設定されていること
       const panel = container.querySelector('.w-80')
       expect(panel).toBeInTheDocument()
+    })
+  })
+
+  describe('自動高さ調整機能', () => {
+    test('textareaが使用されていること', () => {
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntries()
+      
+      render(
+        <TextBoxPanel 
+          textBoxEntries={mockEntries}
+          onUpdateTextBoxEntries={mockOnUpdate}
+          disabled={false}
+        />
+      )
+      
+      const longTextBoxes = screen.getAllByPlaceholderText('説明・メモ')
+      
+      // 長いテキストボックスがtextareaであることを確認
+      longTextBoxes.forEach(element => {
+        expect(element.tagName).toBe('TEXTAREA')
+      })
+    })
+
+    test('textareaに適切な属性が設定されていること', () => {
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntries()
+      
+      render(
+        <TextBoxPanel 
+          textBoxEntries={mockEntries}
+          onUpdateTextBoxEntries={mockOnUpdate}
+          disabled={false}
+        />
+      )
+      
+      const longTextBox = screen.getAllByPlaceholderText('説明・メモ')[0]
+      
+      // textarea固有の属性を確認
+      expect(longTextBox).toHaveAttribute('rows', '1')
+      expect(longTextBox).toHaveClass('resize-none')
+      expect(longTextBox).toHaveClass('overflow-hidden')
+      expect(longTextBox).toHaveClass('min-h-[32px]')
+    })
+
+    test('長いテキスト入力時に更新関数が呼ばれること', () => {
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntries()
+      
+      render(
+        <TextBoxPanel 
+          textBoxEntries={mockEntries}
+          onUpdateTextBoxEntries={mockOnUpdate}
+          disabled={false}
+        />
+      )
+      
+      const longTextBox = screen.getAllByPlaceholderText('説明・メモ')[0]
+      
+      const longText = 'これは長いテキストの例です。端に達したら改行されるかテストしています。'
+      fireEvent.change(longTextBox, { target: { value: longText } })
+      
+      expect(mockOnUpdate).toHaveBeenCalled()
+      const calls = mockOnUpdate.mock.calls
+      const lastCall = calls[calls.length - 1]
+      expect(lastCall[0][0].longText).toBe(longText)
+    })
+  })
+
+  describe('キーボードショートカット', () => {
+    test('textareaでCtrl+Aにより全選択できること', async () => {
+      const user = userEvent.setup()
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntriesWithData()
+      
+      render(
+        <TextBoxPanel 
+          textBoxEntries={mockEntries}
+          onUpdateTextBoxEntries={mockOnUpdate}
+          disabled={false}
+        />
+      )
+      
+      const longTextBox = screen.getAllByPlaceholderText('説明・メモ')[0]
+      
+      // まずテキストボックスにフォーカスを当てる
+      await user.click(longTextBox)
+      
+      // Ctrl+Aキーを押下
+      await user.keyboard('{Control>}a{/Control}')
+      
+      // HTMLTextAreaElementにキャストしてselectionStartとselectionEndを確認
+      const textareaElement = longTextBox as HTMLTextAreaElement
+      
+      // 全選択されていることを確認
+      expect(textareaElement.selectionStart).toBe(0)
+      expect(textareaElement.selectionEnd).toBe(textareaElement.value.length)
+    })
+
+    test('Ctrl+Aイベントが親要素に伝播しないこと', () => {
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntriesWithData()
+      const mockParentKeyDown = vi.fn()
+      
+      render(
+        <div onKeyDown={mockParentKeyDown}>
+          <TextBoxPanel 
+            textBoxEntries={mockEntries}
+            onUpdateTextBoxEntries={mockOnUpdate}
+            disabled={false}
+          />
+        </div>
+      )
+      
+      const longTextBox = screen.getAllByPlaceholderText('説明・メモ')[0]
+      
+      // Ctrl+Aキーイベントを直接発火
+      fireEvent.keyDown(longTextBox, { ctrlKey: true, key: 'a' })
+      
+      // 親要素のイベントハンドラが呼ばれていないことを確認
+      expect(mockParentKeyDown).not.toHaveBeenCalled()
+    })
+
+    test('短いテキストボックスではCtrl+Aイベントハンドラが設定されていないこと', () => {
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntries()
+      
+      render(
+        <TextBoxPanel 
+          textBoxEntries={mockEntries}
+          onUpdateTextBoxEntries={mockOnUpdate}
+          disabled={false}
+        />
+      )
+      
+      const shortTextBox = screen.getAllByPlaceholderText('記号')[0]
+      
+      // onKeyDownイベントハンドラが設定されていないことを確認
+      expect(shortTextBox).not.toHaveAttribute('onkeydown')
     })
   })
 
