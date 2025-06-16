@@ -13,8 +13,8 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
   disabled = false
 }) => {
   const handleShortTextChange = (index: number, value: string) => {
-    // 2文字制限
-    const limitedValue = value.slice(0, 2)
+    // 3文字制限
+    const limitedValue = value.slice(0, 3)
     const updatedEntries = [...textBoxEntries]
     updatedEntries[index] = {
       ...updatedEntries[index],
@@ -49,7 +49,7 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
       <div className="mb-3">
         <h3 className="text-sm font-medium text-gray-700 mb-2">メモ・説明</h3>
         <div className="text-xs text-gray-500 mb-3">
-          左列：記号・番号（2文字まで）｜ 右列：説明文
+          左列：記号・番号（3文字まで）｜ 右列：説明文
         </div>
       </div>
       
@@ -61,14 +61,14 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
               {index + 1}
             </div>
             
-            {/* 1列目: 短いテキスト（2文字まで） */}
+            {/* 1列目: 短いテキスト（3文字まで） */}
             <input
               type="text"
               value={entry.shortText}
               onChange={(e) => handleShortTextChange(index, e.target.value)}
-              className="w-12 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-center"
+              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-center"
               placeholder="記号"
-              maxLength={2}
+              maxLength={3}
             />
             
             {/* 2列目: 長いテキスト */}

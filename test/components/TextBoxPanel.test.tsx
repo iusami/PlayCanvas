@@ -43,7 +43,7 @@ describe('TextBoxPanel Component', () => {
       )
       
       expect(screen.getByText('メモ・説明')).toBeInTheDocument()
-      expect(screen.getByText('左列：記号・番号（2文字まで）｜ 右列：説明文')).toBeInTheDocument()
+      expect(screen.getByText('左列：記号・番号（3文字まで）｜ 右列：説明文')).toBeInTheDocument()
       expect(screen.getByText('プレイごとに自動保存されます')).toBeInTheDocument()
     })
 
@@ -111,7 +111,7 @@ describe('TextBoxPanel Component', () => {
   })
 
   describe('テキスト入力機能', () => {
-    test('短いテキストボックスで2文字制限が機能すること', () => {
+    test('短いテキストボックスで3文字制限が機能すること', () => {
       const mockOnUpdate = vi.fn()
       const mockEntries = createMockTextBoxEntries()
       
@@ -125,16 +125,16 @@ describe('TextBoxPanel Component', () => {
       
       const shortTextBox = screen.getAllByPlaceholderText('記号')[0]
       
-      // onChange イベントを直接発生させて2文字制限をテスト
-      fireEvent.change(shortTextBox, { target: { value: 'ABC' } })
+      // onChange イベントを直接発生させて3文字制限をテスト
+      fireEvent.change(shortTextBox, { target: { value: 'ABCD' } })
       
       // 更新関数が呼ばれること
       expect(mockOnUpdate).toHaveBeenCalled()
       
-      // 2文字制限が適用されていることを確認
+      // 3文字制限が適用されていることを確認
       const calls = mockOnUpdate.mock.calls
       const lastCall = calls[calls.length - 1]
-      expect(lastCall[0][0].shortText).toBe('AB') // 2文字に制限される
+      expect(lastCall[0][0].shortText).toBe('ABC') // 3文字に制限される
     })
 
     test('長いテキストボックスで文字制限がないこと', () => {
@@ -216,7 +216,7 @@ describe('TextBoxPanel Component', () => {
       
       // 短いテキストボックスの属性確認
       expect(shortTextBoxes[0]).toHaveAttribute('type', 'text')
-      expect(shortTextBoxes[0]).toHaveAttribute('maxLength', '2')
+      expect(shortTextBoxes[0]).toHaveAttribute('maxLength', '3')
       
       // 長いテキストボックスの属性確認
       expect(longTextBoxes[0]).toHaveAttribute('type', 'text')
