@@ -3089,29 +3089,39 @@ const FootballCanvas = forwardRef(({
         )
       case 'triangle':
         return (
-          <Line
-            {...baseProps}
-            points={player.flipped ? [
-              // 上向き三角形
-              0, -player.size / 2,
-              -player.size / 2, player.size / 2,
-              player.size / 2, player.size / 2,
-              0, -player.size / 2
-            ] : [
-              // 下向き三角形（デフォルト）
-              0, player.size / 2,
-              -player.size / 2, -player.size / 2,
-              player.size / 2, -player.size / 2,
-              0, player.size / 2
-            ]}
-            fill={fillColor}
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-            closed={true}
-            shadowColor={isSelected ? '#2563eb' : undefined}
-            shadowBlur={isSelected ? 10 : 0}
-            shadowEnabled={shadowEnabled}
-          />
+          <Group {...baseProps}>
+            {/* クリック判定用の透明な大きなエリア */}
+            <Circle
+              radius={Math.max(player.size / 2, 15)} // 最低15pxの半径でタッチしやすく
+              fill="transparent"
+              stroke="transparent"
+              listening={true}
+            />
+            {/* 実際に表示される三角形 */}
+            <Line
+              points={player.flipped ? [
+                // 上向き三角形
+                0, -player.size / 2,
+                -player.size / 2, player.size / 2,
+                player.size / 2, player.size / 2,
+                0, -player.size / 2
+              ] : [
+                // 下向き三角形（デフォルト）
+                0, player.size / 2,
+                -player.size / 2, -player.size / 2,
+                player.size / 2, -player.size / 2,
+                0, player.size / 2
+              ]}
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              closed={true}
+              shadowColor={isSelected ? '#2563eb' : undefined}
+              shadowBlur={isSelected ? 10 : 0}
+              shadowEnabled={shadowEnabled}
+              listening={false} // クリック判定は上の透明サークルが担当
+            />
+          </Group>
         )
       case 'square':
         return (
@@ -3131,27 +3141,37 @@ const FootballCanvas = forwardRef(({
         )
       case 'chevron':
         return (
-          <Line
-            {...baseProps}
-            points={player.flipped ? [
-              // 上向きV
-              -player.size / 2, player.size / 4,
-              0, -player.size / 2,
-              player.size / 2, player.size / 4
-            ] : [
-              // 下向きV（デフォルト）
-              -player.size / 2, -player.size / 4,
-              0, player.size / 2,
-              player.size / 2, -player.size / 4
-            ]}
-            fill={undefined}
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-            closed={false}
-            shadowColor={isSelected ? '#2563eb' : undefined}
-            shadowBlur={isSelected ? 10 : 0}
-            shadowEnabled={shadowEnabled}
-          />
+          <Group {...baseProps}>
+            {/* クリック判定用の透明な大きなエリア */}
+            <Circle
+              radius={Math.max(player.size / 2, 15)} // 最低15pxの半径でタッチしやすく
+              fill="transparent"
+              stroke="transparent"
+              listening={true}
+            />
+            {/* 実際に表示されるchevron */}
+            <Line
+              points={player.flipped ? [
+                // 上向きV
+                -player.size / 2, player.size / 4,
+                0, -player.size / 2,
+                player.size / 2, player.size / 4
+              ] : [
+                // 下向きV（デフォルト）
+                -player.size / 2, -player.size / 4,
+                0, player.size / 2,
+                player.size / 2, -player.size / 4
+              ]}
+              fill={undefined}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              closed={false}
+              shadowColor={isSelected ? '#2563eb' : undefined}
+              shadowBlur={isSelected ? 10 : 0}
+              shadowEnabled={shadowEnabled}
+              listening={false} // クリック判定は上の透明サークルが担当
+            />
+          </Group>
         )
       case 'text': {
         // 編集中の場合は編集中のテキストを表示、空欄なら'A'を表示
@@ -3160,28 +3180,46 @@ const FootballCanvas = forwardRef(({
           : (player.text || 'A')
         
         return (
-          <Text
-            {...baseProps}
-            text={displayText}
-            fontSize={player.size * 0.8}
-            fontFamily="Arial"
-            fontStyle="bold"
-            fill={strokeColor}
-            stroke={isSelected ? '#2563eb' : undefined}
-            strokeWidth={isSelected ? 1 : 0}
-            shadowColor={isSelected ? '#2563eb' : undefined}
-            shadowBlur={isSelected ? 5 : 0}
-            shadowEnabled={shadowEnabled}
-            align="center"
-            verticalAlign="middle"
-            offsetX={player.size / 2}
-            offsetY={player.size / 2}
-          />
+          <Group {...baseProps}>
+            {/* クリック判定用の透明な大きなエリア */}
+            <Circle
+              radius={Math.max(player.size / 2, 15)} // 最低15pxの半径でタッチしやすく
+              fill="transparent"
+              stroke="transparent"
+              listening={true}
+            />
+            {/* 実際に表示されるテキスト */}
+            <Text
+              text={displayText}
+              fontSize={player.size * 0.8}
+              fontFamily="Arial"
+              fontStyle="bold"
+              fill={strokeColor}
+              stroke={isSelected ? '#2563eb' : undefined}
+              strokeWidth={isSelected ? 1 : 0}
+              shadowColor={isSelected ? '#2563eb' : undefined}
+              shadowBlur={isSelected ? 5 : 0}
+              shadowEnabled={shadowEnabled}
+              align="center"
+              verticalAlign="middle"
+              offsetX={player.size / 2}
+              offsetY={player.size / 2}
+              listening={false} // クリック判定は上の透明サークルが担当
+            />
+          </Group>
         )
       }
       case 'x':
         return (
           <Group {...baseProps}>
+            {/* クリック判定用の透明な大きなエリア */}
+            <Circle
+              radius={Math.max(player.size / 2, 15)} // 最低15pxの半径でタッチしやすく
+              fill="transparent"
+              stroke="transparent"
+              listening={true}
+            />
+            {/* 実際に表示されるX */}
             <Line
               points={[
                 -player.size / 2, -player.size / 2,
@@ -3192,6 +3230,7 @@ const FootballCanvas = forwardRef(({
               shadowColor={isSelected ? '#2563eb' : undefined}
               shadowBlur={isSelected ? 10 : 0}
               shadowEnabled={shadowEnabled}
+              listening={false} // クリック判定は上の透明サークルが担当
             />
             <Line
               points={[
@@ -3203,6 +3242,7 @@ const FootballCanvas = forwardRef(({
               shadowColor={isSelected ? '#2563eb' : undefined}
               shadowBlur={isSelected ? 10 : 0}
               shadowEnabled={shadowEnabled}
+              listening={false} // クリック判定は上の透明サークルが担当
             />
           </Group>
         )
