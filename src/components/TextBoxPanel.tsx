@@ -35,6 +35,7 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
   const handleLongTextKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey && e.key === 'a') {
       e.preventDefault()
+      e.stopPropagation()
       const target = e.target as HTMLTextAreaElement
       target.select()
     }

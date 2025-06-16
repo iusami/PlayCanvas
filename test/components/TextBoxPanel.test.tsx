@@ -339,6 +339,30 @@ describe('TextBoxPanel Component', () => {
       expect(textareaElement.selectionEnd).toBe(textareaElement.value.length)
     })
 
+    test('Ctrl+Aイベントが親要素に伝播しないこと', () => {
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntriesWithData()
+      const mockParentKeyDown = vi.fn()
+      
+      render(
+        <div onKeyDown={mockParentKeyDown}>
+          <TextBoxPanel 
+            textBoxEntries={mockEntries}
+            onUpdateTextBoxEntries={mockOnUpdate}
+            disabled={false}
+          />
+        </div>
+      )
+      
+      const longTextBox = screen.getAllByPlaceholderText('説明・メモ')[0]
+      
+      // Ctrl+Aキーイベントを直接発火
+      fireEvent.keyDown(longTextBox, { ctrlKey: true, key: 'a' })
+      
+      // 親要素のイベントハンドラが呼ばれていないことを確認
+      expect(mockParentKeyDown).not.toHaveBeenCalled()
+    })
+
     test('短いテキストボックスではCtrl+Aイベントハンドラが設定されていないこと', () => {
       const mockOnUpdate = vi.fn()
       const mockEntries = createMockTextBoxEntries()
