@@ -115,9 +115,6 @@ const createMockAppState = (): AppState => ({
   selectedText: 'テキスト',
   isEditingText: false,
   editingTextId: null,
-  zoom: 1,
-  panX: 0,
-  panY: 0,
   snapToObjects: true,
   snapTolerance: 15,
   isRangeSelecting: false,
@@ -185,65 +182,6 @@ describe('CanvasArea Component', () => {
     })
   })
 
-  describe('ズーム機能', () => {
-    it('ズームツールバーが表示されること', () => {
-      render(<CanvasArea {...defaultProps} />)
-      
-      expect(screen.getByText('ズーム:')).toBeInTheDocument()
-      expect(screen.getByText('100%')).toBeInTheDocument()
-      expect(screen.getByText('−')).toBeInTheDocument()
-      expect(screen.getByText('+')).toBeInTheDocument()
-      expect(screen.getByText('リセット')).toBeInTheDocument()
-    })
-
-    it('ズームアウトボタンをクリックするとupdateAppStateが呼ばれること', async () => {
-      const user = userEvent.setup()
-      render(<CanvasArea {...defaultProps} />)
-      
-      const zoomOutButton = screen.getByText('−')
-      await user.click(zoomOutButton)
-      
-      expect(mockUpdateAppState).toHaveBeenCalledWith({ zoom: 0.9 })
-    })
-
-    it('ズームインボタンをクリックするとupdateAppStateが呼ばれること', async () => {
-      const user = userEvent.setup()
-      render(<CanvasArea {...defaultProps} />)
-      
-      const zoomInButton = screen.getByText('+')
-      await user.click(zoomInButton)
-      
-      expect(mockUpdateAppState).toHaveBeenCalledWith({ zoom: 1.1 })
-    })
-
-    it('リセットボタンをクリックするとズームとパンがリセットされること', async () => {
-      const user = userEvent.setup()
-      const appStateWithZoom = {
-        ...createMockAppState(),
-        zoom: 1.5,
-        panX: 100,
-        panY: 50
-      }
-      
-      render(<CanvasArea {...defaultProps} appState={appStateWithZoom} />)
-      
-      const resetButton = screen.getByText('リセット')
-      await user.click(resetButton)
-      
-      expect(mockUpdateAppState).toHaveBeenCalledWith({ zoom: 1, panX: 0, panY: 0 })
-    })
-
-    it('ズーム値が正しく表示されること', () => {
-      const appStateWithZoom = {
-        ...createMockAppState(),
-        zoom: 1.5
-      }
-      
-      render(<CanvasArea {...defaultProps} appState={appStateWithZoom} />)
-      
-      expect(screen.getByText('150%')).toBeInTheDocument()
-    })
-  })
 
   describe('Undo/Redo機能', () => {
     it('Undo/Redoボタンが表示されること', () => {
@@ -293,7 +231,6 @@ describe('CanvasArea Component', () => {
       render(<CanvasArea {...defaultProps} />)
       
       expect(screen.getByText('ツール: select')).toBeInTheDocument()
-      expect(screen.getByText('座標: (0, 0)')).toBeInTheDocument()
       expect(screen.getByText('プレイヤー: 2人')).toBeInTheDocument()
       expect(screen.getByText('矢印: 1本')).toBeInTheDocument()
       expect(screen.getByText('テキスト: 1個')).toBeInTheDocument()
@@ -370,7 +307,6 @@ describe('CanvasArea Component', () => {
       
       // appStateの主要プロパティを確認
       expect(props.appState.selectedTool).toBe(defaultProps.appState.selectedTool)
-      expect(props.appState.zoom).toBe(defaultProps.appState.zoom)
     })
   })
 

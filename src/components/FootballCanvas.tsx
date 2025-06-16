@@ -338,9 +338,9 @@ const FootballCanvas = forwardRef(({
           return lastValidPositionRef.current
         }
         
-        // Konvaのスケールとパンを考慮した座標変換
-        const x = (player.x + 50) * appState.zoom + appState.panX + containerRect.left
-        const y = (player.y + 50) * appState.zoom + appState.panY + containerRect.top
+        // 座標変換（ズーム機能削除後）
+        const x = (player.x + 50) + containerRect.left
+        const y = (player.y + 50) + containerRect.top
         
         lastValidPositionRef.current = { x, y }
         return { x, y }
@@ -382,9 +382,9 @@ const FootballCanvas = forwardRef(({
         return lastValidPositionRef.current
       }
       
-      // Konvaのスケールとパンを考慮した座標変換
-      const x = (textElement.x + 50) * appState.zoom + appState.panX + containerRect.left
-      const y = (textElement.y + 50) * appState.zoom + appState.panY + containerRect.top
+      // 座標変換（ズーム機能削除後）
+      const x = (textElement.x + 50) + containerRect.left
+      const y = (textElement.y + 50) + containerRect.top
 
       lastValidPositionRef.current = { x, y }
       return { x, y }
@@ -2788,8 +2788,8 @@ const FootballCanvas = forwardRef(({
         try {
           const containerRect = stage.container().getBoundingClientRect()
           if (containerRect && containerRect.width > 0) {
-            const x = (player.x + 50) * appState.zoom + appState.panX + containerRect.left
-            const y = (player.y + 50) * appState.zoom + appState.panY + containerRect.top
+            const x = (player.x + 50) + containerRect.left
+            const y = (player.y + 50) + containerRect.top
             lastValidPositionRef.current = { x, y }
           }
         } catch (error) {
@@ -3252,37 +3252,8 @@ const FootballCanvas = forwardRef(({
   }
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+    // ズーム機能を削除：スクロールイベントを無効化
     e.evt.preventDefault()
-    
-    const stage = stageRef.current
-    if (!stage) return
-
-    const scaleBy = 1.1
-    const oldScale = stage.scaleX()
-    const pointer = stage.getPointerPosition()
-    if (!pointer) return
-
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale
-    }
-
-    const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy
-    const clampedScale = Math.max(0.1, Math.min(3, newScale))
-
-    stage.scale({ x: clampedScale, y: clampedScale })
-
-    const newPos = {
-      x: pointer.x - mousePointTo.x * clampedScale,
-      y: pointer.y - mousePointTo.y * clampedScale
-    }
-    
-    stage.position(newPos)
-    updateAppState({ 
-      zoom: clampedScale,
-      panX: newPos.x,
-      panY: newPos.y
-    })
   }
 
   if (!play) {
@@ -3302,10 +3273,10 @@ const FootballCanvas = forwardRef(({
         onMouseUp={handleStageMouseUp}
         onWheel={handleWheel}
         draggable={false}
-        scaleX={appState.zoom}
-        scaleY={appState.zoom}
-        x={appState.panX}
-        y={appState.panY}
+        scaleX={1}
+        scaleY={1}
+        x={0}
+        y={0}
       >
         <Layer>
           {/* フィールド描画 */}
@@ -3529,7 +3500,7 @@ const FootballCanvas = forwardRef(({
                 position: 'fixed',
                 left: `${position.x}px`,
                 top: `${position.y}px`,
-                fontSize: isTextPlayer ? `${20 * 0.8 * appState.zoom}px` : `${(displayElement as any).fontSize * appState.zoom}px`,
+                fontSize: isTextPlayer ? `${20 * 0.8}px` : `${(displayElement as any).fontSize}px`,
                 fontFamily: isTextPlayer ? 'Arial' : (displayElement as any).fontFamily,
                 color: isTextPlayer ? player?.strokeColor || '#000' : (displayElement as any).color,
                 background: '#ffffff',
