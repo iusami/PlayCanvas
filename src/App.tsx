@@ -192,7 +192,7 @@ const App: React.FC = () => {
 
   // 空のテキストボックス配列を生成する関数
   const createEmptyTextBoxEntries = (): TextBoxEntry[] => {
-    return Array.from({ length: 10 }, (_, index) => ({
+    return Array.from({ length: 10 }, () => ({
       id: crypto.randomUUID(),
       shortText: '',
       longText: ''
