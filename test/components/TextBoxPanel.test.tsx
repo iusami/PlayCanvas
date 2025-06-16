@@ -242,6 +242,55 @@ describe('TextBoxPanel Component', () => {
     })
   })
 
+  describe('キーボードショートカット', () => {
+    test('長いテキストボックスでCtrl+Aにより全選択できること', async () => {
+      const user = userEvent.setup()
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntriesWithData()
+      
+      render(
+        <TextBoxPanel 
+          textBoxEntries={mockEntries}
+          onUpdateTextBoxEntries={mockOnUpdate}
+          disabled={false}
+        />
+      )
+      
+      const longTextBox = screen.getAllByPlaceholderText('説明・メモ')[0]
+      
+      // まずテキストボックスにフォーカスを当てる
+      await user.click(longTextBox)
+      
+      // Ctrl+Aキーを押下
+      await user.keyboard('{Control>}a{/Control}')
+      
+      // HTMLInputElementにキャストしてselectionStartとselectionEndを確認
+      const inputElement = longTextBox as HTMLInputElement
+      
+      // 全選択されていることを確認
+      expect(inputElement.selectionStart).toBe(0)
+      expect(inputElement.selectionEnd).toBe(inputElement.value.length)
+    })
+
+    test('短いテキストボックスではCtrl+Aイベントハンドラが設定されていないこと', () => {
+      const mockOnUpdate = vi.fn()
+      const mockEntries = createMockTextBoxEntries()
+      
+      render(
+        <TextBoxPanel 
+          textBoxEntries={mockEntries}
+          onUpdateTextBoxEntries={mockOnUpdate}
+          disabled={false}
+        />
+      )
+      
+      const shortTextBox = screen.getAllByPlaceholderText('記号')[0]
+      
+      // onKeyDownイベントハンドラが設定されていないことを確認
+      expect(shortTextBox).not.toHaveAttribute('onkeydown')
+    })
+  })
+
   describe('エラーハンドリング', () => {
     test('空のエントリ配列でもエラーが発生しないこと', () => {
       const mockOnUpdate = vi.fn()

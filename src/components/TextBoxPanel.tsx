@@ -32,6 +32,14 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
     onUpdateTextBoxEntries(updatedEntries)
   }
 
+  const handleLongTextKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.ctrlKey && e.key === 'a') {
+      e.preventDefault()
+      const target = e.target as HTMLInputElement
+      target.select()
+    }
+  }
+
   if (disabled) {
     return (
       <div className="w-80 bg-gray-100 border-l border-gray-300 p-4">
@@ -76,6 +84,7 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
               type="text"
               value={entry.longText}
               onChange={(e) => handleLongTextChange(index, e.target.value)}
+              onKeyDown={handleLongTextKeyDown}
               className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 mr-2"
               placeholder="説明・メモ"
             />
