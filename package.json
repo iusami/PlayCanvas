@@ -18,7 +18,16 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 113",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docker:dev": "docker-compose up web-dev",
+    "docker:dev:build": "docker-compose build web-dev",
+    "docker:prod": "docker-compose up web-prod",
+    "docker:prod:build": "docker-compose build web-prod",
+    "docker:nginx": "docker-compose --profile production up nginx",
+    "docker:build": "docker build -t football-canvas .",
+    "docker:build:dev": "docker build --target development -t football-canvas:dev .",
+    "docker:build:prod": "docker build --target production -t football-canvas:prod .",
+    "docker:clean": "docker-compose down -v && docker system prune -f"
   },
   "dependencies": {
     "electron-store": "^8.1.0",

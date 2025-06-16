@@ -1,0 +1,77 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+build
+dist
+out
+
+# Development
+.vite
+.next
+.nuxt
+.cache
+
+# Testing
+coverage
+.nyc_output
+.jest
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Electron specific
+electron-dist
+release-builds
+
+# Temporary files
+tmp/
+temp/
+
+# Package manager (keep package-lock.json for npm ci)
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
