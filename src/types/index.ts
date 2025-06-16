@@ -153,9 +153,6 @@ export interface AppState {
   selectedText: string
   isEditingText: boolean
   editingTextId: string | null
-  zoom: number
-  panX: number
-  panY: number
   // 中央線スナップ機能
   snapToObjects: boolean
   snapTolerance: number

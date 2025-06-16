@@ -96,29 +96,6 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       {/* ツールバー */}
       <div className="absolute top-4 left-4 z-10 bg-white border border-gray-300 rounded-lg shadow-lg p-2">
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600">ズーム:</span>
-          <button
-            onClick={() => updateAppState({ zoom: Math.max(0.1, appState.zoom - 0.1) })}
-            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-50"
-          >
-            −
-          </button>
-          <span className="text-sm font-mono w-12 text-center">
-            {Math.round(appState.zoom * 100)}%
-          </span>
-          <button
-            onClick={() => updateAppState({ zoom: Math.min(3, appState.zoom + 0.1) })}
-            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-50"
-          >
-            +
-          </button>
-          <button
-            onClick={() => updateAppState({ zoom: 1, panX: 0, panY: 0 })}
-            className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
-          >
-            リセット
-          </button>
-          <div className="border-l border-gray-300 h-6 mx-2"></div>
           <button
             onClick={onUndo}
             disabled={!onUndo || appState.historyIndex <= 0}
@@ -163,7 +140,6 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       <div className="absolute bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-2">
         <div className="text-xs text-gray-600 space-y-1">
           <div>ツール: {appState.selectedTool}</div>
-          <div>座標: ({Math.round(appState.panX)}, {Math.round(appState.panY)})</div>
           <div>プレイヤー: {appState.currentPlay.players.length}人</div>
           <div>矢印: {appState.currentPlay.arrows.length}本</div>
           <div>テキスト: {appState.currentPlay.texts.length}個</div>

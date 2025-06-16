@@ -201,9 +201,6 @@ const createMockAppState = (): AppState => ({
   selectedText: 'テキスト',
   isEditingText: false,
   editingTextId: null,
-  zoom: 1,
-  panX: 0,
-  panY: 0,
   snapToObjects: true,
   snapTolerance: 15,
   isRangeSelecting: false,
@@ -426,21 +423,6 @@ describe('FootballCanvas Component', () => {
     })
   })
 
-  describe('ズーム・パン機能', () => {
-    it('ズーム設定が適用されること', () => {
-      const appStateWithZoom = {
-        ...createMockAppState(),
-        zoom: 1.5,
-        panX: 50,
-        panY: 30
-      }
-      
-      render(<FootballCanvas {...defaultProps} appState={appStateWithZoom} />)
-      
-      const stage = screen.getByTestId('konva-stage')
-      expect(stage).toBeInTheDocument()
-    })
-  })
 
 
   describe('キーボードショートカット', () => {

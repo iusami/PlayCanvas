@@ -38,9 +38,6 @@ const initialAppState: AppState = {
   selectedText: 'テキスト',
   isEditingText: false,
   editingTextId: null,
-  zoom: 1,
-  panX: 0,
-  panY: 0,
   // 中央線スナップ機能
   snapToObjects: true,
   snapTolerance: 15,
