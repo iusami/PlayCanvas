@@ -7,6 +7,8 @@ interface TextBoxPanelProps {
   disabled?: boolean
 }
 
+const MIN_TEXTAREA_HEIGHT = 32
+
 const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
   textBoxEntries,
   onUpdateTextBoxEntries,
