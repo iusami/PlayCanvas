@@ -75,15 +75,23 @@ const App: React.FC = () => {
   // 初期化時にプレイ、プレイリスト、フォーメーションを読み込み
   useEffect(() => {
     const loadData = async () => {
-      const savedPlays = await PlayStorage.getAllPlays()
-      const savedPlaylists = await PlaylistStorage.getAllPlaylists()
-      // デフォルトフォーメーションを初期化
-      await FormationStorage.initializeDefaultFormations()
-      const savedFormations = await FormationStorage.getAllFormations()
-      
-      setPlays(savedPlays)
-      setPlaylists(savedPlaylists)
-      setFormations(savedFormations)
+      try {
+        const savedPlays = await PlayStorage.getAllPlays()
+        const savedPlaylists = await PlaylistStorage.getAllPlaylists()
+        // デフォルトフォーメーションを初期化
+        await FormationStorage.initializeDefaultFormations()
+        const savedFormations = await FormationStorage.getAllFormations()
+        
+        setPlays(savedPlays)
+        setPlaylists(savedPlaylists)
+        setFormations(savedFormations)
+      } catch (error) {
+        console.error('データの初期化に失敗しました:', error)
+        // エラーが発生した場合も空のデータで初期化を継続
+        setPlays([])
+        setPlaylists([])
+        setFormations([])
+      }
     }
     loadData()
   }, [])
