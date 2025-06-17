@@ -73,10 +73,31 @@ interface AuthContextType {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
+  updatePassword: (newPassword: string) => Promise<{ error: any }>
 }
 ```
 
 セルフサインアップ機能とソーシャルログイン機能は削除され、シンプルな認証システムになりました。
+
+#### ユーザー自身によるパスワード変更機能
+
+認証済みユーザーは自分のパスワードを変更することができます：
+
+```typescript
+// src/components/Auth/PasswordChangeForm.tsx
+// パスワード変更フォームをモーダルで提供
+// - 新しいパスワード入力（6文字以上）
+// - パスワード確認入力
+// - バリデーション機能
+// - エラーハンドリング
+```
+
+**パスワード変更機能の特徴：**
+- ヘッダーの「パスワード変更」ボタンからアクセス
+- モーダル形式でユーザーフレンドリーな操作
+- リアルタイムバリデーション（6文字以上、確認一致）
+- 変更後もログイン状態を維持
+- 適切なエラーメッセージとローディング状態の表示
 
 ### Supabase設定
 
@@ -269,8 +290,11 @@ console.log('現在のセッション:', session)
 
 ## 関連ファイル
 
-- `src/contexts/AuthContext.tsx` - 認証コンテキスト（簡素化済み）
+- `src/contexts/AuthContext.tsx` - 認証コンテキスト（簡素化済み、パスワード変更機能付き）
 - `src/components/Auth/AuthPage.tsx` - 認証ページ（ログインのみ）
 - `src/components/Auth/LoginForm.tsx` - ログインフォーム
+- `src/components/Auth/PasswordChangeForm.tsx` - パスワード変更フォーム
 - `src/components/Auth/PrivateRoute.tsx` - 認証保護ルート（簡素化済み）
+- `src/components/Header.tsx` - ヘッダーコンポーネント（パスワード変更UI統合済み）
 - `test/components/Auth/PrivateRoute.test.tsx` - 認証テスト
+- `test/components/Auth/PasswordChangeForm.test.tsx` - パスワード変更フォームテスト

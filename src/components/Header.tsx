@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Play } from '../types'
 import { useAuth } from '@/contexts/AuthContext'
+import { PasswordChangeForm } from './Auth/PasswordChangeForm'
 
 type MessageType = 'success' | 'error' | 'info'
 
@@ -32,6 +33,7 @@ const Header: React.FC<HeaderProps> = ({
   currentPlay 
 }) => {
   const { user, signOut } = useAuth()
+  const [isPasswordChangeOpen, setIsPasswordChangeOpen] = useState(false)
 
   // テスト環境ではモックユーザーを使用
   const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
@@ -47,6 +49,14 @@ const Header: React.FC<HeaderProps> = ({
       // ログアウト成功時のメッセージ（オプション）
       onShowMessage('ログアウトしました', 'info')
     }
+  }
+
+  const handlePasswordChangeSuccess = (message: string) => {
+    onShowMessage(message, 'success')
+  }
+
+  const handlePasswordChangeError = (message: string) => {
+    onShowMessage(message, 'error')
   }
   return (
     <header className="h-14 bg-white border-b border-gray-300 flex items-center justify-between px-4 shadow-sm">
@@ -145,16 +155,32 @@ const Header: React.FC<HeaderProps> = ({
               <span className="font-medium">{displayUser.email}</span>
             </div>
             {!isTestMode && (
-              <button 
-                onClick={handleSignOut}
-                className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-              >
-                ログアウト
-              </button>
+              <>
+                <button 
+                  onClick={() => setIsPasswordChangeOpen(true)}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                >
+                  パスワード変更
+                </button>
+                <button 
+                  onClick={handleSignOut}
+                  className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                >
+                  ログアウト
+                </button>
+              </>
             )}
           </div>
         )}
       </div>
+      
+      {/* パスワード変更モーダル */}
+      <PasswordChangeForm
+        isOpen={isPasswordChangeOpen}
+        onClose={() => setIsPasswordChangeOpen(false)}
+        onSuccess={handlePasswordChangeSuccess}
+        onError={handlePasswordChangeError}
+      />
     </header>
   )
 }
