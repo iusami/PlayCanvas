@@ -65,11 +65,7 @@ export const renderWithAuth = (
     )
   }
 
-  const Wrapper = ({ children }: { children?: React.ReactNode }) => (
-    <MockAuthProvider>{children}</MockAuthProvider>
-  )
-
-  return render(ui, { wrapper: Wrapper, ...renderOptions })
+  return render(ui, { wrapper: MockAuthProvider, ...renderOptions })
 }
 
 // 認証エラーのモック
