@@ -289,7 +289,7 @@ describe('BackupManager Component', () => {
         data: mockBackupData
       })
 
-      vi.mocked(BackupUtil.importAllData).mockReturnValue({
+      vi.mocked(BackupUtil.importAllData).mockResolvedValue({
         success: true,
         message: 'インポート成功',
         imported: { plays: 0, playlists: 0, formations: 0, settingsRestored: false }

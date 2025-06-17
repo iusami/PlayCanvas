@@ -86,10 +86,10 @@ describe('BackupManager', () => {
   describe('exportAllData', () => {
     it('すべてのデータを正常にエクスポートできること', async () => {
       // モックデータの設定
-      vi.mocked(PlayStorage.getAllPlays).mockReturnValue([mockPlay])
-      vi.mocked(PlaylistStorage.getAllPlaylists).mockReturnValue([mockPlaylist])
-      vi.mocked(FormationStorage.getAllFormations).mockReturnValue([mockFormation])
-      vi.mocked(SettingsStorage.getSettings).mockReturnValue(mockSettings)
+      vi.mocked(PlayStorage.getAllPlays).mockResolvedValue([mockPlay])
+      vi.mocked(PlaylistStorage.getAllPlaylists).mockResolvedValue([mockPlaylist])
+      vi.mocked(FormationStorage.getAllFormations).mockResolvedValue([mockFormation])
+      vi.mocked(SettingsStorage.getSettings).mockResolvedValue(mockSettings)
 
       const result = await BackupManager.exportAllData()
 
@@ -105,10 +105,10 @@ describe('BackupManager', () => {
     })
 
     it('データが空の場合でも正常にエクスポートできること', async () => {
-      vi.mocked(PlayStorage.getAllPlays).mockReturnValue([])
-      vi.mocked(PlaylistStorage.getAllPlaylists).mockReturnValue([])
-      vi.mocked(FormationStorage.getAllFormations).mockReturnValue([])
-      vi.mocked(SettingsStorage.getSettings).mockReturnValue({})
+      vi.mocked(PlayStorage.getAllPlays).mockResolvedValue([])
+      vi.mocked(PlaylistStorage.getAllPlaylists).mockResolvedValue([])
+      vi.mocked(FormationStorage.getAllFormations).mockResolvedValue([])
+      vi.mocked(SettingsStorage.getSettings).mockResolvedValue({})
 
       const result = await BackupManager.exportAllData()
 
@@ -215,13 +215,13 @@ describe('BackupManager', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(PlayStorage.getAllPlays).mockReturnValue([])
-      vi.mocked(PlaylistStorage.getAllPlaylists).mockReturnValue([])
-      vi.mocked(FormationStorage.getAllFormations).mockReturnValue([])
+      vi.mocked(PlayStorage.getAllPlays).mockResolvedValue([])
+      vi.mocked(PlaylistStorage.getAllPlaylists).mockResolvedValue([])
+      vi.mocked(FormationStorage.getAllFormations).mockResolvedValue([])
     })
 
-    it('新しいデータを正常にインポートできること', () => {
-      const result = BackupManager.importAllData(validBackupData)
+    it('新しいデータを正常にインポートできること', async () => {
+      const result = await BackupManager.importAllData(validBackupData)
 
       expect(result.success).toBe(true)
       expect(result.imported.plays).toBe(1)
@@ -232,32 +232,32 @@ describe('BackupManager', () => {
       expect(vi.mocked(FormationStorage.saveFormation)).toHaveBeenCalledTimes(1)
     })
 
-    it('上書きモードでデータをインポートできること', () => {
-      const result = BackupManager.importAllData(validBackupData, { overwrite: true })
+    it('上書きモードでデータをインポートできること', async () => {
+      const result = await BackupManager.importAllData(validBackupData, { overwrite: true })
 
       expect(result.success).toBe(true)
       expect(result.imported.settingsRestored).toBe(true)
       expect(vi.mocked(SettingsStorage.saveSettings)).toHaveBeenCalledWith(mockSettings)
     })
 
-    it('重複データをスキップできること', () => {
+    it('重複データをスキップできること', async () => {
       // 既存データに同じタイトルのプレイが存在する場合
-      vi.mocked(PlayStorage.getAllPlays).mockReturnValue([{
+      vi.mocked(PlayStorage.getAllPlays).mockResolvedValue([{
         ...mockPlay,
         id: 'existing-play',
         metadata: { ...mockPlay.metadata, title: 'Test Play' }
       }])
 
-      const result = BackupManager.importAllData(validBackupData, { skipDuplicates: true })
+      const result = await BackupManager.importAllData(validBackupData, { skipDuplicates: true })
 
       expect(result.success).toBe(true)
       expect(result.imported.plays).toBe(0) // 重複のためスキップ
     })
 
-    it('無効なバックアップデータの場合、エラーを返すこと', () => {
+    it('無効なバックアップデータの場合、エラーを返すこと', async () => {
       const invalidData = { invalid: 'data' } as any
 
-      const result = BackupManager.importAllData(invalidData)
+      const result = await BackupManager.importAllData(invalidData)
 
       expect(result.success).toBe(false)
       expect(result.errors).toBeDefined()
