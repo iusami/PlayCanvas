@@ -27,7 +27,9 @@
     "docker:build": "docker build -t football-canvas .",
     "docker:build:dev": "docker build --target development -t football-canvas:dev .",
     "docker:build:prod": "docker build --target production -t football-canvas:prod .",
-    "docker:clean": "docker-compose down -v && docker system prune -f"
+    "docker:clean": "docker-compose down -v && docker system prune -f",
+    "deploy:preview": "npm run build && npm run preview",
+    "deploy:check": "npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {
     "electron-store": "^8.1.0",
