@@ -15,7 +15,7 @@ vi.mock('@/components/Auth/AuthPage', () => ({
 }))
 
 describe('PrivateRoute Component', () => {
-  const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>
+  const mockUseAuth = vi.mocked(useAuth)
   
   beforeEach(() => {
     vi.clearAllMocks()
