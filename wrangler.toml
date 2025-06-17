@@ -12,13 +12,11 @@ vars = { NODE_ENV = "production" }
 # Preview/staging environment settings  
 vars = { NODE_ENV = "development" }
 
-# Build configuration
-[build]
-command = "npm run build"
-cwd = ""
-watch_dir = "src"
-
 # Pages configuration
-[pages_build_output_dir]
-# Output directory after build (should match vite.config.ts outDir)
-dir = "build"
+pages_build_output_dir = "build"
+
+# Build configuration (optional - usually configured in Cloudflare dashboard)
+# [build]
+# command = "npm run build"
+# cwd = ""
+# watch_dir = "src"
