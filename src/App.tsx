@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player, FIELD_CONSTRAINTS, TextBoxEntry } from './types'
+
+// メッセージの型定義
+type MessageType = 'success' | 'error' | 'info'
+interface Message {
+  text: string
+  type: MessageType
+}
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import CanvasArea, { CanvasAreaRef } from './components/CanvasArea'
@@ -61,7 +68,7 @@ const App: React.FC = () => {
   const [isMetadataFormOpen, setIsMetadataFormOpen] = useState(false)
   const [isPlayLibraryOpen, setIsPlayLibraryOpen] = useState(false)
   const [isPlaylistWorkspaceOpen, setIsPlaylistWorkspaceOpen] = useState(false)
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<Message | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
 
@@ -102,7 +109,7 @@ const App: React.FC = () => {
             console.log(`プレイ "${currentAppState.currentPlay.metadata.title}" を自動保存しました`)
           } catch (error) {
             console.error('自動保存に失敗しました:', error)
-            showSaveMessage('自動保存に失敗しました')
+            showMessage('自動保存に失敗しました', 'error')
           } finally {
             setIsSaving(false)
           }
@@ -185,9 +192,9 @@ const App: React.FC = () => {
     }
   }
 
-  const showSaveMessage = (message: string) => {
-    setSaveMessage(message)
-    setTimeout(() => setSaveMessage(null), 3000)
+  const showMessage = (text: string, type: MessageType = 'info') => {
+    setMessage({ text, type })
+    setTimeout(() => setMessage(null), 3000)
   }
 
   // 空のテキストボックス配列を生成する関数
@@ -272,9 +279,9 @@ const App: React.FC = () => {
       const savedPlays = PlayStorage.getAllPlays()
       setPlays(savedPlays)
       
-      showSaveMessage('プレイが保存されました')
+      showMessage('プレイが保存されました', 'success')
     } catch (error) {
-      showSaveMessage('保存に失敗しました')
+      showMessage('保存に失敗しました', 'error')
     }
   }
 
@@ -301,9 +308,9 @@ const App: React.FC = () => {
       setPlays(savedPlays)
       updateAppState({ currentPlay: newPlay })
       
-      showSaveMessage('新しいプレイとして保存されました')
+      showMessage('新しいプレイとして保存されました', 'success')
     } catch (error) {
-      showSaveMessage('保存に失敗しました')
+      showMessage('保存に失敗しました', 'error')
     }
   }
 
@@ -318,9 +325,9 @@ const App: React.FC = () => {
       const savedPlays = PlayStorage.getAllPlays()
       setPlays(savedPlays)
       updateAppState({ currentPlay: duplicatedPlay })
-      showSaveMessage('プレイが複製されました')
+      showMessage('プレイが複製されました', 'success')
     } else {
-      showSaveMessage('複製に失敗しました')
+      showMessage('複製に失敗しました', 'error')
     }
   }
 
@@ -334,7 +341,7 @@ const App: React.FC = () => {
     
     updateCurrentPlay({ metadata: updatedMetadata })
     setIsMetadataFormOpen(false)
-    showSaveMessage('プレイ情報が更新されました')
+    showMessage('プレイ情報が更新されました', 'success')
   }
 
   const selectPlay = (play: Play) => {
@@ -377,9 +384,9 @@ const App: React.FC = () => {
       })
       setPlaylists(PlaylistStorage.getAllPlaylists())
       
-      showSaveMessage('プレイが削除されました')
+      showMessage('プレイが削除されました', 'success')
     } catch (error) {
-      showSaveMessage('削除に失敗しました')
+      showMessage('削除に失敗しました', 'error')
     }
   }
 
@@ -397,9 +404,9 @@ const App: React.FC = () => {
       const savedPlaylists = PlaylistStorage.getAllPlaylists()
       setPlaylists(savedPlaylists)
       
-      showSaveMessage('プレイリストが作成されました')
+      showMessage('プレイリストが作成されました', 'success')
     } catch (error) {
-      showSaveMessage('プレイリストの作成に失敗しました')
+      showMessage('プレイリストの作成に失敗しました', 'error')
     }
   }
 
@@ -409,9 +416,9 @@ const App: React.FC = () => {
       const savedPlaylists = PlaylistStorage.getAllPlaylists()
       setPlaylists(savedPlaylists)
       
-      showSaveMessage('プレイリストが更新されました')
+      showMessage('プレイリストが更新されました', 'success')
     } catch (error) {
-      showSaveMessage('プレイリストの更新に失敗しました')
+      showMessage('プレイリストの更新に失敗しました', 'error')
     }
   }
 
@@ -421,9 +428,9 @@ const App: React.FC = () => {
       const savedPlaylists = PlaylistStorage.getAllPlaylists()
       setPlaylists(savedPlaylists)
       
-      showSaveMessage('プレイリストが削除されました')
+      showMessage('プレイリストが削除されました', 'success')
     } catch (error) {
-      showSaveMessage('プレイリストの削除に失敗しました')
+      showMessage('プレイリストの削除に失敗しました', 'error')
     }
   }
 
@@ -431,14 +438,14 @@ const App: React.FC = () => {
   const handleExportImage = () => {
     if (canvasAreaRef.current) {
       canvasAreaRef.current.exportAsImage()
-      showSaveMessage('画像をダウンロードしました')
+      showMessage('画像をダウンロードしました', 'success')
     }
   }
 
   const handlePrint = () => {
     if (canvasAreaRef.current) {
       canvasAreaRef.current.print()
-      showSaveMessage('印刷プレビューを開きました')
+      showMessage('印刷プレビューを開きました', 'info')
     }
   }
 
@@ -551,7 +558,7 @@ const App: React.FC = () => {
       play.id === updatedPlay.id ? updatedPlay : play
     ))
 
-    showSaveMessage(`${formation.name}フォーメーションを適用しました`)
+    showMessage(`${formation.name}フォーメーションを適用しました`, 'info')
   }
 
   const saveFormationTemplate = (name: string, description: string, type: 'offense' | 'defense') => {
@@ -561,7 +568,7 @@ const App: React.FC = () => {
     const teamPlayers = appState.currentPlay.players.filter(p => p.team === type)
     
     if (teamPlayers.length === 0) {
-      showSaveMessage(`${type === 'offense' ? 'オフェンス' : 'ディフェンス'}のプレイヤーがありません`)
+      showMessage(`${type === 'offense' ? 'オフェンス' : 'ディフェンス'}のプレイヤーがありません`, 'error')
       return
     }
 
@@ -581,9 +588,9 @@ const App: React.FC = () => {
       FormationStorage.saveFormation(newFormation)
       const updatedFormations = FormationStorage.getAllFormations()
       setFormations(updatedFormations)
-      showSaveMessage('フォーメーションテンプレートを保存しました')
+      showMessage('フォーメーションテンプレートを保存しました', 'success')
     } catch (error) {
-      showSaveMessage('テンプレートの保存に失敗しました')
+      showMessage('テンプレートの保存に失敗しました', 'error')
     }
   }
 
@@ -592,9 +599,9 @@ const App: React.FC = () => {
       FormationStorage.deleteFormation(formationId)
       const updatedFormations = FormationStorage.getAllFormations()
       setFormations(updatedFormations)
-      showSaveMessage('フォーメーションテンプレートを削除しました')
+      showMessage('フォーメーションテンプレートを削除しました', 'success')
     } catch (error) {
-      showSaveMessage('テンプレートの削除に失敗しました')
+      showMessage('テンプレートの削除に失敗しました', 'error')
     }
   }
 
@@ -610,6 +617,7 @@ const App: React.FC = () => {
         onPrint={handlePrint}
         onOpenPlayLibrary={() => setIsPlayLibraryOpen(true)}
         onOpenPlaylistWorkspace={() => setIsPlaylistWorkspaceOpen(true)}
+        onShowMessage={showMessage}
         currentPlay={appState.currentPlay}
       />
       
@@ -655,10 +663,31 @@ const App: React.FC = () => {
         />
       </div>
 
-      {/* 保存メッセージ */}
-      {saveMessage && (
-        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-          {saveMessage}
+      {/* メッセージ表示 */}
+      {message && (
+        <div className={`fixed top-20 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-50 ${
+          message.type === 'success' ? 'bg-green-500' :
+          message.type === 'error' ? 'bg-red-500' :
+          'bg-blue-500'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {message.type === 'success' && (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+              </svg>
+            )}
+            {message.type === 'error' && (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
+              </svg>
+            )}
+            {message.type === 'info' && (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
+              </svg>
+            )}
+            <span>{message.text}</span>
+          </div>
         </div>
       )}
 

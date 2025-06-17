@@ -2,6 +2,8 @@ import React from 'react'
 import { Play } from '../types'
 import { useAuth } from '@/contexts/AuthContext'
 
+type MessageType = 'success' | 'error' | 'info'
+
 interface HeaderProps {
   onNewPlay: () => void
   onSave: () => void
@@ -12,6 +14,7 @@ interface HeaderProps {
   onPrint?: () => void
   onOpenPlayLibrary: () => void
   onOpenPlaylistWorkspace: () => void
+  onShowMessage: (text: string, type?: MessageType) => void
   currentPlay: Play | null
 }
 
@@ -25,6 +28,7 @@ const Header: React.FC<HeaderProps> = ({
   onPrint,
   onOpenPlayLibrary,
   onOpenPlaylistWorkspace,
+  onShowMessage,
   currentPlay 
 }) => {
   const { user, signOut } = useAuth()
@@ -33,6 +37,11 @@ const Header: React.FC<HeaderProps> = ({
     const { error } = await signOut()
     if (error) {
       console.error('ログアウトエラー:', error)
+      // ユーザーフレンドリーなエラーメッセージを表示
+      onShowMessage('ログアウトに失敗しました。再度お試しください。', 'error')
+    } else {
+      // ログアウト成功時のメッセージ（オプション）
+      onShowMessage('ログアウトしました', 'info')
     }
   }
   return (
