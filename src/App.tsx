@@ -74,15 +74,26 @@ const App: React.FC = () => {
 
   // 初期化時にプレイ、プレイリスト、フォーメーションを読み込み
   useEffect(() => {
-    const savedPlays = PlayStorage.getAllPlays()
-    const savedPlaylists = PlaylistStorage.getAllPlaylists()
-    // デフォルトフォーメーションを初期化
-    FormationStorage.initializeDefaultFormations()
-    const savedFormations = FormationStorage.getAllFormations()
-    
-    setPlays(savedPlays)
-    setPlaylists(savedPlaylists)
-    setFormations(savedFormations)
+    const loadData = async () => {
+      try {
+        const savedPlays = await PlayStorage.getAllPlays()
+        const savedPlaylists = await PlaylistStorage.getAllPlaylists()
+        // デフォルトフォーメーションを初期化
+        await FormationStorage.initializeDefaultFormations()
+        const savedFormations = await FormationStorage.getAllFormations()
+        
+        setPlays(savedPlays)
+        setPlaylists(savedPlaylists)
+        setFormations(savedFormations)
+      } catch (error) {
+        console.error('データの初期化に失敗しました:', error)
+        // エラーが発生した場合も空のデータで初期化を継続
+        setPlays([])
+        setPlaylists([])
+        setFormations([])
+      }
+    }
+    loadData()
   }, [])
 
   // 現在のプレイの自動保存（一時的に無効化してテスト）
@@ -94,28 +105,36 @@ const App: React.FC = () => {
       // デバウンス: 1秒後に自動保存
       const timeoutId = setTimeout(async () => {
         // 最新のappStateを参照するためにcallback形式を使用
-        setAppState(currentAppState => {
-          if (!currentAppState.currentPlay) {
-            setIsSaving(false)
-            return currentAppState
-          }
-          
-          try {
-            PlayStorage.savePlay(currentAppState.currentPlay)
-            // プレイリストを更新
-            const savedPlays = PlayStorage.getAllPlays()
-            setPlays(savedPlays)
-            setLastSavedAt(new Date())
-            console.log(`プレイ "${currentAppState.currentPlay.metadata.title}" を自動保存しました`)
-          } catch (error) {
-            console.error('自動保存に失敗しました:', error)
-            showMessage('自動保存に失敗しました', 'error')
-          } finally {
-            setIsSaving(false)
-          }
-          
-          return currentAppState // 状態は変更しない
-        })
+        const autoSave = async () => {
+          setAppState(currentAppState => {
+            if (!currentAppState.currentPlay) {
+              setIsSaving(false)
+              return currentAppState
+            }
+            
+            // async処理は外部で実行
+            (async () => {
+              try {
+                if (currentAppState.currentPlay) {
+                  await PlayStorage.savePlay(currentAppState.currentPlay)
+                  // プレイリストを更新
+                  const savedPlays = await PlayStorage.getAllPlays()
+                  setPlays(savedPlays)
+                  setLastSavedAt(new Date())
+                  console.log(`プレイ "${currentAppState.currentPlay.metadata.title}" を自動保存しました`)
+                }
+              } catch (error) {
+                console.error('自動保存に失敗しました:', error)
+                showMessage('自動保存に失敗しました', 'error')
+              } finally {
+                setIsSaving(false)
+              }
+            })()
+            
+            return currentAppState // 状態は変更しない
+          })
+        }
+        autoSave()
       }, 1000)
 
       return () => {
@@ -127,10 +146,10 @@ const App: React.FC = () => {
 
   // ページ離脱時の最終保存
   useEffect(() => {
-    const handleBeforeUnload = () => {
+    const handleBeforeUnload = async () => {
       if (appState.currentPlay) {
         try {
-          PlayStorage.savePlay(appState.currentPlay)
+          await PlayStorage.savePlay(appState.currentPlay)
           console.log('ページ離脱時に最終保存を実行しました')
         } catch (error) {
           console.error('最終保存に失敗しました:', error)
@@ -269,14 +288,14 @@ const App: React.FC = () => {
     updateAppState({ currentPlay: updatedPlay })
   }
 
-  const saveCurrentPlay = () => {
+  const saveCurrentPlay = async () => {
     if (!appState.currentPlay) return
     
     try {
-      PlayStorage.savePlay(appState.currentPlay)
+      await PlayStorage.savePlay(appState.currentPlay)
       
       // プレイリストを更新
-      const savedPlays = PlayStorage.getAllPlays()
+      const savedPlays = await PlayStorage.getAllPlays()
       setPlays(savedPlays)
       
       showMessage('プレイが保存されました', 'success')
@@ -285,7 +304,7 @@ const App: React.FC = () => {
     }
   }
 
-  const saveAsNewPlay = () => {
+  const saveAsNewPlay = async () => {
     if (!appState.currentPlay) return
     
     const newPlay: Play = {
@@ -301,10 +320,10 @@ const App: React.FC = () => {
     }
     
     try {
-      PlayStorage.savePlay(newPlay)
+      await PlayStorage.savePlay(newPlay)
       
       // プレイリストを更新
-      const savedPlays = PlayStorage.getAllPlays()
+      const savedPlays = await PlayStorage.getAllPlays()
       setPlays(savedPlays)
       updateAppState({ currentPlay: newPlay })
       
@@ -319,10 +338,10 @@ const App: React.FC = () => {
     duplicatePlay(appState.currentPlay.id)
   }
 
-  const duplicatePlay = (playId: string) => {
-    const duplicatedPlay = PlayStorage.duplicatePlay(playId)
+  const duplicatePlay = async (playId: string) => {
+    const duplicatedPlay = await PlayStorage.duplicatePlay(playId)
     if (duplicatedPlay) {
-      const savedPlays = PlayStorage.getAllPlays()
+      const savedPlays = await PlayStorage.getAllPlays()
       setPlays(savedPlays)
       updateAppState({ currentPlay: duplicatedPlay })
       showMessage('プレイが複製されました', 'success')
@@ -358,12 +377,12 @@ const App: React.FC = () => {
     })
   }
 
-  const deletePlay = (playId: string) => {
+  const deletePlay = async (playId: string) => {
     try {
-      PlayStorage.deletePlay(playId)
+      await PlayStorage.deletePlay(playId)
       
       // プレイリストを更新
-      const savedPlays = PlayStorage.getAllPlays()
+      const savedPlays = await PlayStorage.getAllPlays()
       setPlays(savedPlays)
       
       // 削除されたプレイが現在選択中の場合、選択を解除
@@ -377,12 +396,13 @@ const App: React.FC = () => {
         playIds: playlist.playIds.filter(id => id !== playId),
         updatedAt: new Date()
       }))
-      updatedPlaylists.forEach(playlist => {
+      for (const playlist of updatedPlaylists) {
         if (playlist.playIds.length !== playlists.find(p => p.id === playlist.id)?.playIds.length) {
-          PlaylistStorage.savePlaylist(playlist)
+          await PlaylistStorage.savePlaylist(playlist)
         }
-      })
-      setPlaylists(PlaylistStorage.getAllPlaylists())
+      }
+      const savedPlaylists = await PlaylistStorage.getAllPlaylists()
+      setPlaylists(savedPlaylists)
       
       showMessage('プレイが削除されました', 'success')
     } catch (error) {
@@ -391,7 +411,7 @@ const App: React.FC = () => {
   }
 
   // プレイリスト管理関数
-  const createPlaylist = (playlistData: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const createPlaylist = async (playlistData: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const newPlaylist: Playlist = {
         ...playlistData,
@@ -400,8 +420,8 @@ const App: React.FC = () => {
         updatedAt: new Date()
       }
       
-      PlaylistStorage.savePlaylist(newPlaylist)
-      const savedPlaylists = PlaylistStorage.getAllPlaylists()
+      await PlaylistStorage.savePlaylist(newPlaylist)
+      const savedPlaylists = await PlaylistStorage.getAllPlaylists()
       setPlaylists(savedPlaylists)
       
       showMessage('プレイリストが作成されました', 'success')
@@ -410,10 +430,10 @@ const App: React.FC = () => {
     }
   }
 
-  const updatePlaylist = (playlist: Playlist) => {
+  const updatePlaylist = async (playlist: Playlist) => {
     try {
-      PlaylistStorage.savePlaylist(playlist)
-      const savedPlaylists = PlaylistStorage.getAllPlaylists()
+      await PlaylistStorage.savePlaylist(playlist)
+      const savedPlaylists = await PlaylistStorage.getAllPlaylists()
       setPlaylists(savedPlaylists)
       
       showMessage('プレイリストが更新されました', 'success')
@@ -422,10 +442,10 @@ const App: React.FC = () => {
     }
   }
 
-  const deletePlaylist = (playlistId: string) => {
+  const deletePlaylist = async (playlistId: string) => {
     try {
-      PlaylistStorage.deletePlaylist(playlistId)
-      const savedPlaylists = PlaylistStorage.getAllPlaylists()
+      await PlaylistStorage.deletePlaylist(playlistId)
+      const savedPlaylists = await PlaylistStorage.getAllPlaylists()
       setPlaylists(savedPlaylists)
       
       showMessage('プレイリストが削除されました', 'success')
@@ -561,7 +581,7 @@ const App: React.FC = () => {
     showMessage(`${formation.name}フォーメーションを適用しました`, 'info')
   }
 
-  const saveFormationTemplate = (name: string, description: string, type: 'offense' | 'defense') => {
+  const saveFormationTemplate = async (name: string, description: string, type: 'offense' | 'defense') => {
     if (!appState.currentPlay) return
 
     // 指定されたチームのプレイヤーのみを取得
@@ -585,8 +605,8 @@ const App: React.FC = () => {
     }
 
     try {
-      FormationStorage.saveFormation(newFormation)
-      const updatedFormations = FormationStorage.getAllFormations()
+      await FormationStorage.saveFormation(newFormation)
+      const updatedFormations = await FormationStorage.getAllFormations()
       setFormations(updatedFormations)
       showMessage('フォーメーションテンプレートを保存しました', 'success')
     } catch (error) {
@@ -594,10 +614,10 @@ const App: React.FC = () => {
     }
   }
 
-  const deleteFormationTemplate = (formationId: string) => {
+  const deleteFormationTemplate = async (formationId: string) => {
     try {
-      FormationStorage.deleteFormation(formationId)
-      const updatedFormations = FormationStorage.getAllFormations()
+      await FormationStorage.deleteFormation(formationId)
+      const updatedFormations = await FormationStorage.getAllFormations()
       setFormations(updatedFormations)
       showMessage('フォーメーションテンプレートを削除しました', 'success')
     } catch (error) {

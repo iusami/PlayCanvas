@@ -82,16 +82,16 @@ describe('PlayStorage', () => {
   })
 
   describe('getAllPlays', () => {
-    it('空のlocalStorageからは空配列を返すこと', () => {
-      const plays = PlayStorage.getAllPlays()
+    it('空のlocalStorageからは空配列を返すこと', async () => {
+      const plays = await PlayStorage.getAllPlays()
       expect(plays).toEqual([])
     })
 
-    it('有効なJSONデータからプレイ配列を復元すること', () => {
+    it('有効なJSONデータからプレイ配列を復元すること', async () => {
       const mockPlays = [createMockPlay()]
       localStorageMock.setItem('football-canvas-plays', JSON.stringify(mockPlays))
 
-      const plays = PlayStorage.getAllPlays()
+      const plays = await PlayStorage.getAllPlays()
       
       expect(plays).toHaveLength(1)
       expect(plays[0].id).toBe('test-play-1')
@@ -100,40 +100,40 @@ describe('PlayStorage', () => {
       expect(plays[0].metadata.updatedAt).toBeInstanceOf(Date)
     })
 
-    it('無効なJSONデータの場合は空配列を返すこと', () => {
+    it('無効なJSONデータの場合は空配列を返すこと', async () => {
       localStorageMock.setItem('football-canvas-plays', 'invalid-json')
 
-      const plays = PlayStorage.getAllPlays()
+      const plays = await PlayStorage.getAllPlays()
       expect(plays).toEqual([])
     })
   })
 
   describe('getPlay', () => {
-    it('指定したIDのプレイを返すこと', () => {
+    it('指定したIDのプレイを返すこと', async () => {
       const mockPlays = [createMockPlay('play-1'), createMockPlay('play-2', 'プレイ2')]
       localStorageMock.setItem('football-canvas-plays', JSON.stringify(mockPlays))
 
-      const play = PlayStorage.getPlay('play-2')
+      const play = await PlayStorage.getPlay('play-2')
       
       expect(play).not.toBeNull()
       expect(play?.id).toBe('play-2')
       expect(play?.metadata.title).toBe('プレイ2')
     })
 
-    it('存在しないIDの場合はnullを返すこと', () => {
+    it('存在しないIDの場合はnullを返すこと', async () => {
       const mockPlays = [createMockPlay()]
       localStorageMock.setItem('football-canvas-plays', JSON.stringify(mockPlays))
 
-      const play = PlayStorage.getPlay('non-existent-id')
+      const play = await PlayStorage.getPlay('non-existent-id')
       expect(play).toBeNull()
     })
   })
 
   describe('savePlay', () => {
-    it('新しいプレイを保存できること', () => {
+    it('新しいプレイを保存できること', async () => {
       const newPlay = createMockPlay()
       
-      PlayStorage.savePlay(newPlay)
+      await PlayStorage.savePlay(newPlay)
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'football-canvas-plays',
@@ -141,20 +141,20 @@ describe('PlayStorage', () => {
       )
     })
 
-    it('既存のプレイを更新できること', () => {
+    it('既存のプレイを更新できること', async () => {
       const originalPlay = createMockPlay()
       const updatedPlay = { ...originalPlay, metadata: { ...originalPlay.metadata, title: '更新されたプレイ' } }
       
       localStorageMock.setItem('football-canvas-plays', JSON.stringify([originalPlay]))
       
-      PlayStorage.savePlay(updatedPlay)
+      await PlayStorage.savePlay(updatedPlay)
       
       const savedPlays = JSON.parse(localStorageMock.store['football-canvas-plays'])
       expect(savedPlays).toHaveLength(1)
       expect(savedPlays[0].metadata.title).toBe('更新されたプレイ')
     })
 
-    it('保存エラーが発生した場合は例外をスローすること', () => {
+    it('保存エラーが発生した場合は例外をスローすること', async () => {
       // localStorageのsetItemをエラーにする
       localStorageMock.setItem.mockImplementation(() => {
         throw new Error('Storage quota exceeded')
@@ -162,37 +162,37 @@ describe('PlayStorage', () => {
 
       const newPlay = createMockPlay()
       
-      expect(() => PlayStorage.savePlay(newPlay)).toThrow('プレイの保存に失敗しました')
+      await expect(async () => await PlayStorage.savePlay(newPlay)).rejects.toThrow('プレイの保存に失敗しました')
     })
   })
 
   describe('deletePlay', () => {
-    it('指定したIDのプレイを削除できること', () => {
+    it('指定したIDのプレイを削除できること', async () => {
       const mockPlays = [createMockPlay('play-1'), createMockPlay('play-2')]
       localStorageMock.setItem('football-canvas-plays', JSON.stringify(mockPlays))
 
-      PlayStorage.deletePlay('play-1')
+      await PlayStorage.deletePlay('play-1')
 
       const savedPlays = JSON.parse(localStorageMock.store['football-canvas-plays'])
       expect(savedPlays).toHaveLength(1)
       expect(savedPlays[0].id).toBe('play-2')
     })
 
-    it('削除エラーが発生した場合は例外をスローすること', () => {
+    it('削除エラーが発生した場合は例外をスローすること', async () => {
       localStorageMock.setItem.mockImplementation(() => {
         throw new Error('Storage error')
       })
 
-      expect(() => PlayStorage.deletePlay('test-id')).toThrow('プレイの削除に失敗しました')
+      await expect(async () => await PlayStorage.deletePlay('test-id')).rejects.toThrow('プレイの削除に失敗しました')
     })
   })
 
   describe('duplicatePlay', () => {
-    it('指定したIDのプレイを複製できること', () => {
+    it('指定したIDのプレイを複製できること', async () => {
       const originalPlay = createMockPlay('original-id', 'オリジナルプレイ')
       localStorageMock.setItem('football-canvas-plays', JSON.stringify([originalPlay]))
 
-      const duplicatedPlay = PlayStorage.duplicatePlay('original-id')
+      const duplicatedPlay = await PlayStorage.duplicatePlay('original-id')
 
       expect(duplicatedPlay).not.toBeNull()
       expect(duplicatedPlay?.id).not.toBe('original-id') // 新しいIDが生成される
@@ -201,36 +201,36 @@ describe('PlayStorage', () => {
       expect(duplicatedPlay?.metadata.updatedAt).toBeInstanceOf(Date)
     })
 
-    it('存在しないIDの場合はnullを返すこと', () => {
-      const duplicatedPlay = PlayStorage.duplicatePlay('non-existent-id')
+    it('存在しないIDの場合はnullを返すこと', async () => {
+      const duplicatedPlay = await PlayStorage.duplicatePlay('non-existent-id')
       expect(duplicatedPlay).toBeNull()
     })
   })
 
   describe('exportPlay & importPlay', () => {
-    it('プレイをJSONとしてエクスポートできること', () => {
+    it('プレイをJSONとしてエクスポートできること', async () => {
       const mockPlay = createMockPlay()
       localStorageMock.setItem('football-canvas-plays', JSON.stringify([mockPlay]))
 
-      const exportedJson = PlayStorage.exportPlay('test-play-1')
+      const exportedJson = await PlayStorage.exportPlay('test-play-1')
       
       expect(exportedJson).not.toBeNull()
       expect(() => JSON.parse(exportedJson!)).not.toThrow()
     })
 
-    it('JSONからプレイをインポートできること', () => {
+    it('JSONからプレイをインポートできること', async () => {
       const mockPlay = createMockPlay('original-id', 'インポート元プレイ')
       const jsonString = JSON.stringify(mockPlay)
 
-      const importedPlay = PlayStorage.importPlay(jsonString)
+      const importedPlay = await PlayStorage.importPlay(jsonString)
 
       expect(importedPlay).not.toBeNull()
       expect(importedPlay?.id).not.toBe('original-id') // 新しいIDが生成される
       expect(importedPlay?.metadata.title).toBe('インポート元プレイ (インポート)')
     })
 
-    it('無効なJSONの場合はnullを返すこと', () => {
-      const importedPlay = PlayStorage.importPlay('invalid-json')
+    it('無効なJSONの場合はnullを返すこと', async () => {
+      const importedPlay = await PlayStorage.importPlay('invalid-json')
       expect(importedPlay).toBeNull()
     })
   })
@@ -242,16 +242,16 @@ describe('PlaylistStorage', () => {
   })
 
   describe('getAllPlaylists', () => {
-    it('空のlocalStorageからは空配列を返すこと', () => {
-      const playlists = PlaylistStorage.getAllPlaylists()
+    it('空のlocalStorageからは空配列を返すこと', async () => {
+      const playlists = await PlaylistStorage.getAllPlaylists()
       expect(playlists).toEqual([])
     })
 
-    it('有効なJSONデータからプレイリスト配列を復元すること', () => {
+    it('有効なJSONデータからプレイリスト配列を復元すること', async () => {
       const mockPlaylists = [createMockPlaylist()]
       localStorageMock.setItem('football-canvas-playlists', JSON.stringify(mockPlaylists))
 
-      const playlists = PlaylistStorage.getAllPlaylists()
+      const playlists = await PlaylistStorage.getAllPlaylists()
       
       expect(playlists).toHaveLength(1)
       expect(playlists[0].id).toBe('test-playlist-1')
@@ -261,10 +261,10 @@ describe('PlaylistStorage', () => {
   })
 
   describe('savePlaylist & deletePlaylist', () => {
-    it('新しいプレイリストを保存できること', () => {
+    it('新しいプレイリストを保存できること', async () => {
       const newPlaylist = createMockPlaylist()
       
-      PlaylistStorage.savePlaylist(newPlaylist)
+      await PlaylistStorage.savePlaylist(newPlaylist)
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'football-canvas-playlists',
@@ -272,11 +272,11 @@ describe('PlaylistStorage', () => {
       )
     })
 
-    it('プレイリストを削除できること', () => {
+    it('プレイリストを削除できること', async () => {
       const mockPlaylists = [createMockPlaylist('playlist-1'), createMockPlaylist('playlist-2')]
       localStorageMock.setItem('football-canvas-playlists', JSON.stringify(mockPlaylists))
 
-      PlaylistStorage.deletePlaylist('playlist-1')
+      await PlaylistStorage.deletePlaylist('playlist-1')
 
       const savedPlaylists = JSON.parse(localStorageMock.store['football-canvas-playlists'])
       expect(savedPlaylists).toHaveLength(1)
@@ -290,17 +290,17 @@ describe('SettingsStorage', () => {
     localStorageMock.clear()
   })
 
-  it('設定を保存・取得できること', () => {
+  it('設定を保存・取得できること', async () => {
     const testSettings = { theme: 'dark', language: 'ja' }
     
-    SettingsStorage.saveSettings(testSettings)
-    const retrievedSettings = SettingsStorage.getSettings()
+    await SettingsStorage.saveSettings(testSettings)
+    const retrievedSettings = await SettingsStorage.getSettings()
     
     expect(retrievedSettings).toEqual(testSettings)
   })
 
-  it('設定が存在しない場合は空オブジェクトを返すこと', () => {
-    const settings = SettingsStorage.getSettings()
+  it('設定が存在しない場合は空オブジェクトを返すこと', async () => {
+    const settings = await SettingsStorage.getSettings()
     expect(settings).toEqual({})
   })
 })
@@ -347,16 +347,16 @@ describe('FormationStorage', () => {
   })
 
   describe('getAllFormations', () => {
-    it('空のlocalStorageからは空配列を返すこと', () => {
-      const formations = FormationStorage.getAllFormations()
+    it('空のlocalStorageからは空配列を返すこと', async () => {
+      const formations = await FormationStorage.getAllFormations()
       expect(formations).toEqual([])
     })
 
-    it('有効なJSONデータからフォーメーション配列を復元すること', () => {
+    it('有効なJSONデータからフォーメーション配列を復元すること', async () => {
       const mockFormations = [createMockFormation()]
       localStorageMock.setItem('football-canvas-formations', JSON.stringify(mockFormations))
 
-      const formations = FormationStorage.getAllFormations()
+      const formations = await FormationStorage.getAllFormations()
       
       expect(formations).toHaveLength(1)
       expect(formations[0].id).toBe('test-formation-1')
@@ -366,14 +366,14 @@ describe('FormationStorage', () => {
   })
 
   describe('getFormationsByType', () => {
-    it('指定したタイプのフォーメーションのみを返すこと', () => {
+    it('指定したタイプのフォーメーションのみを返すこと', async () => {
       const offenseFormation = createMockFormation('offense-1', 'オフェンス')
       const defenseFormation = { ...createMockFormation('defense-1', 'ディフェンス'), type: 'defense' as const }
       
       localStorageMock.setItem('football-canvas-formations', JSON.stringify([offenseFormation, defenseFormation]))
 
-      const offenseFormations = FormationStorage.getFormationsByType('offense')
-      const defenseFormations = FormationStorage.getFormationsByType('defense')
+      const offenseFormations = await FormationStorage.getFormationsByType('offense')
+      const defenseFormations = await FormationStorage.getFormationsByType('defense')
       
       expect(offenseFormations).toHaveLength(1)
       expect(offenseFormations[0].type).toBe('offense')
@@ -383,10 +383,10 @@ describe('FormationStorage', () => {
   })
 
   describe('saveFormation & deleteFormation', () => {
-    it('新しいフォーメーションを保存できること', () => {
+    it('新しいフォーメーションを保存できること', async () => {
       const newFormation = createMockFormation()
       
-      FormationStorage.saveFormation(newFormation)
+      await FormationStorage.saveFormation(newFormation)
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'football-canvas-formations',
@@ -394,11 +394,11 @@ describe('FormationStorage', () => {
       )
     })
 
-    it('フォーメーションを削除できること', () => {
+    it('フォーメーションを削除できること', async () => {
       const mockFormations = [createMockFormation('formation-1'), createMockFormation('formation-2')]
       localStorageMock.setItem('football-canvas-formations', JSON.stringify(mockFormations))
 
-      FormationStorage.deleteFormation('formation-1')
+      await FormationStorage.deleteFormation('formation-1')
 
       const savedFormations = JSON.parse(localStorageMock.store['football-canvas-formations'])
       expect(savedFormations).toHaveLength(1)

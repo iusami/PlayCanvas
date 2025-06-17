@@ -8,25 +8,25 @@ import { PlayStorage, PlaylistStorage, FormationStorage } from '../../src/utils/
 // モジュールをモック化
 vi.mock('../../src/utils/storage', () => ({
   PlayStorage: {
-    getAllPlays: vi.fn(() => []),
-    savePlay: vi.fn(),
-    deletePlay: vi.fn(),
-    duplicatePlay: vi.fn(),
-    getPlay: vi.fn(),
-    exportPlay: vi.fn(),
-    importPlay: vi.fn()
+    getAllPlays: vi.fn(() => Promise.resolve([])),
+    savePlay: vi.fn(() => Promise.resolve()),
+    deletePlay: vi.fn(() => Promise.resolve()),
+    duplicatePlay: vi.fn(() => Promise.resolve()),
+    getPlay: vi.fn(() => Promise.resolve()),
+    exportPlay: vi.fn(() => Promise.resolve()),
+    importPlay: vi.fn(() => Promise.resolve())
   },
   PlaylistStorage: {
-    getAllPlaylists: vi.fn(() => []),
-    savePlaylist: vi.fn(),
-    deletePlaylist: vi.fn()
+    getAllPlaylists: vi.fn(() => Promise.resolve([])),
+    savePlaylist: vi.fn(() => Promise.resolve()),
+    deletePlaylist: vi.fn(() => Promise.resolve())
   },
   FormationStorage: {
-    getAllFormations: vi.fn(() => []),
-    initializeDefaultFormations: vi.fn(),
-    saveFormation: vi.fn(),
-    deleteFormation: vi.fn(),
-    getFormationsByType: vi.fn(() => [])
+    getAllFormations: vi.fn(() => Promise.resolve([])),
+    initializeDefaultFormations: vi.fn(() => Promise.resolve()),
+    saveFormation: vi.fn(() => Promise.resolve()),
+    deleteFormation: vi.fn(() => Promise.resolve()),
+    getFormationsByType: vi.fn(() => Promise.resolve([]))
   }
 }))
 
@@ -139,11 +139,11 @@ describe('App Component', () => {
     // モックをリセット
     vi.clearAllMocks()
     
-    // デフォルトのモック実装を設定
-    mockPlayStorage.getAllPlays.mockReturnValue([])
-    mockPlaylistStorage.getAllPlaylists.mockReturnValue([])
-    mockFormationStorage.getAllFormations.mockReturnValue([])
-    mockFormationStorage.initializeDefaultFormations.mockImplementation(() => {})
+    // デフォルトのモック実装を設定（非同期）
+    mockPlayStorage.getAllPlays.mockResolvedValue([])
+    mockPlaylistStorage.getAllPlaylists.mockResolvedValue([])
+    mockFormationStorage.getAllFormations.mockResolvedValue([])
+    mockFormationStorage.initializeDefaultFormations.mockResolvedValue(undefined)
   })
 
   describe('初期レンダリング', () => {
@@ -195,16 +195,19 @@ describe('App Component', () => {
   })
 
   describe('ストレージとの連携', () => {
-    it('初期化時にストレージからデータを読み込むこと', () => {
+    it('初期化時にストレージからデータを読み込むこと', async () => {
       render(<App />)
       
-      expect(mockPlayStorage.getAllPlays).toHaveBeenCalled()
-      expect(mockPlaylistStorage.getAllPlaylists).toHaveBeenCalled()
-      expect(mockFormationStorage.getAllFormations).toHaveBeenCalled()
-      expect(mockFormationStorage.initializeDefaultFormations).toHaveBeenCalled()
+      // 非同期のuseEffect内でストレージ関数が呼ばれるのを待つ
+      await waitFor(() => {
+        expect(mockPlayStorage.getAllPlays).toHaveBeenCalled()
+        expect(mockPlaylistStorage.getAllPlaylists).toHaveBeenCalled()
+        expect(mockFormationStorage.getAllFormations).toHaveBeenCalled()
+        expect(mockFormationStorage.initializeDefaultFormations).toHaveBeenCalled()
+      })
     })
 
-    it('ストレージに保存されたプレイがある場合、その数が反映されること', () => {
+    it('ストレージに保存されたプレイがある場合、その数が反映されること', async () => {
       const mockPlays = [
         {
           id: 'play-1',
@@ -217,9 +220,14 @@ describe('App Component', () => {
         }
       ]
       
-      mockPlayStorage.getAllPlays.mockReturnValue(mockPlays)
+      mockPlayStorage.getAllPlays.mockResolvedValue(mockPlays)
       
       render(<App />)
+      
+      // 非同期でデータが読み込まれるのを待つ
+      await waitFor(() => {
+        expect(mockPlayStorage.getAllPlays).toHaveBeenCalled()
+      })
       
       // プレイライブラリを開いて確認
       // 注意: この部分は実際のUI実装によって調整が必要
@@ -227,16 +235,36 @@ describe('App Component', () => {
   })
 
   describe('エラーハンドリング', () => {
-    it('ストレージエラーが発生した場合の処理', () => {
+    it('ストレージエラーが発生した場合にアプリが正常にレンダリングされること', async () => {
       // ストレージでエラーが発生する場合をシミュレート
-      mockPlayStorage.getAllPlays.mockImplementation(() => {
-        throw new Error('Storage error')
+      mockPlayStorage.getAllPlays.mockRejectedValue(new Error('Storage error'))
+      mockPlaylistStorage.getAllPlaylists.mockRejectedValue(new Error('Storage error'))
+      mockFormationStorage.initializeDefaultFormations.mockRejectedValue(new Error('Storage error'))
+      mockFormationStorage.getAllFormations.mockRejectedValue(new Error('Storage error'))
+      
+      // unhandled rejectionをモック（実際のアプリではエラーハンドリングされていない）
+      const originalOnError = window.addEventListener
+      const errorSpy = vi.fn()
+      window.addEventListener = vi.fn((event, handler) => {
+        if (event === 'unhandledrejection') {
+          errorSpy()
+        }
+        return originalOnError.call(window, event, handler)
       })
       
-      // エラーが発生した場合のアプリの動作を確認
-      // 実際のアプリではtry-catchでエラーハンドリングをしているかもしれないので、
-      // エラーが発生することを期待するテストに変更
-      expect(() => render(<App />)).toThrow('Storage error')
+      // アプリをレンダリング - エラーが発生してもクラッシュしない
+      const { container } = render(<App />)
+      
+      // UIは正常にレンダリングされる
+      expect(screen.getByTestId('header')).toBeInTheDocument()
+      expect(screen.getByTestId('sidebar')).toBeInTheDocument()
+      expect(screen.getByTestId('canvas-area')).toBeInTheDocument()
+      
+      // エラーが発生したが、アプリは動作し続ける
+      expect(container.firstChild).toBeInTheDocument()
+      
+      // モックを復元
+      window.addEventListener = originalOnError
     })
   })
 
@@ -288,10 +316,21 @@ describe('App Component', () => {
 describe('App Component Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    
+    // デフォルトのモック実装を設定（非同期）
+    mockPlayStorage.getAllPlays.mockResolvedValue([])
+    mockPlaylistStorage.getAllPlaylists.mockResolvedValue([])
+    mockFormationStorage.getAllFormations.mockResolvedValue([])
+    mockFormationStorage.initializeDefaultFormations.mockResolvedValue(undefined)
   })
 
   it('コンポーネント間でデータが正しく連携されること', async () => {
     render(<App />)
+    
+    // 初期化が完了するのを待つ
+    await waitFor(() => {
+      expect(mockPlayStorage.getAllPlays).toHaveBeenCalled()
+    })
     
     // 新しいプレイを作成
     const newPlayButton = screen.getByTestId('new-play-button')
