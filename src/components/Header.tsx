@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Play } from '../types'
 import { useAuth } from '@/contexts/AuthContext'
 import { PasswordChangeForm } from './Auth/PasswordChangeForm'
+import { BackupManager } from './Backup/BackupManager'
 
 type MessageType = 'success' | 'error' | 'info'
 
@@ -34,6 +35,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, signOut } = useAuth()
   const [isPasswordChangeOpen, setIsPasswordChangeOpen] = useState(false)
+  const [isBackupManagerOpen, setIsBackupManagerOpen] = useState(false)
 
   // テスト環境ではモックユーザーを使用
   const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
@@ -56,6 +58,14 @@ const Header: React.FC<HeaderProps> = ({
   }
 
   const handlePasswordChangeError = (message: string) => {
+    onShowMessage(message, 'error')
+  }
+
+  const handleBackupSuccess = (message: string) => {
+    onShowMessage(message, 'success')
+  }
+
+  const handleBackupError = (message: string) => {
     onShowMessage(message, 'error')
   }
   return (
@@ -157,6 +167,12 @@ const Header: React.FC<HeaderProps> = ({
             {!isTestMode && (
               <>
                 <button 
+                  onClick={() => setIsBackupManagerOpen(true)}
+                  className="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded transition-colors"
+                >
+                  バックアップ
+                </button>
+                <button 
                   onClick={() => setIsPasswordChangeOpen(true)}
                   className="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
                 >
@@ -180,6 +196,14 @@ const Header: React.FC<HeaderProps> = ({
         onClose={() => setIsPasswordChangeOpen(false)}
         onSuccess={handlePasswordChangeSuccess}
         onError={handlePasswordChangeError}
+      />
+      
+      {/* バックアップ管理モーダル */}
+      <BackupManager
+        isOpen={isBackupManagerOpen}
+        onClose={() => setIsBackupManagerOpen(false)}
+        onSuccess={handleBackupSuccess}
+        onError={handleBackupError}
       />
     </header>
   )
