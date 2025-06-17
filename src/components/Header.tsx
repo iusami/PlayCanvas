@@ -1,5 +1,6 @@
 import React from 'react'
 import { Play } from '../types'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface HeaderProps {
   onNewPlay: () => void
@@ -26,6 +27,14 @@ const Header: React.FC<HeaderProps> = ({
   onOpenPlaylistWorkspace,
   currentPlay 
 }) => {
+  const { user, signOut } = useAuth()
+
+  const handleSignOut = async () => {
+    const { error } = await signOut()
+    if (error) {
+      console.error('ログアウトエラー:', error)
+    }
+  }
   return (
     <header className="h-14 bg-white border-b border-gray-300 flex items-center justify-between px-4 shadow-sm">
       <div className="flex items-center space-x-4">
@@ -115,6 +124,21 @@ const Header: React.FC<HeaderProps> = ({
             </>
           )}
         </div>
+        
+        {/* ユーザー情報とログアウト */}
+        {user && (
+          <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-300">
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">{user.email}</span>
+            </div>
+            <button 
+              onClick={handleSignOut}
+              className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+            >
+              ログアウト
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )
