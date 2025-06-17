@@ -7,10 +7,8 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string) => Promise<{ error: any }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<{ error: any }>
-  signInWithProvider: (provider: 'google' | 'github') => Promise<{ error: any }>
 }
 
 // AuthContext 作成
@@ -68,18 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [isTestMode])
 
-  // サインアップ
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        // メール認証完了後のリダイレクト先
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
-    })
-    return { error }
-  }
 
   // サインイン
   const signIn = async (email: string, password: string) => {
@@ -96,25 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error }
   }
 
-  // ソーシャルログイン
-  const signInWithProvider = async (provider: 'google' | 'github') => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
-    })
-    return { error }
-  }
 
   const value: AuthContextType = {
     user,
     session,
     loading,
-    signUp,
     signIn,
-    signOut,
-    signInWithProvider
+    signOut
   }
 
   return (
