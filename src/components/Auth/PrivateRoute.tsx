@@ -33,8 +33,8 @@ export function PrivateRoute({ children }: PrivateRouteProps) {
     return <AuthPage />
   }
 
-  // 認証済みだがメール未確認の場合は承認待ち画面を表示
-  if (user && !user.email_confirmed_at) {
+  // 管理者承認が必要かつメール未確認の場合は承認待ち画面を表示
+  if (user && user.user_metadata?.manual_approval_required && !user.email_confirmed_at) {
     return <PendingApprovalPage />
   }
 

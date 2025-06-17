@@ -44,6 +44,8 @@ Football Canvasは、Supabaseを使用した認証システムを実装してお
 
 ### 管理者承認の仕組み
 
+#### サインアップ時のメタデータ設定
+
 ```typescript
 // src/contexts/AuthContext.tsx
 const signUp = async (email: string, password: string) => {
@@ -63,6 +65,23 @@ const signUp = async (email: string, password: string) => {
   return { error }
 }
 ```
+
+#### 承認状態の判定ロジック
+
+```typescript
+// src/components/Auth/PrivateRoute.tsx
+// 管理者承認が必要かつメール未確認の場合は承認待ち画面を表示
+if (user && user.user_metadata?.manual_approval_required && !user.email_confirmed_at) {
+  return <PendingApprovalPage />
+}
+```
+
+この判定により以下の制御が行われます：
+
+- **メール登録ユーザー（manual_approval_required: true）**: 承認待ち画面を表示
+- **ソーシャルログインユーザー**: 通常のアクセス許可（承認不要）
+- **既に承認済みユーザー**: 通常のアクセス許可
+- **管理者承認が不要な設定のユーザー**: 通常のアクセス許可
 
 ### Supabase設定
 
