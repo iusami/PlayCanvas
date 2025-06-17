@@ -84,14 +84,14 @@ describe('BackupManager', () => {
   })
 
   describe('exportAllData', () => {
-    it('すべてのデータを正常にエクスポートできること', () => {
+    it('すべてのデータを正常にエクスポートできること', async () => {
       // モックデータの設定
       vi.mocked(PlayStorage.getAllPlays).mockReturnValue([mockPlay])
       vi.mocked(PlaylistStorage.getAllPlaylists).mockReturnValue([mockPlaylist])
       vi.mocked(FormationStorage.getAllFormations).mockReturnValue([mockFormation])
       vi.mocked(SettingsStorage.getSettings).mockReturnValue(mockSettings)
 
-      const result = BackupManager.exportAllData()
+      const result = await BackupManager.exportAllData()
 
       expect(result.success).toBe(true)
       expect(result.data).toBeDefined()
@@ -104,13 +104,13 @@ describe('BackupManager', () => {
       expect(result.data!.metadata.totalFormations).toBe(1)
     })
 
-    it('データが空の場合でも正常にエクスポートできること', () => {
+    it('データが空の場合でも正常にエクスポートできること', async () => {
       vi.mocked(PlayStorage.getAllPlays).mockReturnValue([])
       vi.mocked(PlaylistStorage.getAllPlaylists).mockReturnValue([])
       vi.mocked(FormationStorage.getAllFormations).mockReturnValue([])
       vi.mocked(SettingsStorage.getSettings).mockReturnValue({})
 
-      const result = BackupManager.exportAllData()
+      const result = await BackupManager.exportAllData()
 
       expect(result.success).toBe(true)
       expect(result.data!.data.plays).toHaveLength(0)
@@ -118,12 +118,12 @@ describe('BackupManager', () => {
       expect(result.data!.data.formations).toHaveLength(0)
     })
 
-    it('エラーが発生した場合、失敗を返すこと', () => {
+    it('エラーが発生した場合、失敗を返すこと', async () => {
       vi.mocked(PlayStorage.getAllPlays).mockImplementation(() => {
         throw new Error('Storage error')
       })
 
-      const result = BackupManager.exportAllData()
+      const result = await BackupManager.exportAllData()
 
       expect(result.success).toBe(false)
       expect(result.message).toBe('データのエクスポートに失敗しました')

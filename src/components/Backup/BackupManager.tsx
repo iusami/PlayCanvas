@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react'
+import React, { useState, useRef, useMemo, useEffect } from 'react'
 import { BackupManager as BackupUtil, BackupData } from '@/utils/backup'
 import { StorageUtils } from '@/utils/storage'
 
@@ -20,6 +20,7 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
     overwrite: false,
     skipDuplicates: true
   })
+  const [currentDataStats, setCurrentDataStats] = useState({ plays: [], playlists: [], formations: [] })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleClose = () => {
@@ -40,7 +41,7 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
       // 短い遅延でローディング状態を表示
       await new Promise(resolve => setTimeout(resolve, 10))
       
-      const result = BackupUtil.exportAllData()
+      const result = await BackupUtil.exportAllData()
       
       if (result.success && result.data) {
         BackupUtil.downloadBackup(result.data)
@@ -114,11 +115,21 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
     }
   }
 
-  // ストレージ使用量とデータ統計をメモ化
+  // ストレージ使用量をメモ化
   const storageInfo = useMemo(() => StorageUtils.checkStorageSpace(), [])
-  const currentDataStats = useMemo(() => {
-    const result = BackupUtil.exportAllData()
-    return result.data?.data || { plays: [], playlists: [], formations: [] }
+
+  // データ統計を非同期で取得
+  useEffect(() => {
+    const loadDataStats = async () => {
+      try {
+        const result = await BackupUtil.exportAllData()
+        setCurrentDataStats(result.data?.data || { plays: [], playlists: [], formations: [] })
+      } catch (error) {
+        console.error('データ統計の取得に失敗しました:', error)
+        setCurrentDataStats({ plays: [], playlists: [], formations: [] })
+      }
+    }
+    loadDataStats()
   }, [])
 
   if (!isOpen) {
