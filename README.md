@@ -300,12 +300,29 @@ npm run test:e2e:debug -- --grep="アプリケーション起動"
 - **ビルドツール**: Vite
 - **データ永続化**: localStorage
 
+## 🔐 認証機能
+
+Football Canvasは、Supabaseを使用した認証システムを実装しています：
+
+- **初期設定**: [AUTH_SETUP.md](AUTH_SETUP.md) - 認証機能の初期設定手順
+- **アカウント管理**: [docs/authentication.md](docs/authentication.md) - 管理者向けアカウント許可・不許可の管理方法
+
+### 管理者向け機能
+
+- ユーザーアカウントの承認・拒否
+- アカウントの一時停止・復旧
+- ユーザー情報の確認・編集
+- セッション管理
+
+詳細な手順は上記ドキュメントを参照してください。
+
 ## 📁 プロジェクト構造
 
 ```
 playCanvas/
 ├── src/
 │   ├── components/          # Reactコンポーネント
+│   │   ├── Auth/           # 認証関連コンポーネント
 │   │   ├── Header.tsx      # ヘッダーコンポーネント
 │   │   ├── Sidebar.tsx     # サイドバーコンポーネント
 │   │   ├── CanvasArea.tsx  # キャンバスエリア
@@ -313,6 +330,10 @@ playCanvas/
 │   │   ├── PlayListView.tsx   # プレイ一覧
 │   │   ├── PlaylistManager.tsx # プレイリスト管理
 │   │   └── PlaylistEditor.tsx  # プレイリスト編集
+│   ├── contexts/           # React Context
+│   │   └── AuthContext.tsx # 認証コンテキスト
+│   ├── lib/               # ライブラリ設定
+│   │   └── supabase.ts    # Supabase設定
 │   ├── types/              # TypeScript型定義
 │   │   └── index.ts
 │   ├── utils/              # ユーティリティ関数
@@ -320,8 +341,10 @@ playCanvas/
 │   ├── App.tsx             # メインアプリケーション
 │   └── main.tsx            # エントリーポイント
 ├── docs/                   # ドキュメント
+│   ├── authentication.md  # 認証管理ガイド
 │   ├── design.md          # 設計仕様書
 │   └── images/            # スクリーンショット
+├── AUTH_SETUP.md          # 認証初期設定ガイド
 ├── electron/               # Electronメイン関連
 ├── package.json           # npm設定
 ├── tsconfig.json         # TypeScript設定
