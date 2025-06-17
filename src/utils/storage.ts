@@ -10,7 +10,7 @@ const STORAGE_KEYS = {
 // Play関連のストレージ操作
 export const PlayStorage = {
   // すべてのプレイを取得
-  getAllPlays(): Play[] {
+  async getAllPlays(): Promise<Play[]> {
     try {
       const playsJson = localStorage.getItem(STORAGE_KEYS.PLAYS)
       if (!playsJson) return []
@@ -32,15 +32,15 @@ export const PlayStorage = {
   },
 
   // 単一のプレイを取得
-  getPlay(id: string): Play | null {
-    const plays = this.getAllPlays()
+  async getPlay(id: string): Promise<Play | null> {
+    const plays = await this.getAllPlays()
     return plays.find(play => play.id === id) || null
   },
 
   // プレイを保存
-  savePlay(play: Play): void {
+  async savePlay(play: Play): Promise<void> {
     try {
-      const plays = this.getAllPlays()
+      const plays = await this.getAllPlays()
       const existingIndex = plays.findIndex(p => p.id === play.id)
       
       if (existingIndex >= 0) {
@@ -59,9 +59,9 @@ export const PlayStorage = {
   },
 
   // プレイを削除
-  deletePlay(id: string): void {
+  async deletePlay(id: string): Promise<void> {
     try {
-      const plays = this.getAllPlays()
+      const plays = await this.getAllPlays()
       const filteredPlays = plays.filter(play => play.id !== id)
       localStorage.setItem(STORAGE_KEYS.PLAYS, JSON.stringify(filteredPlays))
     } catch (error) {
@@ -71,9 +71,9 @@ export const PlayStorage = {
   },
 
   // プレイを複製
-  duplicatePlay(id: string): Play | null {
+  async duplicatePlay(id: string): Promise<Play | null> {
     try {
-      const originalPlay = this.getPlay(id)
+      const originalPlay = await this.getPlay(id)
       if (!originalPlay) return null
 
       const duplicatedPlay: Play = {
@@ -87,7 +87,7 @@ export const PlayStorage = {
         }
       }
 
-      this.savePlay(duplicatedPlay)
+      await this.savePlay(duplicatedPlay)
       return duplicatedPlay
     } catch (error) {
       console.error('プレイの複製に失敗しました:', error)
@@ -96,9 +96,9 @@ export const PlayStorage = {
   },
 
   // プレイをJSONとしてエクスポート
-  exportPlay(id: string): string | null {
+  async exportPlay(id: string): Promise<string | null> {
     try {
-      const play = this.getPlay(id)
+      const play = await this.getPlay(id)
       if (!play) return null
       return JSON.stringify(play, null, 2)
     } catch (error) {
@@ -108,7 +108,7 @@ export const PlayStorage = {
   },
 
   // JSONからプレイをインポート
-  importPlay(jsonString: string): Play | null {
+  async importPlay(jsonString: string): Promise<Play | null> {
     try {
       const play = JSON.parse(jsonString)
       
@@ -129,7 +129,7 @@ export const PlayStorage = {
         }
       }
 
-      this.savePlay(importedPlay)
+      await this.savePlay(importedPlay)
       return importedPlay
     } catch (error) {
       console.error('プレイのインポートに失敗しました:', error)
@@ -141,7 +141,7 @@ export const PlayStorage = {
 // Playlist関連のストレージ操作
 export const PlaylistStorage = {
   // すべてのプレイリストを取得
-  getAllPlaylists(): Playlist[] {
+  async getAllPlaylists(): Promise<Playlist[]> {
     try {
       const playlistsJson = localStorage.getItem(STORAGE_KEYS.PLAYLISTS)
       if (!playlistsJson) return []
@@ -160,9 +160,9 @@ export const PlaylistStorage = {
   },
 
   // プレイリストを保存
-  savePlaylist(playlist: Playlist): void {
+  async savePlaylist(playlist: Playlist): Promise<void> {
     try {
-      const playlists = this.getAllPlaylists()
+      const playlists = await this.getAllPlaylists()
       const existingIndex = playlists.findIndex(p => p.id === playlist.id)
       
       if (existingIndex >= 0) {
@@ -179,9 +179,9 @@ export const PlaylistStorage = {
   },
 
   // プレイリストを削除
-  deletePlaylist(id: string): void {
+  async deletePlaylist(id: string): Promise<void> {
     try {
-      const playlists = this.getAllPlaylists()
+      const playlists = await this.getAllPlaylists()
       const filteredPlaylists = playlists.filter(playlist => playlist.id !== id)
       localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(filteredPlaylists))
     } catch (error) {
@@ -194,7 +194,7 @@ export const PlaylistStorage = {
 // 設定関連のストレージ操作
 export const SettingsStorage = {
   // 設定を取得
-  getSettings(): any {
+  async getSettings(): Promise<any> {
     try {
       const settingsJson = localStorage.getItem(STORAGE_KEYS.SETTINGS)
       return settingsJson ? JSON.parse(settingsJson) : {}
@@ -205,7 +205,7 @@ export const SettingsStorage = {
   },
 
   // 設定を保存
-  saveSettings(settings: any): void {
+  async saveSettings(settings: any): Promise<void> {
     try {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings))
     } catch (error) {
@@ -264,7 +264,7 @@ export const StorageUtils = {
 // Formation関連のストレージ操作
 export const FormationStorage = {
   // すべてのフォーメーションテンプレートを取得
-  getAllFormations(): FormationTemplate[] {
+  async getAllFormations(): Promise<FormationTemplate[]> {
     try {
       const formationsJson = localStorage.getItem(STORAGE_KEYS.FORMATIONS)
       if (!formationsJson) return []
@@ -284,20 +284,21 @@ export const FormationStorage = {
   },
 
   // タイプ別フォーメーションを取得
-  getFormationsByType(type: 'offense' | 'defense'): FormationTemplate[] {
-    return this.getAllFormations().filter(formation => formation.type === type)
+  async getFormationsByType(type: 'offense' | 'defense'): Promise<FormationTemplate[]> {
+    const formations = await this.getAllFormations()
+    return formations.filter(formation => formation.type === type)
   },
 
   // 単一のフォーメーションを取得
-  getFormation(id: string): FormationTemplate | null {
-    const formations = this.getAllFormations()
+  async getFormation(id: string): Promise<FormationTemplate | null> {
+    const formations = await this.getAllFormations()
     return formations.find(formation => formation.id === id) || null
   },
 
   // フォーメーションを保存
-  saveFormation(formation: FormationTemplate): void {
+  async saveFormation(formation: FormationTemplate): Promise<void> {
     try {
-      const formations = this.getAllFormations()
+      const formations = await this.getAllFormations()
       const existingIndex = formations.findIndex(f => f.id === formation.id)
       
       if (existingIndex >= 0) {
@@ -316,9 +317,9 @@ export const FormationStorage = {
   },
 
   // フォーメーションを削除
-  deleteFormation(id: string): void {
+  async deleteFormation(id: string): Promise<void> {
     try {
-      const formations = this.getAllFormations()
+      const formations = await this.getAllFormations()
       const filteredFormations = formations.filter(formation => formation.id !== id)
       localStorage.setItem(STORAGE_KEYS.FORMATIONS, JSON.stringify(filteredFormations))
     } catch (error) {
@@ -328,7 +329,7 @@ export const FormationStorage = {
   },
 
   // デフォルトフォーメーションを初期化（空で開始）
-  initializeDefaultFormations(): void {
+  async initializeDefaultFormations(): Promise<void> {
     // デフォルトのフォーメーションテンプレートは提供しない
     // ユーザーが自分でカスタムフォーメーションを作成する
   }

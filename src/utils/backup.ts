@@ -52,10 +52,10 @@ export class BackupManager {
   static async exportAllData(): Promise<BackupResult> {
     try {
       // 全データを取得
-      const plays = PlayStorage.getAllPlays()
-      const playlists = PlaylistStorage.getAllPlaylists()
-      const formations = FormationStorage.getAllFormations()
-      const settings = SettingsStorage.getSettings()
+      const plays = await PlayStorage.getAllPlays()
+      const playlists = await PlaylistStorage.getAllPlaylists()
+      const formations = await FormationStorage.getAllFormations()
+      const settings = await SettingsStorage.getSettings()
 
       // バックアップデータを構築
       const backupData: BackupData = {
@@ -182,10 +182,10 @@ export class BackupManager {
   /**
    * バックアップデータの一括インポート
    */
-  static importAllData(backupData: BackupData, options: {
+  static async importAllData(backupData: BackupData, options: {
     overwrite?: boolean
     skipDuplicates?: boolean
-  } = {}): ImportResult {
+  } = {}): Promise<ImportResult> {
     const { overwrite = false, skipDuplicates = true } = options
     const imported = {
       plays: 0,
@@ -210,13 +210,13 @@ export class BackupManager {
       const { plays, playlists, formations, settings } = backupData.data
 
       // 既存データの取得（重複チェック用）
-      const existingPlays = PlayStorage.getAllPlays()
-      const existingPlaylists = PlaylistStorage.getAllPlaylists()
-      const existingFormations = FormationStorage.getAllFormations()
+      const existingPlays = await PlayStorage.getAllPlays()
+      const existingPlaylists = await PlaylistStorage.getAllPlaylists()
+      const existingFormations = await FormationStorage.getAllFormations()
 
       // プレイのインポート
       if (Array.isArray(plays)) {
-        plays.forEach((play: Play) => {
+        for (const play of plays) {
           try {
             const exists = existingPlays.some(existing => 
               existing.metadata.title === play.metadata.title ||
@@ -234,7 +234,7 @@ export class BackupManager {
                   updatedAt: new Date(),
                 }
               }
-              PlayStorage.savePlay(importedPlay)
+              await PlayStorage.savePlay(importedPlay)
               imported.plays++
             } else if (!skipDuplicates) {
               errors.push(`プレイ "${play.metadata.title}" は既に存在します`)
@@ -242,12 +242,12 @@ export class BackupManager {
           } catch (error) {
             errors.push(`プレイ "${play.metadata.title}" のインポートに失敗しました`)
           }
-        })
+        }
       }
 
       // プレイリストのインポート
       if (Array.isArray(playlists)) {
-        playlists.forEach((playlist: Playlist) => {
+        for (const playlist of playlists) {
           try {
             const exists = existingPlaylists.some(existing => 
               existing.title === playlist.title ||
@@ -262,7 +262,7 @@ export class BackupManager {
                 createdAt: new Date(playlist.createdAt),
                 updatedAt: new Date(),
               }
-              PlaylistStorage.savePlaylist(importedPlaylist)
+              await PlaylistStorage.savePlaylist(importedPlaylist)
               imported.playlists++
             } else if (!skipDuplicates) {
               errors.push(`プレイリスト "${playlist.title}" は既に存在します`)
@@ -270,12 +270,12 @@ export class BackupManager {
           } catch (error) {
             errors.push(`プレイリスト "${playlist.title}" のインポートに失敗しました`)
           }
-        })
+        }
       }
 
       // フォーメーションのインポート
       if (Array.isArray(formations)) {
-        formations.forEach((formation: FormationTemplate) => {
+        for (const formation of formations) {
           try {
             const exists = existingFormations.some(existing => 
               existing.name === formation.name ||
@@ -290,7 +290,7 @@ export class BackupManager {
                 createdAt: new Date(formation.createdAt),
                 updatedAt: new Date(),
               }
-              FormationStorage.saveFormation(importedFormation)
+              await FormationStorage.saveFormation(importedFormation)
               imported.formations++
             } else if (!skipDuplicates) {
               errors.push(`フォーメーション "${formation.name}" は既に存在します`)
@@ -298,13 +298,13 @@ export class BackupManager {
           } catch (error) {
             errors.push(`フォーメーション "${formation.name}" のインポートに失敗しました`)
           }
-        })
+        }
       }
 
       // 設定のインポート
       if (settings && typeof settings === 'object' && overwrite) {
         try {
-          SettingsStorage.saveSettings(settings)
+          await SettingsStorage.saveSettings(settings)
           imported.settingsRestored = true
         } catch (error) {
           errors.push('設定の復元に失敗しました')

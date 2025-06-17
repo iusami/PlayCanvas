@@ -99,7 +99,7 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
 
     setLoading(true)
     try {
-      const result = BackupUtil.importAllData(backupPreview, importOptions)
+      const result = await BackupUtil.importAllData(backupPreview, importOptions)
       
       if (result.success) {
         let message = result.message
