@@ -26,6 +26,10 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
     setSelectedFile(null)
     setBackupPreview(null)
     setActiveTab('export')
+    // ファイル入力の値をクリアして同じファイル再選択を可能にする
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
     onClose()
   }
 
