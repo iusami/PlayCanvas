@@ -357,7 +357,24 @@ describe('BackupManager Component', () => {
 
   describe('エラーハンドリング', () => {
     it('予期しないエラーが発生した場合の処理', async () => {
+      // useMemoとボタンクリックで異なる動作をさせる
+      let callCount = 0
       vi.mocked(BackupUtil.exportAllData).mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          // 初回（useMemo）は正常なデータを返す
+          return {
+            success: true,
+            message: 'success',
+            data: {
+              version: '1.0.0',
+              timestamp: '2023-01-01T00:00:00.000Z',
+              data: { plays: [], playlists: [], formations: [], settings: {} },
+              metadata: { totalPlays: 0, totalPlaylists: 0, totalFormations: 0, exportedBy: 'user', appVersion: '1.0.0' }
+            }
+          }
+        }
+        // 2回目（ボタンクリック時）はエラーを投げる
         throw new Error('Unexpected error')
       })
 

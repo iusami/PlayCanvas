@@ -37,6 +37,9 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
   const handleExport = async () => {
     setLoading(true)
     try {
+      // 短い遅延でローディング状態を表示
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
       const result = BackupUtil.exportAllData()
       
       if (result.success && result.data) {
@@ -57,7 +60,10 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
   // ファイル選択処理
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file) return
+    if (!file) {
+      setSelectedFile(null)
+      return
+    }
 
     setLoading(true)
     setSelectedFile(file)
@@ -225,15 +231,24 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   バックアップファイル選択
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    disabled={loading}
+                  />
                 </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileSelect}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="block w-full text-sm text-gray-500 border border-gray-300 rounded-md py-2 px-4 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
-                />
+                  aria-label="Choose file"
+                >
+                  {selectedFile ? selectedFile.name : 'ファイルを選択'}
+                </button>
               </div>
 
               {/* バックアップファイルプレビュー */}
