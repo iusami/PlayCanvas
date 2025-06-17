@@ -49,7 +49,7 @@ export class BackupManager {
   /**
    * 全データの一括エクスポート
    */
-  static exportAllData(): BackupResult {
+  static async exportAllData(): Promise<BackupResult> {
     try {
       // 全データを取得
       const plays = PlayStorage.getAllPlays()

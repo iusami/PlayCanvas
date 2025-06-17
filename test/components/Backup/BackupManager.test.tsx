@@ -41,7 +41,7 @@ describe('BackupManager Component', () => {
     vi.clearAllMocks()
     
     // デフォルトのモック実装
-    vi.mocked(BackupUtil.exportAllData).mockReturnValue({
+    vi.mocked(BackupUtil.exportAllData).mockResolvedValue({
       success: true,
       message: 'エクスポート成功',
       data: {
@@ -111,7 +111,7 @@ describe('BackupManager Component', () => {
       fireEvent.click(exportButton)
 
       await waitFor(() => {
-        expect(BackupUtil.exportAllData).toHaveBeenCalledTimes(2) // useMemo + ボタンクリック
+        expect(BackupUtil.exportAllData).toHaveBeenCalledTimes(2) // useEffect + ボタンクリック
         expect(BackupUtil.downloadBackup).toHaveBeenCalledTimes(1)
         expect(mockOnSuccess).toHaveBeenCalledWith('エクスポート成功')
         expect(mockOnClose).toHaveBeenCalledTimes(1)
@@ -119,9 +119,9 @@ describe('BackupManager Component', () => {
     })
 
     it('エクスポートに失敗した場合、エラーメッセージが表示されること', async () => {
-      // 最初のuseMemoでは成功、ボタンクリック時で失敗させる
+      // 最初のuseEffectでは成功、ボタンクリック時で失敗させる
       let callCount = 0
-      vi.mocked(BackupUtil.exportAllData).mockImplementation(() => {
+      vi.mocked(BackupUtil.exportAllData).mockImplementation(async () => {
         callCount++
         if (callCount === 1) {
           return {
@@ -333,12 +333,12 @@ describe('BackupManager Component', () => {
     })
 
     it('ローディング中は×ボタンが無効化されること', async () => {
-      vi.mocked(BackupUtil.exportAllData).mockImplementation(() => {
+      vi.mocked(BackupUtil.exportAllData).mockImplementation(async () => {
         return new Promise(resolve => setTimeout(() => resolve({
           success: true,
           message: 'success',
           data: undefined
-        }), 100)) as any
+        }), 100))
       })
 
       render(<BackupManager {...defaultProps} />)
@@ -357,7 +357,24 @@ describe('BackupManager Component', () => {
 
   describe('エラーハンドリング', () => {
     it('予期しないエラーが発生した場合の処理', async () => {
-      vi.mocked(BackupUtil.exportAllData).mockImplementation(() => {
+      // useEffectとボタンクリックで異なる動作をさせる
+      let callCount = 0
+      vi.mocked(BackupUtil.exportAllData).mockImplementation(async () => {
+        callCount++
+        if (callCount === 1) {
+          // 初回（useEffect）は正常なデータを返す
+          return {
+            success: true,
+            message: 'success',
+            data: {
+              version: '1.0.0',
+              timestamp: '2023-01-01T00:00:00.000Z',
+              data: { plays: [], playlists: [], formations: [], settings: {} },
+              metadata: { totalPlays: 0, totalPlaylists: 0, totalFormations: 0, exportedBy: 'user', appVersion: '1.0.0' }
+            }
+          }
+        }
+        // 2回目（ボタンクリック時）はエラーを投げる
         throw new Error('Unexpected error')
       })
 
