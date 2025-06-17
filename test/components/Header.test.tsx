@@ -1,10 +1,15 @@
-import React from 'react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import Header from '../../src/components/Header'
 import { Play } from '../../src/types'
+import { renderWithAuth, createMockAuthContext } from '../utils/testUtils'
+
+// useAuthフックをモック
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => createMockAuthContext()
+}))
 
 const createMockPlay = (): Play => ({
   id: 'test-play-1',
@@ -30,7 +35,8 @@ const createMockPlay = (): Play => ({
   players: [],
   arrows: [],
   texts: [],
-  center: { x: 400, y: 300 }
+  center: { x: 400, y: 300 },
+  textBoxEntries: []
 })
 
 describe('Header Component', () => {
@@ -43,6 +49,7 @@ describe('Header Component', () => {
   const mockOnPrint = vi.fn()
   const mockOnOpenPlayLibrary = vi.fn()
   const mockOnOpenPlaylistWorkspace = vi.fn()
+  const mockOnShowMessage = vi.fn()
 
   const defaultProps = {
     onNewPlay: mockOnNewPlay,
@@ -54,6 +61,7 @@ describe('Header Component', () => {
     onPrint: mockOnPrint,
     onOpenPlayLibrary: mockOnOpenPlayLibrary,
     onOpenPlaylistWorkspace: mockOnOpenPlaylistWorkspace,
+    onShowMessage: mockOnShowMessage,
     currentPlay: null
   }
 
@@ -63,25 +71,25 @@ describe('Header Component', () => {
 
   describe('初期レンダリング', () => {
     it('Headerが正常にレンダリングされること', () => {
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       expect(screen.getByText('Football Canvas')).toBeInTheDocument()
     })
 
     it('新しいプレイボタンが表示されること', () => {
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       expect(screen.getByText('新しいプレイ')).toBeInTheDocument()
     })
 
     it('プレイライブラリボタンが表示されること', () => {
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       expect(screen.getByText('プレイ一覧')).toBeInTheDocument()
     })
 
     it('プレイリストワークスペースボタンが表示されること', () => {
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       expect(screen.getByText('プレイリスト管理')).toBeInTheDocument()
     })
@@ -89,7 +97,7 @@ describe('Header Component', () => {
 
   describe('プレイが選択されていない場合', () => {
     it('プレイ依存のボタンが表示されないこと', () => {
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       // プレイがnullの場合、これらのボタンは表示されない
       expect(screen.queryByText('保存')).not.toBeInTheDocument()
@@ -101,7 +109,7 @@ describe('Header Component', () => {
     })
 
     it('プレイタイトルが表示されないこと', () => {
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       expect(screen.queryByText('テストプレイ')).not.toBeInTheDocument()
     })
@@ -114,7 +122,7 @@ describe('Header Component', () => {
     }
 
     it('プレイ依存のボタンが表示されること', () => {
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       expect(screen.getByText('保存')).toBeInTheDocument()
       expect(screen.getByText('名前を付けて保存')).toBeInTheDocument()
@@ -125,7 +133,7 @@ describe('Header Component', () => {
     })
 
     it('プレイタイトルが表示されること', () => {
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       expect(screen.getByText('テストプレイ')).toBeInTheDocument()
     })
@@ -135,7 +143,7 @@ describe('Header Component', () => {
   describe('ボタンクリック処理', () => {
     it('新しいプレイボタンをクリックするとonNewPlayが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       const newPlayButton = screen.getByText('新しいプレイ')
       await user.click(newPlayButton)
@@ -145,7 +153,7 @@ describe('Header Component', () => {
 
     it('プレイライブラリボタンをクリックするとonOpenPlayLibraryが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       const libraryButton = screen.getByText('プレイ一覧')
       await user.click(libraryButton)
@@ -155,7 +163,7 @@ describe('Header Component', () => {
 
     it('プレイリスト管理ボタンをクリックするとonOpenPlaylistWorkspaceが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...defaultProps} />)
+      renderWithAuth(<Header {...defaultProps} />)
       
       const workspaceButton = screen.getByText('プレイリスト管理')
       await user.click(workspaceButton)
@@ -172,7 +180,7 @@ describe('Header Component', () => {
 
     it('保存ボタンをクリックするとonSaveが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       const saveButton = screen.getByText('保存')
       await user.click(saveButton)
@@ -182,7 +190,7 @@ describe('Header Component', () => {
 
     it('名前を付けて保存ボタンをクリックするとonSaveAsが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       const saveAsButton = screen.getByText('名前を付けて保存')
       await user.click(saveAsButton)
@@ -192,7 +200,7 @@ describe('Header Component', () => {
 
     it('プレイ情報編集ボタンをクリックするとonEditMetadataが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       const editButton = screen.getByText('プレイ情報編集')
       await user.click(editButton)
@@ -202,7 +210,7 @@ describe('Header Component', () => {
 
     it('複製ボタンをクリックするとonDuplicatePlayが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       const duplicateButton = screen.getByText('複製')
       await user.click(duplicateButton)
@@ -212,7 +220,7 @@ describe('Header Component', () => {
 
     it('画像エクスポートボタンをクリックするとonExportImageが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       const exportButton = screen.getByText('エクスポート')
       await user.click(exportButton)
@@ -222,7 +230,7 @@ describe('Header Component', () => {
 
     it('印刷ボタンをクリックするとonPrintが呼ばれること', async () => {
       const user = userEvent.setup()
-      render(<Header {...propsWithPlay} />)
+      renderWithAuth(<Header {...propsWithPlay} />)
       
       const printButton = screen.getByText('印刷')
       await user.click(printButton)
@@ -240,7 +248,7 @@ describe('Header Component', () => {
         value: 768,
       })
 
-      render(<Header {...defaultProps} currentPlay={createMockPlay()} />)
+      renderWithAuth(<Header {...defaultProps} currentPlay={createMockPlay()} />)
       
       // 主要なボタンが表示されていることを確認
       expect(screen.getByText('新しいプレイ')).toBeInTheDocument()
@@ -260,7 +268,7 @@ describe('Header Component', () => {
       // エラーが発生する可能性があるため、console.errorをモック
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       
-      render(<Header {...defaultProps} onNewPlay={errorOnNewPlay} />)
+      renderWithAuth(<Header {...defaultProps} onNewPlay={errorOnNewPlay} />)
       
       const newPlayButton = screen.getByText('新しいプレイ')
       
