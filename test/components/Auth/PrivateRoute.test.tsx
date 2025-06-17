@@ -9,13 +9,9 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn()
 }))
 
-// AuthPageとPendingApprovalPageをモック
+// AuthPageをモック
 vi.mock('@/components/Auth/AuthPage', () => ({
   AuthPage: () => <div data-testid="auth-page">Auth Page</div>
-}))
-
-vi.mock('@/components/Auth/PendingApprovalPage', () => ({
-  PendingApprovalPage: () => <div data-testid="pending-approval-page">Pending Approval Page</div>
 }))
 
 describe('PrivateRoute Component', () => {
@@ -60,7 +56,7 @@ describe('PrivateRoute Component', () => {
       expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
     })
 
-    it('認証済みかつメール確認済みの場合、子コンポーネントが表示されること', () => {
+    it('認証済みの場合、子コンポーネントが表示されること', () => {
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
@@ -81,113 +77,9 @@ describe('PrivateRoute Component', () => {
 
       expect(screen.getByTestId('protected-content')).toBeInTheDocument()
       expect(screen.queryByTestId('auth-page')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('pending-approval-page')).not.toBeInTheDocument()
     })
   })
 
-  describe('管理者承認フロー', () => {
-    it('管理者承認が必要かつメール未確認の場合、承認待ち画面が表示されること', () => {
-      const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
-        email_confirmed_at: null,
-        user_metadata: {
-          manual_approval_required: true
-        }
-      } as User
-
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false
-      })
-
-      render(
-        <PrivateRoute>
-          <div data-testid="protected-content">Protected Content</div>
-        </PrivateRoute>
-      )
-
-      expect(screen.getByTestId('pending-approval-page')).toBeInTheDocument()
-      expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('auth-page')).not.toBeInTheDocument()
-    })
-
-    it('管理者承認が不要でメール未確認の場合、子コンポーネントが表示されること', () => {
-      const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
-        email_confirmed_at: null,
-        user_metadata: {
-          manual_approval_required: false
-        }
-      } as User
-
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false
-      })
-
-      render(
-        <PrivateRoute>
-          <div data-testid="protected-content">Protected Content</div>
-        </PrivateRoute>
-      )
-
-      expect(screen.getByTestId('protected-content')).toBeInTheDocument()
-      expect(screen.queryByTestId('pending-approval-page')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('auth-page')).not.toBeInTheDocument()
-    })
-
-    it('ソーシャルログインユーザー（manual_approval_requiredなし）の場合、子コンポーネントが表示されること', () => {
-      const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
-        email_confirmed_at: null, // ソーシャルログインでは確認不要の場合がある
-        user_metadata: {} // manual_approval_requiredフラグなし
-      } as User
-
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false
-      })
-
-      render(
-        <PrivateRoute>
-          <div data-testid="protected-content">Protected Content</div>
-        </PrivateRoute>
-      )
-
-      expect(screen.getByTestId('protected-content')).toBeInTheDocument()
-      expect(screen.queryByTestId('pending-approval-page')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('auth-page')).not.toBeInTheDocument()
-    })
-
-    it('管理者承認が必要だがメール確認済みの場合、子コンポーネントが表示されること', () => {
-      const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
-        email_confirmed_at: '2023-01-01T00:00:00Z',
-        user_metadata: {
-          manual_approval_required: true
-        }
-      } as User
-
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false
-      })
-
-      render(
-        <PrivateRoute>
-          <div data-testid="protected-content">Protected Content</div>
-        </PrivateRoute>
-      )
-
-      expect(screen.getByTestId('protected-content')).toBeInTheDocument()
-      expect(screen.queryByTestId('pending-approval-page')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('auth-page')).not.toBeInTheDocument()
-    })
-  })
 
   describe('テスト環境での動作', () => {
     it('テストモードの場合、認証チェックがバイパスされること', () => {

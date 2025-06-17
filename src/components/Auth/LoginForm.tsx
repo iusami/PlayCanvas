@@ -1,17 +1,13 @@
 import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
-interface LoginFormProps {
-  onToggleMode: () => void
-}
-
-export function LoginForm({ onToggleMode }: LoginFormProps) {
+export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  const { signIn, signInWithProvider } = useAuth()
+  const { signIn } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,18 +29,6 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
     setLoading(false)
   }
 
-  const handleSocialLogin = async (provider: 'google' | 'github') => {
-    setLoading(true)
-    setError(null)
-    
-    const { error } = await signInWithProvider(provider)
-    
-    if (error) {
-      setError(`${provider}ログインに失敗しました`)
-    }
-    
-    setLoading(false)
-  }
 
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
@@ -98,42 +82,11 @@ export function LoginForm({ onToggleMode }: LoginFormProps) {
         </button>
       </form>
 
-      <div className="mt-6">
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">または</span>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <button
-            onClick={() => handleSocialLogin('google')}
-            disabled={loading}
-            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-          >
-            Google
-          </button>
-          
-          <button
-            onClick={() => handleSocialLogin('github')}
-            disabled={loading}
-            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-          >
-            GitHub
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-6 text-center">
-        <button
-          onClick={onToggleMode}
-          className="text-sm text-blue-600 hover:text-blue-500"
-        >
-          アカウントをお持ちでない方はこちら
-        </button>
+      <div className="mt-6 text-center text-sm text-gray-500">
+        <p>
+          アカウントは管理者によって事前に作成されています。<br />
+          ログインに問題がある場合は管理者にお問い合わせください。
+        </p>
       </div>
     </div>
   )

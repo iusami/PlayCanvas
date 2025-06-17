@@ -1,7 +1,6 @@
 import React from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { AuthPage } from './AuthPage'
-import { PendingApprovalPage } from './PendingApprovalPage'
 
 interface PrivateRouteProps {
   children: React.ReactNode
@@ -33,11 +32,6 @@ export function PrivateRoute({ children }: PrivateRouteProps) {
     return <AuthPage />
   }
 
-  // 管理者承認が必要かつメール未確認の場合は承認待ち画面を表示
-  if (user && user.user_metadata?.manual_approval_required && !user.email_confirmed_at) {
-    return <PendingApprovalPage />
-  }
-
-  // 認証済みかつメール確認済みの場合は子コンポーネントを表示
+  // 認証済みの場合は子コンポーネントを表示
   return <>{children}</>
 }

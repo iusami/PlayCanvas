@@ -1,10 +1,6 @@
-import { useState } from 'react'
 import { LoginForm } from './LoginForm'
-import { SignUpForm } from './SignUpForm'
 
 export function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true)
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -19,17 +15,13 @@ export function AuthPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        {isLogin ? (
-          <LoginForm onToggleMode={() => setIsLogin(false)} />
-        ) : (
-          <SignUpForm onToggleMode={() => setIsLogin(true)} />
-        )}
+        <LoginForm />
       </div>
 
       <div className="mt-8 text-center text-sm text-gray-600">
         <p>
-          このアプリケーションを使用するには認証が必要です。<br />
-          アカウントを作成するか、既存のアカウントでログインしてください。
+          このアプリケーションを使用するには管理者が事前に登録した<br />
+          アカウントでのログインが必要です。
         </p>
       </div>
     </div>
