@@ -1,0 +1,24 @@
+# Cloudflare Pages configuration
+# This file is optional but provides additional configuration options
+
+name = "football-canvas"
+compatibility_date = "2024-12-01"
+
+[env.production]
+# Production environment settings
+vars = { NODE_ENV = "production" }
+
+[env.preview]
+# Preview/staging environment settings  
+vars = { NODE_ENV = "development" }
+
+# Build configuration
+[build]
+command = "npm run build"
+cwd = ""
+watch_dir = "src"
+
+# Pages configuration
+[pages_build_output_dir]
+# Output directory after build (should match vite.config.ts outDir)
+dir = "build"
