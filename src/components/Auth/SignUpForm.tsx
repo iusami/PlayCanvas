@@ -73,8 +73,9 @@ export function SignUpForm({ onToggleMode }: SignUpFormProps) {
             アカウント作成完了
           </h2>
           <p className="text-gray-600 mb-6">
-            確認メールを送信しました。<br />
-            メール内のリンクをクリックしてアカウントを有効化してください。
+            アカウント申請を受け付けました。<br />
+            管理者による確認・承認後、確認メールをお送りします。<br />
+            しばらくお待ちください。
           </p>
           <button
             onClick={onToggleMode}

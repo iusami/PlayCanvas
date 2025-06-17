@@ -75,7 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       options: {
         // メール認証完了後のリダイレクト先
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // 自動確認メール無効化（管理者承認フロー用）
+        data: { 
+          email_confirm: false,
+          manual_approval_required: true 
+        }
       }
     })
     return { error }

@@ -21,20 +21,28 @@ Football Canvasは、Supabaseを使用した認証システムを実装してお
 
 ## アカウント有効化フロー
 
-### 現在の実装（メール確認）
+### 管理者承認フロー（現在の実装）
 
 1. **ユーザー登録**
    - ユーザーがサインアップフォームで情報を入力
-   - Supabaseに新規ユーザーとして登録される
+   - Supabaseに新規ユーザーとして登録される（未確認状態）
+   - 自動確認メールは送信されない
 
-2. **確認メール送信**
-   - Supabaseから確認メールが自動送信される
-   - メール内のリンクをクリックでアカウント有効化
+2. **承認待ち状態**
+   - ユーザーには「アカウント申請を受け付けました」メッセージを表示
+   - ログイン試行時は「承認待ち」画面を表示
+   - 管理者による承認を待機
 
-3. **アカウント有効化**
-   - メール確認後、ユーザーは即座にアプリケーションにアクセス可能
+3. **管理者による承認**
+   - 管理者がSupabaseダッシュボードで新規ユーザーを確認
+   - 「Confirm email」ボタンをクリックして承認
+   - 承認と同時に確認メールが自動送信される
 
-### メール確認の仕組み
+4. **アカウント有効化**
+   - ユーザーがメール内のリンクをクリック
+   - アカウントが有効化され、アプリケーションアクセス可能
+
+### 管理者承認の仕組み
 
 ```typescript
 // src/contexts/AuthContext.tsx
@@ -44,12 +52,27 @@ const signUp = async (email: string, password: string) => {
     password,
     options: {
       // メール認証完了後のリダイレクト先
-      emailRedirectTo: `${window.location.origin}/auth/callback`
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      // 自動確認メール無効化（管理者承認フロー用）
+      data: { 
+        email_confirm: false,
+        manual_approval_required: true 
+      }
     }
   })
   return { error }
 }
 ```
+
+### Supabase設定
+
+管理者承認フローを有効にするために、以下の設定が必要です：
+
+#### Authentication設定
+1. Supabaseダッシュボード → 「Authentication」→「Settings」
+2. **Email confirmations**: `Enable email confirmations`をON
+3. **Confirm email automatically**: OFF（管理者承認のため）
+4. **Secure email change**: ON（推奨）
 
 ## アカウント管理
 
@@ -99,14 +122,25 @@ const signUp = async (email: string, password: string) => {
 1. **新規登録の通知確認**
    - Supabaseダッシュボードで定期的にユーザー一覧をチェック
    - 新規ユーザー（Unconfirmed状態）を確認
+   - メタデータに`manual_approval_required: true`が設定されているユーザーが対象
 
 2. **ユーザー情報の検証**
    - 登録メールアドレスの妥当性確認
    - 必要に応じてユーザーに連絡を取り、本人確認
+   - 利用目的や所属の確認（必要に応じて）
 
-3. **アカウント有効化**
-   - **自動承認**: ユーザーがメール確認リンクをクリック
-   - **手動承認**: 管理者が「Confirm email」ボタンをクリック
+3. **アカウント承認**
+   - **承認する場合**: 
+     - ユーザー詳細画面で「Confirm email」ボタンをクリック
+     - 自動的に確認メールがユーザーに送信される
+     - ユーザーがメールリンクをクリックすると有効化完了
+   - **拒否する場合**:
+     - 「Delete user」でアカウントを削除
+     - または理由をメタデータに記録して放置
+
+4. **承認後の確認**
+   - ユーザーがメール確認を完了したかチェック
+   - `email_confirmed_at`フィールドに日時が記録される
 
 #### 問題ユーザーの対処手順
 
