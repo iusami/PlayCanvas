@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react'
 import { BackupManager as BackupUtil, BackupData } from '@/utils/backup'
 import { StorageUtils } from '@/utils/storage'
+import { Play, Playlist, FormationTemplate } from '@/types'
 
 interface BackupManagerProps {
   isOpen: boolean
@@ -20,7 +21,11 @@ export function BackupManager({ isOpen, onClose, onSuccess, onError }: BackupMan
     overwrite: false,
     skipDuplicates: true
   })
-  const [currentDataStats, setCurrentDataStats] = useState({ plays: [], playlists: [], formations: [] })
+  const [currentDataStats, setCurrentDataStats] = useState<{
+    plays: Play[]
+    playlists: Playlist[]
+    formations: FormationTemplate[]
+  }>({ plays: [], playlists: [], formations: [] })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleClose = () => {
