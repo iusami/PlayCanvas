@@ -7,3 +7,4 @@ playwright-report/
 docs/images/
 build/
 .env.local
+.env.test

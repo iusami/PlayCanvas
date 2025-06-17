@@ -9,6 +9,12 @@ interface PrivateRouteProps {
 export function PrivateRoute({ children }: PrivateRouteProps) {
   const { user, loading } = useAuth()
 
+  // テスト環境では認証をバイパス
+  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+  if (isTestMode) {
+    return <>{children}</>
+  }
+
   // ローディング中の表示
   if (loading) {
     return (

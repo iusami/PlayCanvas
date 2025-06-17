@@ -65,6 +65,12 @@ export default defineConfig({
     port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: {
+      // E2Eテスト用環境変数
+      VITE_TEST_MODE: 'true',
+      VITE_SUPABASE_URL: 'https://mock-supabase-url.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'mock-anon-key',
+    },
   },
 
   // テストタイムアウト設定

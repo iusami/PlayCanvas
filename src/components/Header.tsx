@@ -33,6 +33,10 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, signOut } = useAuth()
 
+  // テスト環境ではモックユーザーを使用
+  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+  const displayUser = isTestMode ? { email: 'test@example.com' } : user
+
   const handleSignOut = async () => {
     const { error } = await signOut()
     if (error) {
@@ -135,17 +139,19 @@ const Header: React.FC<HeaderProps> = ({
         </div>
         
         {/* ユーザー情報とログアウト */}
-        {user && (
+        {displayUser && (
           <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-300">
             <div className="text-sm text-gray-600">
-              <span className="font-medium">{user.email}</span>
+              <span className="font-medium">{displayUser.email}</span>
             </div>
-            <button 
-              onClick={handleSignOut}
-              className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-            >
-              ログアウト
-            </button>
+            {!isTestMode && (
+              <button 
+                onClick={handleSignOut}
+                className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+              >
+                ログアウト
+              </button>
+            )}
           </div>
         )}
       </div>

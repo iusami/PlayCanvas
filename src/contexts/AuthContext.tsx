@@ -22,7 +22,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // テスト環境の場合は認証をスキップ
+  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+
   useEffect(() => {
+    if (isTestMode) {
+      // テスト環境では即座にモックユーザーを設定
+      const mockUser = {
+        id: 'test-user-id',
+        email: 'test@example.com',
+      } as User
+      
+      setUser(mockUser)
+      setSession({ user: mockUser } as Session)
+      setLoading(false)
+      return
+    }
+
     // 初期セッション取得
     const getInitialSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession()
@@ -50,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [isTestMode])
 
   // サインアップ
   const signUp = async (email: string, password: string) => {

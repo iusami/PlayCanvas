@@ -1,6 +1,5 @@
-import React from 'react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { screen, fireEvent } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import Header from '../../src/components/Header'
@@ -36,7 +35,8 @@ const createMockPlay = (): Play => ({
   players: [],
   arrows: [],
   texts: [],
-  center: { x: 400, y: 300 }
+  center: { x: 400, y: 300 },
+  textBoxEntries: []
 })
 
 describe('Header Component', () => {
