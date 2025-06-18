@@ -144,10 +144,19 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
 
     try {
       setLoading(true)
-      const result = await AutoBackupManager.restoreFromAutoBackup(
+      const rawResult = await AutoBackupManager.restoreFromAutoBackup(
         selectedBackup.id,
         restoreOptions
-      ) as ImportResult
+      )
+      
+      // 型ガードによる安全な型チェック
+      if (!isImportResult(rawResult)) {
+        console.error('予期しない復元結果の型:', rawResult)
+        onError('復元処理で予期しないエラーが発生しました')
+        return
+      }
+
+      const result = rawResult // ここでresultはImportResult型として安全に使用可能
       
       if (result.success) {
         onSuccess(`復元が完了しました: プレイ${result.imported.plays}個、プレイリスト${result.imported.playlists}個、フォーメーション${result.imported.formations}個を復元しました`)
@@ -170,6 +179,21 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
   const handleCancelRestore = () => {
     setRestoreDialogOpen(false)
     setSelectedBackup(null)
+  }
+
+  // ImportResult型ガード関数
+  const isImportResult = (obj: any): obj is ImportResult => {
+    return obj && 
+           typeof obj === 'object' &&
+           typeof obj.success === 'boolean' &&
+           typeof obj.message === 'string' &&
+           obj.imported &&
+           typeof obj.imported === 'object' &&
+           typeof obj.imported.plays === 'number' &&
+           typeof obj.imported.playlists === 'number' &&
+           typeof obj.imported.formations === 'number' &&
+           typeof obj.imported.settingsRestored === 'boolean' &&
+           (obj.errors === undefined || Array.isArray(obj.errors))
   }
 
   const formatFileSize = (bytes: number): string => {
