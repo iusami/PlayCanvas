@@ -369,7 +369,10 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
                         <div className="flex-1">
                           <div className="text-sm font-medium text-gray-900">{backup.filename}</div>
                           <div className="text-xs text-gray-500">
-                            {backup.createdAt.toLocaleString('ja-JP')} • {formatFileSize(backup.size)}
+                            {(backup.createdAt instanceof Date 
+                              ? backup.createdAt 
+                              : new Date(backup.createdAt)
+                            ).toLocaleString('ja-JP')} • {formatFileSize(backup.size)}
                           </div>
                         </div>
                         <div className="flex space-x-2">
@@ -435,7 +438,10 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="text-sm font-medium text-gray-900">{selectedBackup.filename}</div>
                   <div className="text-xs text-gray-500">
-                    {selectedBackup.createdAt.toLocaleString('ja-JP')} • {formatFileSize(selectedBackup.size)}
+                    {(selectedBackup.createdAt instanceof Date 
+                      ? selectedBackup.createdAt 
+                      : new Date(selectedBackup.createdAt)
+                    ).toLocaleString('ja-JP')} • {formatFileSize(selectedBackup.size)}
                   </div>
                 </div>
               </div>
