@@ -50,7 +50,8 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     )
 
     if (play.field.yardLines) {
-      // 7本の水平線を均等に配置
+      // 7本の水平線を均等に配置（フィールドを8等分）
+      // 上から2つ目の線がプレイヤー配置の上限制約として機能
       for (let i = 1; i <= 7; i++) {
         const y = (fieldHeight * i) / 8
         let strokeWidth = 1

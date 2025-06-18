@@ -431,9 +431,13 @@ const FootballCanvas = forwardRef(({
     // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
     const centerLineY = flipped && play.center ? play.center.y : getCenterLineY(play.field.height)
     
+    // フィールド上限制約：上から2つ目の線をフィールド上限とする
+    const fieldUpperLimit = (play.field.height * FIELD_CONSTRAINTS.FIELD_UPPER_LIMIT_LINE_INDEX) / 8
+    
     console.log(`🔍 constrainPlayerPosition: 入力(${x.toFixed(1)}, ${y.toFixed(1)}) ${team} centerLineY=${centerLineY.toFixed(1)} flipped=${flipped}`)
     console.log(`🔍 フィールドサイズ: width=${play.field.width}, height=${play.field.height}`)
     console.log(`🔍 プレーヤーサイズ: ${playerSize}, halfSize=${halfSize}`)
+    console.log(`🔍 フィールド上限: ${fieldUpperLimit.toFixed(1)}px (上から${FIELD_CONSTRAINTS.FIELD_UPPER_LIMIT_LINE_INDEX}つ目の線)`)
     console.log(`🔍 センター位置: ${play.center ? `(${play.center.x}, ${play.center.y})` : 'なし'}`)
     console.log(`🔍 使用する中央線: ${flipped ? '実際の中央線位置' : '固定の中央線位置'} = ${centerLineY.toFixed(1)}`)
     
@@ -452,13 +456,14 @@ const FootballCanvas = forwardRef(({
       if (team === 'offense') {
         // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
         const maxY = centerLineY + 10 // 205 + 10 = 215px
-        const fieldTopLimit = halfSize
+        // フィールド上限制約を適用：上から2つ目の線以下まで
+        const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
         
-        // オフェンスの有効範囲：フィールド上端からmaxYまで
-        constrainedY = Math.max(fieldTopLimit, Math.min(maxY, y))
+        // オフェンスの有効範囲：フィールド上限からmaxYまで
+        constrainedY = Math.max(effectiveTopLimit, Math.min(maxY, y))
         
-        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
-        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
+        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
+        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${effectiveTopLimit.toFixed(1)}〜${maxY.toFixed(1)})`)
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
         const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
@@ -485,13 +490,14 @@ const FootballCanvas = forwardRef(({
       } else {
         // ディフェンスは中央線より少し上まで（ディフェンス用オフセット適用）
         const maxY = centerLineY - defenseSnapOffset  // 375 - 10 = 365
-        const fieldTopLimit = halfSize  // プレーヤーがフィールドから出ないように
+        // フィールド上限制約を適用：上から2つ目の線以下まで
+        const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
         
-        // 通常の制限のみ適用
-        constrainedY = Math.max(fieldTopLimit, Math.min(maxY, y))
+        // ディフェンスの有効範囲：フィールド上限からmaxYまで
+        constrainedY = Math.max(effectiveTopLimit, Math.min(maxY, y))
         
-        console.log(`🔍 通常ディフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
-        console.log(`🔍 通常ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
+        console.log(`🔍 通常ディフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
+        console.log(`🔍 通常ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${effectiveTopLimit.toFixed(1)}〜${maxY.toFixed(1)})`)
       }
     }
     
@@ -2652,6 +2658,7 @@ const FootballCanvas = forwardRef(({
       const flipped = isFieldFlipped()
       
       // 7本の水平線を均等に配置（フィールドを8等分）
+      // 上から2つ目の線がプレイヤー配置の上限制約として機能
       for (let i = 1; i <= 7; i++) {
         const y = (fieldHeight * i) / 8
         let strokeWidth = 2

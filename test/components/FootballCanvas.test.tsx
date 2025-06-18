@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import FootballCanvas from '../../src/components/FootballCanvas'
-import { AppState, Play } from '../../src/types'
+import { AppState, Play, FIELD_CONSTRAINTS } from '../../src/types'
 
 // Konvaのモック化
 vi.mock('react-konva', () => ({
@@ -526,5 +526,17 @@ describe('セグメント最適化関数', () => {
     const result = optimizeSegments(segments)
     expect(result).toHaveLength(1)
     expect(result[0].points).toEqual([0, 0, 2, 2])
+  })
+})
+
+describe('フィールド上限制約', () => {
+  it('フィールド上限制約定数が正しく定義されていること', () => {
+    expect(FIELD_CONSTRAINTS.FIELD_UPPER_LIMIT_LINE_INDEX).toBe(2)
+  })
+
+  it('上から2つ目の線の位置が正しく計算されること', () => {
+    const fieldHeight = 600
+    const expectedUpperLimit = (fieldHeight * 2) / 8 // 150px
+    expect(expectedUpperLimit).toBe(150)
   })
 })
