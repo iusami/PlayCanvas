@@ -1,4 +1,4 @@
-import { BackupManager, BackupData } from './backup'
+import { BackupManager, BackupData, ImportResult } from './backup'
 import { SettingsStorage } from './storage'
 import { AutoBackupSettings } from '../types'
 
@@ -216,7 +216,7 @@ export class AutoBackupManager {
   static async restoreFromAutoBackup(backupId: string, options?: {
     overwrite?: boolean
     skipDuplicates?: boolean
-  }) {
+  }): Promise<ImportResult> {
     try {
       const backups = await this.getAutoBackupList()
       const backup = backups.find(b => b.id === backupId)
@@ -224,7 +224,9 @@ export class AutoBackupManager {
       if (!backup) {
         return {
           success: false,
-          message: '指定されたバックアップファイルが見つかりません'
+          message: '指定されたバックアップファイルが見つかりません',
+          imported: { plays: 0, playlists: 0, formations: 0, settingsRestored: false },
+          errors: ['指定されたバックアップファイルが見つかりません']
         }
       }
 

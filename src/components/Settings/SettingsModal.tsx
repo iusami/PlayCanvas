@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { SettingsStorage } from '@/utils/storage'
 import { AutoBackupManager } from '@/utils/autoBackup'
+import { ImportResult } from '@/utils/backup'
 import { AppSettings, AutoBackupSettings } from '@/types'
 
 interface SettingsModalProps {
@@ -15,6 +16,12 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
   const [autoBackupHistory, setAutoBackupHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'general' | 'autoBackup'>('general')
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false)
+  const [selectedBackup, setSelectedBackup] = useState<any>(null)
+  const [restoreOptions, setRestoreOptions] = useState({
+    overwrite: true,
+    skipDuplicates: false
+  })
 
   // 設定を読み込み
   useEffect(() => {
@@ -122,6 +129,71 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
       console.error('バックアップのダウンロードに失敗しました:', error)
       onError('バックアップのダウンロードに失敗しました')
     }
+  }
+
+  const handleRestoreAutoBackup = (backupId: string) => {
+    const backup = autoBackupHistory.find(b => b.id === backupId)
+    if (backup) {
+      setSelectedBackup(backup)
+      setRestoreDialogOpen(true)
+    }
+  }
+
+  const handleConfirmRestore = async () => {
+    if (!selectedBackup) return
+
+    try {
+      setLoading(true)
+      const rawResult = await AutoBackupManager.restoreFromAutoBackup(
+        selectedBackup.id,
+        restoreOptions
+      )
+      
+      // 型ガードによる安全な型チェック
+      if (!isImportResult(rawResult)) {
+        console.error('予期しない復元結果の型:', rawResult)
+        onError('復元処理で予期しないエラーが発生しました')
+        return
+      }
+
+      const result = rawResult // ここでresultはImportResult型として安全に使用可能
+      
+      if (result.success) {
+        onSuccess(`復元が完了しました: プレイ${result.imported.plays}個、プレイリスト${result.imported.playlists}個、フォーメーション${result.imported.formations}個を復元しました`)
+        setRestoreDialogOpen(false)
+        setSelectedBackup(null)
+      } else {
+        onError(result.message)
+        if (result.errors && result.errors.length > 0) {
+          console.error('復元エラー詳細:', result.errors)
+        }
+      }
+    } catch (error) {
+      console.error('復元に失敗しました:', error)
+      onError('復元に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancelRestore = () => {
+    setRestoreDialogOpen(false)
+    setSelectedBackup(null)
+  }
+
+  // ImportResult型ガード関数
+  const isImportResult = (obj: any): obj is ImportResult => {
+    return obj && 
+           typeof obj === 'object' &&
+           typeof obj.success === 'boolean' &&
+           typeof obj.message === 'string' &&
+           obj.imported &&
+           typeof obj.imported === 'object' &&
+           typeof obj.imported.plays === 'number' &&
+           typeof obj.imported.playlists === 'number' &&
+           typeof obj.imported.formations === 'number' &&
+           typeof obj.imported.settingsRestored === 'boolean' &&
+           (obj.errors === undefined || Array.isArray(obj.errors))
   }
 
   const formatFileSize = (bytes: number): string => {
@@ -321,7 +393,10 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
                         <div className="flex-1">
                           <div className="text-sm font-medium text-gray-900">{backup.filename}</div>
                           <div className="text-xs text-gray-500">
-                            {backup.createdAt.toLocaleString('ja-JP')} • {formatFileSize(backup.size)}
+                            {(backup.createdAt instanceof Date 
+                              ? backup.createdAt 
+                              : new Date(backup.createdAt)
+                            ).toLocaleString('ja-JP')} • {formatFileSize(backup.size)}
                           </div>
                         </div>
                         <div className="flex space-x-2">
@@ -330,6 +405,13 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
                             className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                           >
                             ダウンロード
+                          </button>
+                          <button
+                            onClick={() => handleRestoreAutoBackup(backup.id)}
+                            className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                            disabled={loading}
+                          >
+                            復元
                           </button>
                           <button
                             onClick={() => handleDeleteAutoBackup(backup.id)}
@@ -365,6 +447,83 @@ export function SettingsModal({ isOpen, onClose, onSuccess, onError }: SettingsM
           </button>
         </div>
       </div>
+
+      {/* 復元確認ダイアログ */}
+      {restoreDialogOpen && selectedBackup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                バックアップの復元
+              </h3>
+              
+              <div className="mb-4">
+                <div className="text-sm text-gray-600 mb-2">復元するバックアップ:</div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm font-medium text-gray-900">{selectedBackup.filename}</div>
+                  <div className="text-xs text-gray-500">
+                    {(selectedBackup.createdAt instanceof Date 
+                      ? selectedBackup.createdAt 
+                      : new Date(selectedBackup.createdAt)
+                    ).toLocaleString('ja-JP')} • {formatFileSize(selectedBackup.size)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-6 space-y-3">
+                <div className="text-sm font-medium text-gray-700">復元オプション:</div>
+                
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={restoreOptions.overwrite}
+                    onChange={(e) => setRestoreOptions(prev => ({ ...prev, overwrite: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">
+                    既存のデータを上書きする
+                  </span>
+                </label>
+
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={restoreOptions.skipDuplicates}
+                    onChange={(e) => setRestoreOptions(prev => ({ ...prev, skipDuplicates: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">
+                    重複するデータをスキップする
+                  </span>
+                </label>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+                <div className="text-xs text-yellow-800">
+                  ⚠️ 復元を実行すると、現在のデータが変更される可能性があります。事前にバックアップを作成することをお勧めします。
+                </div>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleCancelRestore}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  disabled={loading}
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleConfirmRestore}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  {loading ? '復元中...' : '復元実行'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
