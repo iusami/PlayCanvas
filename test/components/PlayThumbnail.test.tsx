@@ -248,7 +248,7 @@ describe('PlayThumbnail Component', () => {
       expect(lines.length).toBeGreaterThan(6)
     })
 
-    it('5番目の線が太く描画されること', () => {
+    it('4番目の線が太く描画されること', () => {
       render(<PlayThumbnail {...defaultProps} />)
       
       const lines = screen.getAllByTestId('konva-line')

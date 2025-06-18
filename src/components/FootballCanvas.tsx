@@ -2663,8 +2663,8 @@ const FootballCanvas = forwardRef(({
         const y = (fieldHeight * i) / 6
         let strokeWidth = 2
         
-        // 反転時は2番目、通常時は5番目の線を太く
-        if ((flipped && i === 2) || (!flipped && i === 5)) {
+        // 反転時は2番目、通常時は4番目の線を太く
+        if ((flipped && i === 2) || (!flipped && i === 4)) {
           strokeWidth = 4
         }
         
@@ -3006,7 +3006,7 @@ const FootballCanvas = forwardRef(({
         width={20}
         height={20}
         offsetX={10}
-        offsetY={0} // 上端を基準にする
+        offsetY={10} // 下端を基準にする（センターの高さ20pxの半分）
         fill="#ffffff" // 白色の背景
         stroke="#000000" // 黒色の枠線
         strokeWidth={3}

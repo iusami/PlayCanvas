@@ -56,8 +56,8 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         const y = (fieldHeight * i) / 6
         let strokeWidth = 1
         
-        // 上から5番目の線は太く（中央線）
-        if (i === 5) {
+        // 上から4番目の線は太く（中央線）
+        if (i === 4) {
           strokeWidth = 2
         }
         
@@ -252,8 +252,8 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
   const renderCenter = () => {
     if (!play.center) return null
     
-    const centerLineY = (play.field.height * 5) / 6  // 6等分の5番目
-    const centerY = centerLineY + 2
+    const centerLineY = (play.field.height * 4) / 6  // 6等分の4番目
+    const centerY = centerLineY - 8  // センターの下端を中央線に合わせる（16px高さの半分）
     
     return (
       <Rect
@@ -263,7 +263,7 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         width={16} // サムネイルでは小さく
         height={16}
         offsetX={8}
-        offsetY={0}
+        offsetY={8} // 下端基準にする（16pxの半分）
         fill="#ffffff" // 白色の背景
         stroke="#000000"
         strokeWidth={2}

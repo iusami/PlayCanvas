@@ -240,8 +240,8 @@ const App: React.FC = () => {
   const createNewPlay = () => {
     const fieldWidth = 800
     const fieldHeight = 450  // 上から2つ目の線より上を削除（600 * 6/8 = 450）
-    // 太い線（上から5番目）の位置を計算
-    const centerLineY = (fieldHeight * 5) / 6  // 6等分の5番目
+    // 太い線（上から4番目）の位置を計算
+    const centerLineY = (fieldHeight * 4) / 6  // 6等分の4番目
     
     const newPlay: Play = {
       id: crypto.randomUUID(),
@@ -267,7 +267,7 @@ const App: React.FC = () => {
       players: [],
       arrows: [],
       texts: [],
-      center: { x: fieldWidth / 2, y: centerLineY }, // センターを太い線上に配置
+      center: { x: fieldWidth / 2, y: centerLineY - 20 }, // センターの下端を太い線に合わせる（センターの高さ20px）
       textBoxEntries: createEmptyTextBoxEntries() // 空のテキストボックス10行を初期化
     }
     
@@ -483,7 +483,7 @@ const App: React.FC = () => {
 
   // プレーヤー配置制限関連の関数
   const getCenterLineY = (fieldHeight: number) => {
-    return (fieldHeight * 5) / 6  // 6等分の5番目（中央線）
+    return (fieldHeight * 4) / 6  // 6等分の4番目（中央線）
   }
 
   const isFieldFlipped = (center: { x: number; y: number } | undefined, fieldHeight: number) => {
