@@ -129,6 +129,23 @@ export interface FormationTemplate {
   updatedAt: Date
 }
 
+// 自動バックアップ設定
+export interface AutoBackupSettings {
+  enabled: boolean
+  interval: 'daily' | 'weekly' | 'monthly'
+  maxBackupFiles: number
+  includeSettings: boolean
+  customFileName?: string
+  lastBackupDate?: Date
+}
+
+// アプリケーション設定
+export interface AppSettings {
+  autoBackup: AutoBackupSettings
+  theme: 'light' | 'dark'
+  language: 'ja' | 'en'
+}
+
 // アプリケーションの状態
 export interface AppState {
   currentPlay: Play | null

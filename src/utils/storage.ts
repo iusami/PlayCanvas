@@ -1,4 +1,4 @@
-import { Play, Playlist, FormationTemplate } from '../types'
+import { Play, Playlist, FormationTemplate, AppSettings, AutoBackupSettings } from '../types'
 
 const STORAGE_KEYS = {
   PLAYS: 'football-canvas-plays',
@@ -193,24 +193,74 @@ export const PlaylistStorage = {
 
 // 設定関連のストレージ操作
 export const SettingsStorage = {
+  // デフォルト設定
+  getDefaultSettings(): AppSettings {
+    return {
+      autoBackup: {
+        enabled: false,
+        interval: 'weekly',
+        maxBackupFiles: 5,
+        includeSettings: true,
+        customFileName: undefined,
+        lastBackupDate: undefined
+      },
+      theme: 'light',
+      language: 'ja'
+    }
+  },
+
   // 設定を取得
-  async getSettings(): Promise<any> {
+  async getSettings(): Promise<AppSettings> {
     try {
       const settingsJson = localStorage.getItem(STORAGE_KEYS.SETTINGS)
-      return settingsJson ? JSON.parse(settingsJson) : {}
+      if (!settingsJson) {
+        return this.getDefaultSettings()
+      }
+      
+      const savedSettings = JSON.parse(settingsJson)
+      
+      // lastBackupDateがある場合はDate型に変換
+      if (savedSettings.autoBackup?.lastBackupDate) {
+        savedSettings.autoBackup.lastBackupDate = new Date(savedSettings.autoBackup.lastBackupDate)
+      }
+      
+      // デフォルト設定とマージして不足項目を補完
+      return {
+        ...this.getDefaultSettings(),
+        ...savedSettings,
+        autoBackup: {
+          ...this.getDefaultSettings().autoBackup,
+          ...savedSettings.autoBackup
+        }
+      }
     } catch (error) {
       console.error('設定の読み込みに失敗しました:', error)
-      return {}
+      return this.getDefaultSettings()
     }
   },
 
   // 設定を保存
-  async saveSettings(settings: any): Promise<void> {
+  async saveSettings(settings: AppSettings): Promise<void> {
     try {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings))
     } catch (error) {
       console.error('設定の保存に失敗しました:', error)
       throw new Error('設定の保存に失敗しました')
+    }
+  },
+
+  // 自動バックアップ設定のみを更新
+  async updateAutoBackupSettings(autoBackupSettings: AutoBackupSettings): Promise<void> {
+    try {
+      const currentSettings = await this.getSettings()
+      const updatedSettings: AppSettings = {
+        ...currentSettings,
+        autoBackup: autoBackupSettings
+      }
+      await this.saveSettings(updatedSettings)
+    } catch (error) {
+      console.error('自動バックアップ設定の保存に失敗しました:', error)
+      throw new Error('自動バックアップ設定の保存に失敗しました')
     }
   }
 }

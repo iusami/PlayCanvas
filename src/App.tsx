@@ -15,6 +15,7 @@ import PlayMetadataForm from './components/PlayMetadataForm'
 import PlayLibrary from './components/PlayLibrary'
 import PlaylistWorkspace from './components/PlaylistWorkspace'
 import { PlayStorage, PlaylistStorage, FormationStorage } from './utils/storage'
+import { AutoBackupScheduler } from './utils/autoBackupScheduler'
 
 const initialAppState: AppState = {
   currentPlay: null,
@@ -72,7 +73,7 @@ const App: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
 
-  // 初期化時にプレイ、プレイリスト、フォーメーションを読み込み
+  // 初期化時にプレイ、プレイリスト、フォーメーションを読み込み + 自動バックアップ開始
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -85,6 +86,12 @@ const App: React.FC = () => {
         setPlays(savedPlays)
         setPlaylists(savedPlaylists)
         setFormations(savedFormations)
+
+        // 自動バックアップスケジューラーを開始
+        AutoBackupScheduler.start()
+        
+        // 通知許可をリクエスト（ユーザーが許可するかは任意）
+        AutoBackupScheduler.requestNotificationPermission()
       } catch (error) {
         console.error('データの初期化に失敗しました:', error)
         // エラーが発生した場合も空のデータで初期化を継続
@@ -94,6 +101,11 @@ const App: React.FC = () => {
       }
     }
     loadData()
+
+    // クリーンアップ関数でスケジューラーを停止
+    return () => {
+      AutoBackupScheduler.stop()
+    }
   }, [])
 
   // 現在のプレイの自動保存（一時的に無効化してテスト）
