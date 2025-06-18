@@ -291,7 +291,18 @@ describe('SettingsStorage', () => {
   })
 
   it('設定を保存・取得できること', async () => {
-    const testSettings = { theme: 'dark', language: 'ja' }
+    const testSettings = {
+      autoBackup: {
+        enabled: true,
+        interval: 'daily' as const,
+        maxBackupFiles: 10,
+        includeSettings: false,
+        customFileName: 'custom-backup',
+        lastBackupDate: new Date('2024-01-01T00:00:00Z')
+      },
+      theme: 'dark' as const,
+      language: 'ja' as const
+    }
     
     await SettingsStorage.saveSettings(testSettings)
     const retrievedSettings = await SettingsStorage.getSettings()
@@ -299,9 +310,46 @@ describe('SettingsStorage', () => {
     expect(retrievedSettings).toEqual(testSettings)
   })
 
-  it('設定が存在しない場合は空オブジェクトを返すこと', async () => {
+  it('設定が存在しない場合はデフォルト設定を返すこと', async () => {
     const settings = await SettingsStorage.getSettings()
-    expect(settings).toEqual({})
+    const defaultSettings = SettingsStorage.getDefaultSettings()
+    expect(settings).toEqual(defaultSettings)
+  })
+
+  it('部分的な設定がある場合、デフォルト設定とマージされること', async () => {
+    const partialSettings = {
+      theme: 'dark' as const,
+      language: 'en' as const
+    }
+    
+    // 部分的な設定を直接localStorageに保存
+    localStorage.setItem('football-canvas-settings', JSON.stringify(partialSettings))
+    
+    const settings = await SettingsStorage.getSettings()
+    const expectedSettings = {
+      ...SettingsStorage.getDefaultSettings(),
+      ...partialSettings
+    }
+    
+    expect(settings).toEqual(expectedSettings)
+  })
+
+  it('自動バックアップ設定のみを更新できること', async () => {
+    const newAutoBackupSettings = {
+      enabled: true,
+      interval: 'monthly' as const,
+      maxBackupFiles: 3,
+      includeSettings: false,
+      customFileName: 'monthly-backup',
+      lastBackupDate: new Date('2024-02-01T00:00:00Z')
+    }
+    
+    await SettingsStorage.updateAutoBackupSettings(newAutoBackupSettings)
+    const settings = await SettingsStorage.getSettings()
+    
+    expect(settings.autoBackup).toEqual(newAutoBackupSettings)
+    expect(settings.theme).toEqual('light') // デフォルト値のまま
+    expect(settings.language).toEqual('ja') // デフォルト値のまま
   })
 })
 

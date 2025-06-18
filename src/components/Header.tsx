@@ -3,6 +3,7 @@ import { Play } from '../types'
 import { useAuth } from '@/contexts/AuthContext'
 import { PasswordChangeForm } from './Auth/PasswordChangeForm'
 import { BackupManager } from './Backup/BackupManager'
+import { SettingsModal } from './Settings/SettingsModal'
 
 type MessageType = 'success' | 'error' | 'info'
 
@@ -36,6 +37,7 @@ const Header: React.FC<HeaderProps> = ({
   const { user, signOut } = useAuth()
   const [isPasswordChangeOpen, setIsPasswordChangeOpen] = useState(false)
   const [isBackupManagerOpen, setIsBackupManagerOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // テスト環境ではモックユーザーを使用
   const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
@@ -66,6 +68,14 @@ const Header: React.FC<HeaderProps> = ({
   }
 
   const handleBackupError = (message: string) => {
+    onShowMessage(message, 'error')
+  }
+
+  const handleSettingsSuccess = (message: string) => {
+    onShowMessage(message, 'success')
+  }
+
+  const handleSettingsError = (message: string) => {
     onShowMessage(message, 'error')
   }
   return (
@@ -167,6 +177,12 @@ const Header: React.FC<HeaderProps> = ({
             {!isTestMode && (
               <>
                 <button 
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 px-2 py-1 rounded transition-colors"
+                >
+                  設定
+                </button>
+                <button 
                   onClick={() => setIsBackupManagerOpen(true)}
                   className="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded transition-colors"
                 >
@@ -204,6 +220,14 @@ const Header: React.FC<HeaderProps> = ({
         onClose={() => setIsBackupManagerOpen(false)}
         onSuccess={handleBackupSuccess}
         onError={handleBackupError}
+      />
+      
+      {/* 設定モーダル */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSuccess={handleSettingsSuccess}
+        onError={handleSettingsError}
       />
     </header>
   )

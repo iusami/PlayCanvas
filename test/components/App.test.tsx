@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import App from '../../src/App'
-import { PlayStorage, PlaylistStorage, FormationStorage } from '../../src/utils/storage'
+import { PlayStorage, PlaylistStorage, FormationStorage, SettingsStorage } from '../../src/utils/storage'
 
 // モジュールをモック化
 vi.mock('../../src/utils/storage', () => ({
@@ -27,6 +27,43 @@ vi.mock('../../src/utils/storage', () => ({
     saveFormation: vi.fn(() => Promise.resolve()),
     deleteFormation: vi.fn(() => Promise.resolve()),
     getFormationsByType: vi.fn(() => Promise.resolve([]))
+  },
+  SettingsStorage: {
+    getSettings: vi.fn(() => Promise.resolve({
+      autoBackup: {
+        enabled: false,
+        interval: 'weekly',
+        maxBackupFiles: 5,
+        includeSettings: true,
+        customFileName: undefined,
+        lastBackupDate: undefined
+      },
+      theme: 'light',
+      language: 'ja'
+    })),
+    saveSettings: vi.fn(() => Promise.resolve()),
+    updateAutoBackupSettings: vi.fn(() => Promise.resolve()),
+    getDefaultSettings: vi.fn(() => ({
+      autoBackup: {
+        enabled: false,
+        interval: 'weekly',
+        maxBackupFiles: 5,
+        includeSettings: true,
+        customFileName: undefined,
+        lastBackupDate: undefined
+      },
+      theme: 'light',
+      language: 'ja'
+    }))
+  }
+}))
+
+// 自動バックアップスケジューラーをモック化
+vi.mock('../../src/utils/autoBackupScheduler', () => ({
+  AutoBackupScheduler: {
+    start: vi.fn(),
+    stop: vi.fn(),
+    requestNotificationPermission: vi.fn(() => Promise.resolve(false))
   }
 }))
 
