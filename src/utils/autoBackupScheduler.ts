@@ -5,6 +5,7 @@ import { AutoBackupManager } from './autoBackup'
  */
 export class AutoBackupScheduler {
   private static isRunning = false
+  private static isProcessing = false
   private static intervalId: number | null = null
   private static readonly CHECK_INTERVAL = 60 * 60 * 1000 // 1時間ごとにチェック
 
@@ -23,7 +24,11 @@ export class AutoBackupScheduler {
     
     // 定期チェックを開始
     this.intervalId = window.setInterval(() => {
-      this.checkAndCreateBackup()
+      if (!this.isProcessing) {
+        this.checkAndCreateBackup()
+      } else {
+        console.log('前回の自動バックアップ処理がまだ実行中のため、今回の処理をスキップします')
+      }
     }, this.CHECK_INTERVAL)
 
     console.log('自動バックアップスケジューラーを開始しました')
@@ -51,6 +56,13 @@ export class AutoBackupScheduler {
    * バックアップが必要かチェックして実行
    */
   private static async checkAndCreateBackup(): Promise<void> {
+    if (this.isProcessing) {
+      console.log('自動バックアップ処理が既に実行中です')
+      return
+    }
+
+    this.isProcessing = true
+    
     try {
       const shouldBackup = await AutoBackupManager.shouldCreateBackup()
       
@@ -73,6 +85,8 @@ export class AutoBackupScheduler {
       }
     } catch (error) {
       console.error('自動バックアップチェック中にエラーが発生しました:', error)
+    } finally {
+      this.isProcessing = false
     }
   }
 
@@ -129,6 +143,15 @@ export class AutoBackupScheduler {
    * 手動でバックアップチェックを実行
    */
   static async runManualCheck(): Promise<{ success: boolean; message: string }> {
+    if (this.isProcessing) {
+      return {
+        success: false,
+        message: '自動バックアップ処理が実行中のため、手動実行できません'
+      }
+    }
+
+    this.isProcessing = true
+    
     try {
       const shouldBackup = await AutoBackupManager.shouldCreateBackup()
       
@@ -147,6 +170,8 @@ export class AutoBackupScheduler {
         success: false,
         message: '手動バックアップチェックに失敗しました'
       }
+    } finally {
+      this.isProcessing = false
     }
   }
 }
