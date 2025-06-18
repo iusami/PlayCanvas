@@ -10,7 +10,7 @@ import {
 
 describe('FIELD_CONSTRAINTS', () => {
   it('DEFENSE_MIN_Y_FLIPPEDが正しい値であること', () => {
-    expect(FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED).toBe(240)
+    expect(FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED).toBe(225)
   })
 
   it('FIELD_UPPER_LIMIT_LINE_INDEXが正しい値であること', () => {
@@ -20,7 +20,7 @@ describe('FIELD_CONSTRAINTS', () => {
   it('FIELD_CONSTRAINTSが読み取り専用であること', () => {
     // TypeScriptレベルでの読み取り専用チェック（実行時エラーは発生しない）
     expect(FIELD_CONSTRAINTS).toEqual({ 
-      DEFENSE_MIN_Y_FLIPPED: 240,
+      DEFENSE_MIN_Y_FLIPPED: 225,
       FIELD_UPPER_LIMIT_LINE_INDEX: 2
     })
     // オブジェクトが変更不可能であることを確認

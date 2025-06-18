@@ -407,18 +407,18 @@ const FootballCanvas = forwardRef(({
     }
     
     const centerLineY = getCenterLineY(play.field.height)
-    const thirdLineY = (play.field.height * 3) / 8 - 20
-    const fifthLineY = (play.field.height * 5) / 8 + 2
+    const secondLineY = (play.field.height * 2) / 6 - 20  // 6等分の2番目
+    const fourthLineY = (play.field.height * 4) / 6 + 2   // 6等分の4番目
     
-    const distToThird = Math.abs(play.center.y - thirdLineY)
-    const distToFifth = Math.abs(play.center.y - fifthLineY)
-    const flipped = distToThird < distToFifth
+    const distToSecond = Math.abs(play.center.y - secondLineY)
+    const distToFourth = Math.abs(play.center.y - fourthLineY)
+    const flipped = distToSecond < distToFourth
     
     console.log(`🔍 isFieldFlipped: センター(${play.center.x}, ${play.center.y})`)
-    console.log(`🔍 isFieldFlipped: 3番目の線=${thirdLineY.toFixed(1)}, 5番目の線=${fifthLineY.toFixed(1)}, 中央線=${centerLineY.toFixed(1)}`)
-    console.log(`🔍 isFieldFlipped: 3番目まで距離=${distToThird.toFixed(1)}, 5番目まで距離=${distToFifth.toFixed(1)} → ${flipped}`)
+    console.log(`🔍 isFieldFlipped: 2番目の線=${secondLineY.toFixed(1)}, 4番目の線=${fourthLineY.toFixed(1)}, 中央線=${centerLineY.toFixed(1)}`)
+    console.log(`🔍 isFieldFlipped: 2番目まで距離=${distToSecond.toFixed(1)}, 4番目まで距離=${distToFourth.toFixed(1)} → ${flipped}`)
     
-    // センターが3番目の線付近にいる場合は反転状態とみなす
+    // センターが2番目の線付近にいる場合は反転状態とみなす
     return flipped
   }
 
@@ -2657,14 +2657,14 @@ const FootballCanvas = forwardRef(({
       // フィールド反転状態を判定
       const flipped = isFieldFlipped()
       
-      // 7本の水平線を均等に配置（フィールドを8等分）
-      // 上から2つ目の線がプレイヤー配置の上限制約として機能
-      for (let i = 1; i <= 7; i++) {
-        const y = (fieldHeight * i) / 8
+      // 6本の水平線を均等に配置（フィールドを6等分）
+      // 上部を削除して6本線のみ描画
+      for (let i = 1; i <= 6; i++) {
+        const y = (fieldHeight * i) / 6
         let strokeWidth = 2
         
-        // 反転時は3番目、通常時は5番目の線を太く
-        if ((flipped && i === 3) || (!flipped && i === 5)) {
+        // 反転時は2番目、通常時は5番目の線を太く
+        if ((flipped && i === 2) || (!flipped && i === 5)) {
           strokeWidth = 4
         }
         

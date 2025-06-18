@@ -50,13 +50,13 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     )
 
     if (play.field.yardLines) {
-      // 7本の水平線を均等に配置（フィールドを8等分）
-      // 上から2つ目の線がプレイヤー配置の上限制約として機能
-      for (let i = 1; i <= 7; i++) {
-        const y = (fieldHeight * i) / 8
+      // 6本の水平線を均等に配置（フィールドを6等分）
+      // 上部を削除して6本線のみ描画
+      for (let i = 1; i <= 6; i++) {
+        const y = (fieldHeight * i) / 6
         let strokeWidth = 1
         
-        // 上から5番目の線は太く
+        // 上から5番目の線は太く（中央線）
         if (i === 5) {
           strokeWidth = 2
         }
@@ -252,7 +252,7 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
   const renderCenter = () => {
     if (!play.center) return null
     
-    const centerLineY = (play.field.height * 5) / 8
+    const centerLineY = (play.field.height * 5) / 6  // 6等分の5番目
     const centerY = centerLineY + 2
     
     return (

@@ -4,9 +4,9 @@ export type PlayerType = 'circle' | 'triangle' | 'square' | 'text' | 'chevron' |
 // フィールド制約定数
 export const FIELD_CONSTRAINTS = Object.freeze({
   // 反転時のディフェンス最小Y座標（フィールド下半分の制限）
-  DEFENSE_MIN_Y_FLIPPED: 240,
+  DEFENSE_MIN_Y_FLIPPED: 225, // 6等分の第3線（450 * 3 / 6 = 225）
   // フィールド上限制約：上から2つ目の線をフィールド上限とする
-  FIELD_UPPER_LIMIT_LINE_INDEX: 2, // 8等分の2つ目の線
+  FIELD_UPPER_LIMIT_LINE_INDEX: 2, // 6等分の2つ目の線
 } as const)
 
 // プレイヤーのポジション

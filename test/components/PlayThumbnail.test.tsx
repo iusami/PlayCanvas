@@ -244,8 +244,8 @@ describe('PlayThumbnail Component', () => {
       
       const lines = screen.getAllByTestId('konva-line')
       
-      // 7本のヤードライン + 他の線要素
-      expect(lines.length).toBeGreaterThan(7)
+      // 6本のヤードライン + 他の線要素
+      expect(lines.length).toBeGreaterThan(6)
     })
 
     it('5番目の線が太く描画されること', () => {
