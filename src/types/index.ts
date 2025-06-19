@@ -7,6 +7,9 @@ export const FIELD_CONSTRAINTS = Object.freeze({
   DEFENSE_MIN_Y_FLIPPED: 225, // 6等分の第3線（450 * 3 / 6 = 225）
   // フィールド上限制約：上から2つ目の線をフィールド上限とする
   FIELD_UPPER_LIMIT_LINE_INDEX: 2, // 6等分の2つ目の線
+  // フィールド反転判定用オフセット
+  FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET: 20, // 2番目の線の判定オフセット
+  FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET: 2,  // 4番目の線の判定オフセット
 } as const)
 
 // プレイヤーのポジション

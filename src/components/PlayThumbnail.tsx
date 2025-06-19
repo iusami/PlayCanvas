@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
-import { Play, Player, Arrow, TextElement } from '../types'
+import { Play, Player, Arrow, TextElement, FIELD_CONSTRAINTS } from '../types'
 
 interface PlayThumbnailProps {
   play: Play
@@ -33,8 +33,8 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
       return false
     }
     
-    const secondLineY = (play.field.height * 2) / 6 - 20  // 6等分の2番目
-    const fourthLineY = (play.field.height * 4) / 6 + 2   // 6等分の4番目
+    const secondLineY = (play.field.height * 2) / 6 - FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET  // 6等分の2番目
+    const fourthLineY = (play.field.height * 4) / 6 + FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET   // 6等分の4番目
     
     const distToSecond = Math.abs(play.center.y - secondLineY)
     const distToFourth = Math.abs(play.center.y - fourthLineY)
