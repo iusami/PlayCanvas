@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player, FIELD_CONSTRAINTS, TextBoxEntry } from './types'
+import { Play, AppState, PlayMetadata, Playlist, FormationTemplate, Player, TextBoxEntry } from './types'
 
 // メッセージの型定義
 type MessageType = 'success' | 'error' | 'info'
@@ -512,9 +512,9 @@ const App: React.FC = () => {
     const centerLineY = getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
-    // プレイヤーの実際の上端・下端位置を計算
-    const playerTopY = y - halfSize    // プレイヤーの上端
-    const playerBottomY = y + halfSize // プレイヤーの下端
+    // プレイヤーの実際の上端・下端位置の計算方法:
+    // プレイヤーの上端 = y - halfSize
+    // プレイヤーの下端 = y + halfSize
     
     // オフセット距離設定（中央線から少し離した位置）
     const offenseSnapOffset = 15 // オフェンス用の距離（中央線より下に）

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { AppState, Play, PlayerType, Playlist, FormationTemplate, FIELD_CONSTRAINTS } from '../types'
+import { AppState, Play, PlayerType, Playlist, FormationTemplate } from '../types'
 import PlayListView from './PlayListView'
 import PlaylistManager from './PlaylistManager'
 import PlaylistEditor from './PlaylistEditor'
@@ -98,8 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     fieldWidth: number, 
     fieldHeight: number, 
     center: { x: number; y: number } | undefined,
-    playerSize: number = 20,
-    appState: AppState
+    playerSize: number = 20
   ) => {
     const flipped = isFieldFlipped(center, fieldHeight)
     // 常に固定の中央線位置を使用（centerの実際位置ではなく）
@@ -338,7 +337,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       }
                       
                       
-                      const updatedPlayers = appState.currentPlay.players.map((player, index) => {
+                      const updatedPlayers = appState.currentPlay.players.map((player) => {
                         const flippedY = flipAxisY + (flipAxisY - player.y)
                         
                         
@@ -350,8 +349,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           appState.currentPlay!.field.width, 
                           appState.currentPlay!.field.height, 
                           updatedCenter,
-                          player.size,
-                          appState
+                          player.size
                         )
                         
                         
