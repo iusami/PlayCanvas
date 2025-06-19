@@ -526,14 +526,16 @@ const App: React.FC = () => {
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンス：プレイヤーの下端が中央線より15px下まで配置可能（フィールド上半分で制約）
-        // プレイヤーの下端 = center.y + halfSize <= centerLineY + 15
-        // つまり: center.y <= centerLineY + 15 - halfSize
-        const maxY = centerLineY + 15 - halfSize
+        // 反転時オフェンス：プレイヤーの下端が中央線より15px上まで配置可能（フィールド上半分で制約）
+        // プレイヤーの下端 = center.y + halfSize <= centerLineY - 15
+        // つまり: center.y <= centerLineY - 15 - halfSize
+        const maxY = centerLineY - offenseSnapOffset - halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
-        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
-        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
+        // 反転時ディフェンス：プレイヤーの上端が中央線より15px下まで配置可能（フィールド下半分で制約）
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 15
+        // つまり: center.y >= centerLineY + 15 + halfSize
+        const minY = centerLineY + defenseSnapOffset + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       }
     } else {
