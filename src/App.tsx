@@ -243,13 +243,7 @@ const App: React.FC = () => {
     // 太い線（上から4番目）の位置を計算
     const centerLineY = (fieldHeight * 4) / 6  // 6等分の4番目 = 300px
     
-    // センターをオフェンス領域に配置（オフェンスプレイヤーが自然に配置できる位置）
-    // オフェンス制約: minY = centerLineY + offenseSnapOffset + halfSize = 300 + 15 + 10 = 325px
-    const offenseSnapOffset = 15
-    const playerHalfSize = 10 // デフォルトプレイヤーサイズの半分
-    const centerY = centerLineY + offenseSnapOffset + playerHalfSize + 15 // 少し下に余裕を持たせて340px
-    
-    console.log(`🏈 新プレイ作成: 中央線=${centerLineY}, センター配置=${centerY}`)
+    console.log(`🏈 新プレイ作成: 中央線=${centerLineY}, センター配置=${centerLineY}`)
     
     const newPlay: Play = {
       id: crypto.randomUUID(),
@@ -275,7 +269,7 @@ const App: React.FC = () => {
       players: [],
       arrows: [],
       texts: [],
-      center: { x: fieldWidth / 2, y: centerY }, // センターをオフェンス領域に配置
+      center: { x: fieldWidth / 2, y: centerLineY }, // センターを中央線に配置
       textBoxEntries: createEmptyTextBoxEntries() // 空のテキストボックス10行を初期化
     }
     
@@ -532,10 +526,10 @@ const App: React.FC = () => {
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンス：プレイヤーの上端が中央線より下（フィールド上半分で制約）
-        // 反転時は上半分（y < centerLineY）で動作、上端 >= centerLineY - offenseSnapOffset
-        // つまり: center.y >= centerLineY - offenseSnapOffset + halfSize
-        const maxY = centerLineY - offenseSnapOffset - halfSize
+        // 反転時オフェンス：プレイヤーの下端が中央線と同じ高さまで配置可能（フィールド上半分で制約）
+        // プレイヤーの下端 = center.y + halfSize <= centerLineY
+        // つまり: center.y <= centerLineY - halfSize
+        const maxY = centerLineY - halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
@@ -544,10 +538,10 @@ const App: React.FC = () => {
       }
     } else {
       if (team === 'offense') {
-        // 通常時オフェンス：プレイヤーの上端が中央線より下になるよう制約
-        // プレイヤーの上端 = center.y - halfSize >= centerLineY + offenseSnapOffset
-        // つまり: center.y >= centerLineY + offenseSnapOffset + halfSize
-        const minY = centerLineY + offenseSnapOffset + halfSize
+        // 通常時オフェンス：プレイヤーの上端が中央線と同じ高さまで配置可能
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY
+        // つまり: center.y >= centerLineY + halfSize  
+        const minY = centerLineY + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       } else {
         // 通常時ディフェンス：下端が中央線より上
