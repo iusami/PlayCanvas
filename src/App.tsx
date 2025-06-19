@@ -241,7 +241,15 @@ const App: React.FC = () => {
     const fieldWidth = 800
     const fieldHeight = 450  // 上から2つ目の線より上を削除（600 * 6/8 = 450）
     // 太い線（上から4番目）の位置を計算
-    const centerLineY = (fieldHeight * 4) / 6  // 6等分の4番目
+    const centerLineY = (fieldHeight * 4) / 6  // 6等分の4番目 = 300px
+    
+    // センターをオフェンス領域に配置（オフェンスプレイヤーが自然に配置できる位置）
+    // オフェンス制約: minY = centerLineY + offenseSnapOffset + halfSize = 300 + 15 + 10 = 325px
+    const offenseSnapOffset = 15
+    const playerHalfSize = 10 // デフォルトプレイヤーサイズの半分
+    const centerY = centerLineY + offenseSnapOffset + playerHalfSize + 15 // 少し下に余裕を持たせて340px
+    
+    console.log(`🏈 新プレイ作成: 中央線=${centerLineY}, センター配置=${centerY}`)
     
     const newPlay: Play = {
       id: crypto.randomUUID(),
@@ -267,7 +275,7 @@ const App: React.FC = () => {
       players: [],
       arrows: [],
       texts: [],
-      center: { x: fieldWidth / 2, y: centerLineY }, // センターの上端を太い線に合わせる
+      center: { x: fieldWidth / 2, y: centerY }, // センターをオフェンス領域に配置
       textBoxEntries: createEmptyTextBoxEntries() // 空のテキストボックス10行を初期化
     }
     
