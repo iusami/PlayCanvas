@@ -27,7 +27,7 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
   const offsetX = (width - scaledWidth) / 2
   const offsetY = (height - scaledHeight) / 2
 
-  // フィールド反転判定（FootballCanvas.tsxから移植）
+  // フィールド反転判定（FootballCanvas.tsxと完全統一）
   const isFieldFlipped = () => {
     if (!play?.center) {
       return false
@@ -107,6 +107,10 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     const fillColor = player.fillColor === 'transparent' ? '#ffffff' : (player.fillColor || '#ffffff')
     const size = player.size * 0.8 // サムネイルでは少し小さく
     
+    // フィールド反転状態に基づいてプレーヤーの向きを決定
+    const fieldFlipped = isFieldFlipped()
+    const shouldFlipPlayer = fieldFlipped
+    
     switch (player.type) {
       case 'circle':
         return (
@@ -122,14 +126,14 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         return (
           <Line
             {...baseProps}
-            points={player.flipped ? [
-              // 上向き三角形
+            points={shouldFlipPlayer ? [
+              // 上向き三角形（フィールド反転時）
               0, -size / 2,
               -size / 2, size / 2,
               size / 2, size / 2,
               0, -size / 2
             ] : [
-              // 下向き三角形（デフォルト）
+              // 下向き三角形（通常時）
               0, size / 2,
               -size / 2, -size / 2,
               size / 2, -size / 2,
@@ -158,13 +162,13 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         return (
           <Line
             {...baseProps}
-            points={player.flipped ? [
-              // 上向きV
+            points={shouldFlipPlayer ? [
+              // 上向きV（フィールド反転時）
               -size / 2, size / 4,
               0, -size / 2,
               size / 2, size / 4
             ] : [
-              // 下向きV（デフォルト）
+              // 下向きV（通常時）
               -size / 2, -size / 4,
               0, size / 2,
               size / 2, -size / 4
