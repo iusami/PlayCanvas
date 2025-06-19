@@ -395,7 +395,7 @@ const FootballCanvas = forwardRef(({
 
   // プレーヤー配置制限関連の基本関数
   const getCenterLineY = (fieldHeight: number) => {
-    return (fieldHeight * 5) / 8
+    return (fieldHeight * 4) / 6  // 6等分の4番目（中央線）
   }
 
   const isFieldFlipped = () => {
@@ -407,18 +407,18 @@ const FootballCanvas = forwardRef(({
     }
     
     const centerLineY = getCenterLineY(play.field.height)
-    const thirdLineY = (play.field.height * 3) / 8 - 20
-    const fifthLineY = (play.field.height * 5) / 8 + 2
+    const secondLineY = (play.field.height * 2) / 6 - 20  // 6等分の2番目
+    const fourthLineY = (play.field.height * 4) / 6 + 2   // 6等分の4番目
     
-    const distToThird = Math.abs(play.center.y - thirdLineY)
-    const distToFifth = Math.abs(play.center.y - fifthLineY)
-    const flipped = distToThird < distToFifth
+    const distToSecond = Math.abs(play.center.y - secondLineY)
+    const distToFourth = Math.abs(play.center.y - fourthLineY)
+    const flipped = distToSecond < distToFourth
     
     console.log(`🔍 isFieldFlipped: センター(${play.center.x}, ${play.center.y})`)
-    console.log(`🔍 isFieldFlipped: 3番目の線=${thirdLineY.toFixed(1)}, 5番目の線=${fifthLineY.toFixed(1)}, 中央線=${centerLineY.toFixed(1)}`)
-    console.log(`🔍 isFieldFlipped: 3番目まで距離=${distToThird.toFixed(1)}, 5番目まで距離=${distToFifth.toFixed(1)} → ${flipped}`)
+    console.log(`🔍 isFieldFlipped: 2番目の線=${secondLineY.toFixed(1)}, 4番目の線=${fourthLineY.toFixed(1)}, 中央線=${centerLineY.toFixed(1)}`)
+    console.log(`🔍 isFieldFlipped: 2番目まで距離=${distToSecond.toFixed(1)}, 4番目まで距離=${distToFourth.toFixed(1)} → ${flipped}`)
     
-    // センターが3番目の線付近にいる場合は反転状態とみなす
+    // センターが2番目の線付近にいる場合は反転状態とみなす
     return flipped
   }
 
@@ -431,9 +431,13 @@ const FootballCanvas = forwardRef(({
     // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
     const centerLineY = flipped && play.center ? play.center.y : getCenterLineY(play.field.height)
     
+    // フィールド上限制約：上から2つ目の線をフィールド上限とする
+    const fieldUpperLimit = (play.field.height * FIELD_CONSTRAINTS.FIELD_UPPER_LIMIT_LINE_INDEX) / 6
+    
     console.log(`🔍 constrainPlayerPosition: 入力(${x.toFixed(1)}, ${y.toFixed(1)}) ${team} centerLineY=${centerLineY.toFixed(1)} flipped=${flipped}`)
     console.log(`🔍 フィールドサイズ: width=${play.field.width}, height=${play.field.height}`)
     console.log(`🔍 プレーヤーサイズ: ${playerSize}, halfSize=${halfSize}`)
+    console.log(`🔍 フィールド上限: ${fieldUpperLimit.toFixed(1)}px (上から${FIELD_CONSTRAINTS.FIELD_UPPER_LIMIT_LINE_INDEX}つ目の線)`)
     console.log(`🔍 センター位置: ${play.center ? `(${play.center.x}, ${play.center.y})` : 'なし'}`)
     console.log(`🔍 使用する中央線: ${flipped ? '実際の中央線位置' : '固定の中央線位置'} = ${centerLineY.toFixed(1)}`)
     
@@ -450,48 +454,59 @@ const FootballCanvas = forwardRef(({
     if (flipped) {
       // 反転時: オフェンスが上、ディフェンスが下
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
-        const maxY = centerLineY + 10 // 205 + 10 = 215px
-        const fieldTopLimit = halfSize
+        // 反転時オフェンス：プレイヤーの下端が中央線より15px上まで配置可能（フィールド上半分で制約）
+        // プレイヤーの下端 = center.y + halfSize <= centerLineY - 15
+        // つまり: center.y <= centerLineY - 15 - halfSize
+        const maxY = centerLineY - offenseSnapOffset - halfSize
+        // フィールド上限制約を適用：上から2つ目の線以下まで
+        const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
         
-        // オフェンスの有効範囲：フィールド上端からmaxYまで
-        constrainedY = Math.max(fieldTopLimit, Math.min(maxY, y))
+        // オフェンスの有効範囲：フィールド上限からmaxYまで
+        constrainedY = Math.max(effectiveTopLimit, Math.min(maxY, y))
         
-        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
-        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
+        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
+        console.log(`🔍 反転オフェンス: プレイヤー下端=${constrainedY + halfSize}px (中央線-15px=${centerLineY - offenseSnapOffset}以下でないとダメ)`)
+        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${effectiveTopLimit.toFixed(1)}〜${maxY.toFixed(1)})`)
       } else {
-        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
-        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
+        // 反転時ディフェンス：プレイヤーの上端が中央線より10px下まで配置可能（フィールド下半分で制約）
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 10
+        // つまり: center.y >= centerLineY + 10 + halfSize
+        const minY = centerLineY + 10 + halfSize
         const fieldBottomLimit = play.field.height - halfSize
         
         // ディフェンスの有効範囲：minYからフィールド下端まで
         constrainedY = Math.max(minY, Math.min(fieldBottomLimit, y))
         
         console.log(`🔍 反転ディフェンス: minY=${minY}, fieldBottomLimit=${fieldBottomLimit}`)
+        console.log(`🔍 反転ディフェンス: プレイヤー上端=${constrainedY - halfSize}px (中央線+10px=${centerLineY + 10}以上でないとダメ)`)
         console.log(`🔍 反転ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${minY}〜${fieldBottomLimit})`)
       }
     } else {
       // 通常時: オフェンスが下、ディフェンスが上
       if (team === 'offense') {
-        // 通常時オフェンスは中央線より少し下から（オフェンス用オフセット適用）
-        const minY = centerLineY + offenseSnapOffset  // 375 + 10 = 385
+        // 通常時オフェンス：プレイヤーの上端が中央線より15px下まで配置可能
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 15
+        // つまり: center.y >= centerLineY + 15 + halfSize
+        const minY = centerLineY + offenseSnapOffset + halfSize
         const fieldBottomLimit = play.field.height - halfSize
         
         // オフェンスの有効範囲：minYからフィールド下端まで
         constrainedY = Math.max(minY, Math.min(fieldBottomLimit, y))
         
         console.log(`🔍 通常オフェンス: centerLineY=${centerLineY.toFixed(1)}, minY=${minY.toFixed(1)}, fieldBottomLimit=${fieldBottomLimit}`)
+        console.log(`🔍 通常オフェンス: プレイヤー上端=${constrainedY - halfSize}px (中央線+15px=${centerLineY + offenseSnapOffset}以下でないとダメ)`)
         console.log(`🔍 通常オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${minY.toFixed(1)}〜${fieldBottomLimit})`)
       } else {
         // ディフェンスは中央線より少し上まで（ディフェンス用オフセット適用）
         const maxY = centerLineY - defenseSnapOffset  // 375 - 10 = 365
-        const fieldTopLimit = halfSize  // プレーヤーがフィールドから出ないように
+        // フィールド上限制約を適用：上から2つ目の線以下まで
+        const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
         
-        // 通常の制限のみ適用
-        constrainedY = Math.max(fieldTopLimit, Math.min(maxY, y))
+        // ディフェンスの有効範囲：フィールド上限からmaxYまで
+        constrainedY = Math.max(effectiveTopLimit, Math.min(maxY, y))
         
-        console.log(`🔍 通常ディフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, fieldTopLimit=${fieldTopLimit}`)
-        console.log(`🔍 通常ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${fieldTopLimit}〜${maxY.toFixed(1)})`)
+        console.log(`🔍 通常ディフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
+        console.log(`🔍 通常ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${effectiveTopLimit.toFixed(1)}〜${maxY.toFixed(1)})`)
       }
     }
     
@@ -2651,13 +2666,14 @@ const FootballCanvas = forwardRef(({
       // フィールド反転状態を判定
       const flipped = isFieldFlipped()
       
-      // 7本の水平線を均等に配置（フィールドを8等分）
-      for (let i = 1; i <= 7; i++) {
-        const y = (fieldHeight * i) / 8
+      // 6本の水平線を均等に配置（フィールドを6等分）
+      // 上部を削除して6本線のみ描画
+      for (let i = 1; i <= 6; i++) {
+        const y = (fieldHeight * i) / 6
         let strokeWidth = 2
         
-        // 反転時は3番目、通常時は5番目の線を太く
-        if ((flipped && i === 3) || (!flipped && i === 5)) {
+        // 反転時は2番目、通常時は4番目の線を太く
+        if ((flipped && i === 2) || (!flipped && i === 4)) {
           strokeWidth = 4
         }
         
@@ -2990,6 +3006,15 @@ const FootballCanvas = forwardRef(({
   const renderCenter = () => {
     if (!play?.center) return null
     
+    // フィールド反転状態を検出
+    const fieldHeight = play.field.height
+    const secondLineY = (fieldHeight * 2) / 6  // 6等分の2番目
+    const fourthLineY = (fieldHeight * 4) / 6  // 6等分の4番目
+    const isFlipped = Math.abs(play.center.y - secondLineY) < Math.abs(play.center.y - fourthLineY)
+    
+    // 反転状態に応じてoffsetYを設定
+    const offsetY = isFlipped ? 20 : 0  // 反転時は下端基準(20)、通常時は上端基準(0)
+    
     return (
       <Rect
         key="center"
@@ -2999,7 +3024,7 @@ const FootballCanvas = forwardRef(({
         width={20}
         height={20}
         offsetX={10}
-        offsetY={0} // 上端を基準にする
+        offsetY={offsetY}
         fill="#ffffff" // 白色の背景
         stroke="#000000" // 黒色の枠線
         strokeWidth={3}

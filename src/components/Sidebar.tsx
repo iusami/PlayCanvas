@@ -1,28 +1,10 @@
 import React, { useState } from 'react'
-import { AppState, Play, PlayerType, Playlist, FormationTemplate, FIELD_CONSTRAINTS } from '../types'
+import { AppState, Play, PlayerType, Playlist, FormationTemplate } from '../types'
 import PlayListView from './PlayListView'
 import PlaylistManager from './PlaylistManager'
 import PlaylistEditor from './PlaylistEditor'
 import FormationTemplateManager from './FormationTemplateManager'
 
-// デバッグログヘルパー関数
-const debugLog = (appState: AppState, ...args: any[]) => {
-  if (appState.debugMode) {
-    console.log(...args)
-  }
-}
-
-const debugGroup = (appState: AppState, label: string) => {
-  if (appState.debugMode) {
-    console.group(label)
-  }
-}
-
-const debugGroupEnd = (appState: AppState) => {
-  if (appState.debugMode) {
-    console.groupEnd()
-  }
-}
 
 // 座標反転ヘルパー関数
 const flipXCoordinate = (center: number, coordinate: number): number => {
@@ -95,16 +77,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // プレーヤー配置制限関連の関数
   const getCenterLineY = (fieldHeight: number) => {
-    return (fieldHeight * 5) / 8
+    // 6等分システムに統一：4番目の線が中央線
+    return (fieldHeight * 4) / 6
   }
 
   const isFieldFlipped = (center: { x: number; y: number } | undefined, fieldHeight: number) => {
     if (!center) return false
     
-    const thirdLineY = (fieldHeight * 3) / 8 - 20
-    const fifthLineY = (fieldHeight * 5) / 8 + 2
+    // 6等分システムに統一：2番目と4番目の線で判定
+    const secondLineY = (fieldHeight * 2) / 6
+    const fourthLineY = (fieldHeight * 4) / 6
     
-    return Math.abs(center.y - thirdLineY) < Math.abs(center.y - fifthLineY)
+    return Math.abs(center.y - secondLineY) < Math.abs(center.y - fourthLineY)
   }
 
   const constrainPlayerPosition = (
@@ -114,18 +98,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     fieldWidth: number, 
     fieldHeight: number, 
     center: { x: number; y: number } | undefined,
-    playerSize: number = 20,
-    appState: AppState
+    playerSize: number = 20
   ) => {
     const flipped = isFieldFlipped(center, fieldHeight)
-    // 反転時は実際の中央線位置（center.y）を使用、通常時は固定値を使用
-    const centerLineY = flipped && center ? center.y : getCenterLineY(fieldHeight)
+    // 常に固定の中央線位置を使用（centerの実際位置ではなく）
+    const centerLineY = getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
-    // プレイヤー制限の詳細ログは削除（不要な詳細情報）
-    
     // オフセット距離設定（中央線から少し離した位置）
-    const offenseSnapOffset = 15 // オフェンス用の距離（中央線より下に）
     const defenseSnapOffset = 15 // ディフェンス用の距離（中央線より上に）
     
     const constrainedX = Math.max(halfSize, Math.min(fieldWidth - halfSize, x))
@@ -134,31 +114,33 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
-        const maxY = centerLineY + offenseSnapOffset // 205 + offenseSnapOffset = 215px
+        // 反転時オフェンス：プレイヤーの下端が中央線より15px上まで配置可能（フィールド上半分で制約）
+        // プレイヤーの下端 = center.y + halfSize <= centerLineY - 15
+        // つまり: center.y <= centerLineY - 15 - halfSize
+        const maxY = centerLineY - 15 - halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
-        debugLog(appState, `🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
-        // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
-        const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
+        // 反転時ディフェンス：プレイヤーの上端が中央線より10px下まで配置可能（フィールド下半分で制約）
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 10
+        // つまり: center.y >= centerLineY + 10 + halfSize
+        const minY = centerLineY + 10 + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-        debugLog(appState, `🔧 反転時ディフェンス: minY=${minY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       }
     } else {
       if (team === 'offense') {
-        // 通常時オフェンスは中央線より少し下から
-        const minY = centerLineY + offenseSnapOffset
+        // 通常時オフェンス：プレイヤーの上端が中央線より15px下以下に配置（プレイヤーの上端 = center.y - halfSize >= centerLineY + 15）
+        const minY = centerLineY + 15 + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-        debugLog(appState, `🔧 通常時オフェンス: minY=${minY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
-        // 通常時ディフェンスは中央線より少し上まで
-        const maxY = centerLineY - defenseSnapOffset
+        // 通常時ディフェンス：下端が中央線より上
+        // プレイヤーの下端 = center.y + halfSize
+        // 下端 <= centerLineY - defenseSnapOffset
+        // center.y <= centerLineY - defenseSnapOffset - halfSize
+        const maxY = centerLineY - defenseSnapOffset - halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
-        debugLog(appState, `🔧 通常時ディフェンス: maxY=${maxY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       }
     }
     
-    debugLog(appState, `🔧 最終結果: (${constrainedX.toFixed(1)}, ${constrainedY.toFixed(1)})`)
     return { x: constrainedX, y: constrainedY }
   }
 
@@ -317,56 +299,47 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   onClick={() => {
                     if (appState.currentPlay && onUpdatePlay) {
-                      debugLog(appState, '🔄 上下反転ボタンが押されました')
                       
-                      // 上下反転（上から4番目の線を軸）
-                      const flipAxisY = (appState.currentPlay.field.height * 4) / 8
-                      debugLog(appState, `🔄 flipAxisY: ${flipAxisY}`)
+                      // 上下反転（6等分システムに統一：3番目の線を軸）
+                      const flipAxisY = (appState.currentPlay.field.height * 3) / 6
                       
                       // センターを現在位置に応じて反転（プレーヤー処理の前に実行）
                       let updatedCenter = appState.currentPlay.center
-                      debugLog(appState, `🔄 現在のcenter:`, appState.currentPlay.center)
                       if (appState.currentPlay.center) {
                         const currentY = appState.currentPlay.center.y
                         
-                        // 3番目の線と5番目の線の位置を計算
-                        const thirdLineY = (appState.currentPlay.field.height * 3) / 8 - 20  // 205px
-                        const fifthLineY = (appState.currentPlay.field.height * 5) / 8 + 2   // 377px
+                        // 2番目の線と4番目の線の位置を計算（6等分システム）
+                        const secondLineY = (appState.currentPlay.field.height * 2) / 6   // 150px
+                        const fourthLineY = (appState.currentPlay.field.height * 4) / 6   // 300px
                         
                         // 現在の位置に応じて反転先を決定
                         let newY
-                        if (Math.abs(currentY - thirdLineY) < Math.abs(currentY - fifthLineY)) {
-                          // 現在3番目の線に近い場合は5番目の線へ
-                          newY = fifthLineY
+                        if (Math.abs(currentY - secondLineY) < Math.abs(currentY - fourthLineY)) {
+                          // 現在2番目の線に近い場合は4番目の線へ
+                          newY = fourthLineY
                         } else {
-                          // 現在5番目の線に近い場合は3番目の線へ
-                          newY = thirdLineY
+                          // 現在4番目の線に近い場合は2番目の線へ
+                          newY = secondLineY
                         }
                         
                         updatedCenter = {
                           ...appState.currentPlay.center,
                           y: newY
                         }
-                        debugLog(appState, `🔄 センターを更新: ${currentY} → ${newY}`)
                       } else {
-                        // センターが存在しない場合は3番目の線に配置
-                        const thirdLineY = (appState.currentPlay.field.height * 3) / 8 - 20
+                        // センターが存在しない場合は4番目の線に配置（新規プレイと同じ）
+                        const fourthLineY = (appState.currentPlay.field.height * 4) / 6
                         
                         updatedCenter = {
                           x: appState.currentPlay.field.width / 2,
-                          y: thirdLineY
+                          y: fourthLineY
                         }
-                        debugLog(appState, `🔄 センターを新規作成: y=${thirdLineY}`)
                       }
                       
-                      debugLog(appState, `🔄 更新されたセンター:`, updatedCenter)
                       
-                      const updatedPlayers = appState.currentPlay.players.map((player, index) => {
+                      const updatedPlayers = appState.currentPlay.players.map((player) => {
                         const flippedY = flipAxisY + (flipAxisY - player.y)
                         
-                        // isFieldFlipped関数の動作確認
-                        const isFlipped = isFieldFlipped(updatedCenter, appState.currentPlay!.field.height)
-                        debugLog(appState, `🔄 プレーヤー${index} (${player.team}): 元位置=${player.y.toFixed(1)} → 反転後=${flippedY.toFixed(1)}, isFlipped=${isFlipped}`)
                         
                         // 反転後の位置に配置制限を適用（更新されたセンターを考慮）
                         const constrained = constrainPlayerPosition(
@@ -376,11 +349,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                           appState.currentPlay!.field.width, 
                           appState.currentPlay!.field.height, 
                           updatedCenter,
-                          player.size,
-                          appState
+                          player.size
                         )
                         
-                        debugLog(appState, `🔄 プレーヤー${index} (${player.team}): 制限後=${constrained.y.toFixed(1)}`)
                         
                         return {
                           ...player,
@@ -665,7 +636,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                               segmentLimitWarning: null
                             })
                             
-                            debugLog(appState, '↶ Undo: 前の点に戻る')
                           }
                         }}
                         disabled={appState.currentArrowSegments.length === 0}
@@ -724,157 +694,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                             )}
                           </div>
                           <div className="space-y-1">
-                            <button
-                              onClick={() => {
-                                debugGroup(appState, '🔍 現在のセグメント詳細情報')
-                                debugLog(appState, 'セグメント数:', appState.currentArrowSegments.length)
-                                debugLog(appState, 'Points数:', appState.currentArrowPoints.length / 2)
-                                debugLog(appState, 'セグメント詳細:', appState.currentArrowSegments)
-                                debugLog(appState, 'Points詳細:', appState.currentArrowPoints)
-                                debugGroupEnd(appState)
-                              }}
-                              className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                            >
-                              セグメント情報をログ出力
-                            </button>
-                            
-                            <button
-                              onClick={() => {
-                                // 統一計算関数に基づくプレビュー線接続テスト
-                                debugGroup(appState, '🧪 統一プレビュー線接続テスト')
-                                
-                                // 統一計算関数ロジックで期待される開始点を計算
-                                let expectedStartX: number, expectedStartY: number
-                                if (appState.currentArrowSegments.length > 0) {
-                                  const lastSegment = appState.currentArrowSegments[appState.currentArrowSegments.length - 1]
-                                  if (lastSegment.points.length >= 4) {
-                                    expectedStartX = lastSegment.points[lastSegment.points.length - 2]
-                                    expectedStartY = lastSegment.points[lastSegment.points.length - 1]
-                                  } else {
-                                    expectedStartX = appState.currentArrowPoints[appState.currentArrowPoints.length - 2] || 0
-                                    expectedStartY = appState.currentArrowPoints[appState.currentArrowPoints.length - 1] || 0
-                                  }
-                                } else {
-                                  if (appState.currentArrowPoints.length >= 2) {
-                                    expectedStartX = appState.currentArrowPoints[appState.currentArrowPoints.length - 2]
-                                    expectedStartY = appState.currentArrowPoints[appState.currentArrowPoints.length - 1]
-                                  } else {
-                                    expectedStartX = appState.currentArrowPoints[0] || 0
-                                    expectedStartY = appState.currentArrowPoints[1] || 0
-                                  }
-                                }
-                                
-                                // 実際のプレビュー線開始点
-                                const actualStartX = appState.currentArrowPreviewPoints.length >= 4 ? 
-                                  appState.currentArrowPreviewPoints[0] : 'N/A'
-                                const actualStartY = appState.currentArrowPreviewPoints.length >= 4 ? 
-                                  appState.currentArrowPreviewPoints[1] : 'N/A'
-                                
-                                debugLog(appState, '期待される開始点:', `(${expectedStartX.toFixed(1)}, ${expectedStartY.toFixed(1)})`)
-                                debugLog(appState, '実際のプレビュー開始点:', `(${actualStartX}, ${actualStartY})`)
-                                
-                                if (typeof actualStartX === 'number' && typeof actualStartY === 'number') {
-                                  const isMatched = Math.abs(expectedStartX - actualStartX) < 0.1 && Math.abs(expectedStartY - actualStartY) < 0.1
-                                  debugLog(appState, '統一計算一致:', isMatched ? '✅ 正常' : '❌ 不一致')
-                                  
-                                  if (!isMatched) {
-                                    debugLog(appState, '差分:', {
-                                      X差分: (expectedStartX - actualStartX).toFixed(2),
-                                      Y差分: (expectedStartY - actualStartY).toFixed(2)
-                                    })
-                                  }
-                                } else {
-                                  debugLog(appState, 'プレビュー線なし')
-                                }
-                                
-                                debugGroupEnd(appState)
-                              }}
-                              className="w-full px-2 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600"
-                            >
-                              プレビュー線接続テスト
-                            </button>
-                            
-                            {appState.currentArrowSegments.length > 0 && (
-                              <button
-                                onClick={() => {
-                                  // パフォーマンステストを実行
-                                  const testSegments = appState.currentArrowSegments
-                                  debugGroup(appState, '🚀 マルチセグメント最適化パフォーマンステスト')
-                                  debugLog(appState, 'テスト対象セグメント数:', testSegments.length)
-                                  
-                                  // 軽量テスト (100回)
-                                  const lightTest = performance.now()
-                                  for (let i = 0; i < 100; i++) {
-                                    // optimizeSegments と buildPointsFromSegments のシミュレート
-                                    const optimized = testSegments.filter(s => s.points.length >= 4)
-                                    // パフォーマンステスト用処理のシミュレート
-                                    optimized.flatMap((s, i) => 
-                                      i === 0 ? s.points : s.points.slice(2)
-                                    )
-                                  }
-                                  const lightTime = performance.now() - lightTest
-                                  
-                                  debugLog(appState, `100回実行時間: ${lightTime.toFixed(2)}ms`)
-                                  debugLog(appState, `平均実行時間: ${(lightTime / 100).toFixed(4)}ms`)
-                                  debugLog(appState, '✅ パフォーマンステスト完了')
-                                  debugGroupEnd(appState)
-                                }}
-                                className="w-full px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
-                              >
-                                パフォーマンステスト実行
-                              </button>
-                            )}
-                            
-                            <button
-                              onClick={() => {
-                                // Phase 6: イベント競合検証テスト
-                                debugGroup(appState, '⚡ Phase 6: イベント競合検証テスト')
-                                
-                                // 現在の状態をスナップショット
-                                const stateSnapshot = {
-                                  セグメント数: appState.currentArrowSegments.length,
-                                  Points数: appState.currentArrowPoints.length / 2,
-                                  プレビュー数: appState.currentArrowPreviewPoints.length / 2,
-                                  描画中: appState.isDrawingArrow,
-                                  範囲選択中: appState.isRangeSelecting
-                                }
-                                
-                                debugLog(appState, '📊 現在の状態:', stateSnapshot)
-                                
-                                // 座標変換統一化検証
-                                if (appState.currentArrowPreviewPoints.length >= 4) {
-                                  debugLog(appState, '🎯 統一座標変換検証:')
-                                  debugLog(appState, '- プレビュー開始点:', `(${appState.currentArrowPreviewPoints[0].toFixed(1)}, ${appState.currentArrowPreviewPoints[1].toFixed(1)})`)
-                                  debugLog(appState, '- プレビュー終点:', `(${appState.currentArrowPreviewPoints[2].toFixed(1)}, ${appState.currentArrowPreviewPoints[3].toFixed(1)})`)
-                                }
-                                
-                                // 競合可能性チェック
-                                const competitionRisk = []
-                                if (appState.isDrawingArrow && appState.isRangeSelecting) {
-                                  competitionRisk.push('🚨 描画中+範囲選択の同時実行')
-                                }
-                                if (appState.currentArrowSegments.length > 5) {
-                                  competitionRisk.push('⚠️ 大量セグメントによる処理遅延リスク')
-                                }
-                                
-                                if (competitionRisk.length > 0) {
-                                  debugLog(appState, '🔍 競合リスク検出:', competitionRisk)
-                                } else {
-                                  debugLog(appState, '✅ 競合リスク: なし')
-                                }
-                                
-                                debugLog(appState, '🔧 Phase 6実装状況:')
-                                debugLog(appState, '- ✅ 座標変換統一化完了')
-                                debugLog(appState, '- ✅ イベント分離完了')  
-                                debugLog(appState, '- ✅ 状態更新バッチ化完了')
-                                debugLog(appState, '- ✅ 範囲選択競合回避完了')
-                                
-                                debugGroupEnd(appState)
-                              }}
-                              className="w-full px-2 py-1 text-xs bg-cyan-500 text-white rounded hover:bg-cyan-600"
-                            >
-                              Phase 6: 競合検証テスト
-                            </button>
                           </div>
                         </div>
                       )}

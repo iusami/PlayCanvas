@@ -50,13 +50,14 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     )
 
     if (play.field.yardLines) {
-      // 7本の水平線を均等に配置
-      for (let i = 1; i <= 7; i++) {
-        const y = (fieldHeight * i) / 8
+      // 6本の水平線を均等に配置（フィールドを6等分）
+      // 上部を削除して6本線のみ描画
+      for (let i = 1; i <= 6; i++) {
+        const y = (fieldHeight * i) / 6
         let strokeWidth = 1
         
-        // 上から5番目の線は太く
-        if (i === 5) {
+        // 上から4番目の線は太く（中央線）
+        if (i === 4) {
           strokeWidth = 2
         }
         
@@ -251,18 +252,24 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
   const renderCenter = () => {
     if (!play.center) return null
     
-    const centerLineY = (play.field.height * 5) / 8
-    const centerY = centerLineY + 2
+    // フィールド反転状態を検出
+    const fieldHeight = play.field.height
+    const secondLineY = (fieldHeight * 2) / 6  // 6等分の2番目
+    const fourthLineY = (fieldHeight * 4) / 6  // 6等分の4番目
+    const isFlipped = Math.abs(play.center.y - secondLineY) < Math.abs(play.center.y - fourthLineY)
+    
+    // 反転状態に応じてoffsetYを設定
+    const offsetY = isFlipped ? 16 : 0  // 反転時は下端基準(16)、通常時は上端基準(0)
     
     return (
       <Rect
         key="center"
         x={play.center.x}
-        y={centerY}
+        y={play.center.y}
         width={16} // サムネイルでは小さく
         height={16}
         offsetX={8}
-        offsetY={0}
+        offsetY={offsetY}
         fill="#ffffff" // 白色の背景
         stroke="#000000"
         strokeWidth={2}
