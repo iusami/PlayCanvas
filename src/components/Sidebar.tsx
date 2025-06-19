@@ -56,6 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [playListView, setPlayListView] = useState<'simple' | 'advanced'>('simple')
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
   const [isEditingPlaylist, setIsEditingPlaylist] = useState(false)
+  const [selectedFlipTeam, setSelectedFlipTeam] = useState<'all' | 'offense' | 'defense'>('all')
 
 
   const playerTypes: { value: PlayerType; label: string }[] = [
@@ -224,19 +225,67 @@ const Sidebar: React.FC<SidebarProps> = ({
               <h3 className="text-sm font-medium text-gray-900 mb-2">
                 フォーメーション反転
               </h3>
-              <p className="text-xs text-gray-500 mb-2">
-                全てのプレイヤーを反転します
-              </p>
+              
+              {/* チーム選択 */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  反転対象チーム
+                </label>
+                <div className="flex space-x-2">
+                  <label className="flex items-center text-xs">
+                    <input
+                      type="radio"
+                      name="flipTeam"
+                      value="all"
+                      checked={selectedFlipTeam === 'all'}
+                      onChange={(e) => setSelectedFlipTeam(e.target.value as 'all' | 'offense' | 'defense')}
+                      className="mr-1"
+                    />
+                    全て
+                  </label>
+                  <label className="flex items-center text-xs">
+                    <input
+                      type="radio"
+                      name="flipTeam"
+                      value="offense"
+                      checked={selectedFlipTeam === 'offense'}
+                      onChange={(e) => setSelectedFlipTeam(e.target.value as 'all' | 'offense' | 'defense')}
+                      className="mr-1"
+                    />
+                    オフェンス
+                  </label>
+                  <label className="flex items-center text-xs">
+                    <input
+                      type="radio"
+                      name="flipTeam"
+                      value="defense"
+                      checked={selectedFlipTeam === 'defense'}
+                      onChange={(e) => setSelectedFlipTeam(e.target.value as 'all' | 'offense' | 'defense')}
+                      className="mr-1"
+                    />
+                    ディフェンス
+                  </label>
+                </div>
+              </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => {
                     if (appState.currentPlay && onUpdatePlay) {
                       // 左右反転（フィールド中心を軸）
                       const fieldCenterX = appState.currentPlay.field.width / 2
-                      const updatedPlayers = appState.currentPlay.players.map(player => ({
-                        ...player, 
-                        x: flipXCoordinate(fieldCenterX, player.x)
-                      }))
+                      
+                      // 選択的チーム反転: 選択されたチームのプレーヤーのみ反転
+                      const updatedPlayers = appState.currentPlay.players.map(player => {
+                        // チーム選択に基づいてフィルタリング
+                        const shouldFlip = selectedFlipTeam === 'all' || 
+                                         (selectedFlipTeam === 'offense' && player.team === 'offense') ||
+                                         (selectedFlipTeam === 'defense' && player.team === 'defense')
+                        
+                        return shouldFlip ? {
+                          ...player, 
+                          x: flipXCoordinate(fieldCenterX, player.x)
+                        } : player
+                      })
                       
                       // 全ての矢印も反転（セグメントも含む）
                       const updatedArrows = appState.currentPlay.arrows.map(arrow => {
@@ -338,8 +387,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                       
                       
                       const updatedPlayers = appState.currentPlay.players.map((player) => {
-                        const flippedY = flipAxisY + (flipAxisY - player.y)
+                        // チーム選択に基づいてフィルタリング
+                        const shouldFlip = selectedFlipTeam === 'all' || 
+                                         (selectedFlipTeam === 'offense' && player.team === 'offense') ||
+                                         (selectedFlipTeam === 'defense' && player.team === 'defense')
                         
+                        if (!shouldFlip) {
+                          // 反転対象でない場合はそのまま返す
+                          return player
+                        }
+                        
+                        const flippedY = flipAxisY + (flipAxisY - player.y)
                         
                         // 反転後の位置に配置制限を適用（更新されたセンターを考慮）
                         const constrained = constrainPlayerPosition(
@@ -351,7 +409,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                           updatedCenter,
                           player.size
                         )
-                        
                         
                         return {
                           ...player,
