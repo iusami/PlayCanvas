@@ -136,13 +136,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンス：上端が中央線より下（フィールドの上半分）
-        // プレイヤーの上端 = center.y - halfSize
-        // 上端 <= centerLineY + offenseSnapOffset
-        // center.y <= centerLineY + offenseSnapOffset + halfSize
-        const maxY = centerLineY + offenseSnapOffset + halfSize
-        constrainedY = Math.max(halfSize, Math.min(maxY, y))
-        debugLog(appState, `🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
+        // 反転時オフェンス：センターと同じy座標まで動かせる（フィールドの上半分）
+        // オフェンスプレイヤーの最小Y座標 = センターのY座標
+        const minY = center ? center.y : centerLineY - offenseSnapOffset - halfSize
+        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
+        debugLog(appState, `🔧 反転時オフェンス: minY=${minY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
         const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
@@ -151,13 +149,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     } else {
       if (team === 'offense') {
-        // 通常時オフェンス：上端が中央線より下
-        // プレイヤーの上端 = center.y - halfSize
-        // 上端 >= centerLineY + offenseSnapOffset
-        // center.y >= centerLineY + offenseSnapOffset + halfSize
-        const minY = centerLineY + offenseSnapOffset + halfSize
-        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-        debugLog(appState, `🔧 通常時オフェンス: minY=${minY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
+        // 通常時オフェンス：センターと同じy座標まで動かせる
+        // オフェンスプレイヤーの最大Y座標 = センターのY座標
+        const maxY = center ? center.y : centerLineY + offenseSnapOffset + halfSize
+        constrainedY = Math.max(halfSize, Math.min(maxY, y))
+        debugLog(appState, `🔧 通常時オフェンス: maxY=${maxY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
         // 通常時ディフェンス：下端が中央線より上
         // プレイヤーの下端 = center.y + halfSize
