@@ -468,17 +468,17 @@ const FootballCanvas = forwardRef(({
         console.log(`🔍 反転オフェンス: プレイヤー下端=${constrainedY + halfSize}px (中央線-15px=${centerLineY - offenseSnapOffset}以下でないとダメ)`)
         console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${effectiveTopLimit.toFixed(1)}〜${maxY.toFixed(1)})`)
       } else {
-        // 反転時ディフェンス：プレイヤーの上端が中央線より15px下まで配置可能（フィールド下半分で制約）
-        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 15
-        // つまり: center.y >= centerLineY + 15 + halfSize
-        const minY = centerLineY + defenseSnapOffset + halfSize
+        // 反転時ディフェンス：プレイヤーの上端が中央線より10px下まで配置可能（フィールド下半分で制約）
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 10
+        // つまり: center.y >= centerLineY + 10 + halfSize
+        const minY = centerLineY + 10 + halfSize
         const fieldBottomLimit = play.field.height - halfSize
         
         // ディフェンスの有効範囲：minYからフィールド下端まで
         constrainedY = Math.max(minY, Math.min(fieldBottomLimit, y))
         
         console.log(`🔍 反転ディフェンス: minY=${minY}, fieldBottomLimit=${fieldBottomLimit}`)
-        console.log(`🔍 反転ディフェンス: プレイヤー上端=${constrainedY - halfSize}px (中央線+15px=${centerLineY + defenseSnapOffset}以上でないとダメ)`)
+        console.log(`🔍 反転ディフェンス: プレイヤー上端=${constrainedY - halfSize}px (中央線+10px=${centerLineY + 10}以上でないとダメ)`)
         console.log(`🔍 反転ディフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${minY}〜${fieldBottomLimit})`)
       }
     } else {
