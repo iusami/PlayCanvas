@@ -95,16 +95,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // プレーヤー配置制限関連の関数
   const getCenterLineY = (fieldHeight: number) => {
-    return (fieldHeight * 5) / 8
+    // 6等分システムに統一：4番目の線が中央線
+    return (fieldHeight * 4) / 6
   }
 
   const isFieldFlipped = (center: { x: number; y: number } | undefined, fieldHeight: number) => {
     if (!center) return false
     
-    const thirdLineY = (fieldHeight * 3) / 8 - 20
-    const fifthLineY = (fieldHeight * 5) / 8 + 2
+    // 6等分システムに統一：2番目と4番目の線で判定
+    const secondLineY = (fieldHeight * 2) / 6
+    const fourthLineY = (fieldHeight * 4) / 6
     
-    return Math.abs(center.y - thirdLineY) < Math.abs(center.y - fifthLineY)
+    return Math.abs(center.y - secondLineY) < Math.abs(center.y - fourthLineY)
   }
 
   const constrainPlayerPosition = (
@@ -319,9 +321,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                     if (appState.currentPlay && onUpdatePlay) {
                       debugLog(appState, '🔄 上下反転ボタンが押されました')
                       
-                      // 上下反転（上から4番目の線を軸）
-                      const flipAxisY = (appState.currentPlay.field.height * 4) / 8
-                      debugLog(appState, `🔄 flipAxisY: ${flipAxisY}`)
+                      // 上下反転（6等分システムに統一：3番目の線を軸）
+                      const flipAxisY = (appState.currentPlay.field.height * 3) / 6
+                      debugLog(appState, `🔄 flipAxisY (6等分): ${flipAxisY}`)
                       
                       // センターを現在位置に応じて反転（プレーヤー処理の前に実行）
                       let updatedCenter = appState.currentPlay.center
@@ -329,34 +331,34 @@ const Sidebar: React.FC<SidebarProps> = ({
                       if (appState.currentPlay.center) {
                         const currentY = appState.currentPlay.center.y
                         
-                        // 3番目の線と5番目の線の位置を計算
-                        const thirdLineY = (appState.currentPlay.field.height * 3) / 8 - 20  // 205px
-                        const fifthLineY = (appState.currentPlay.field.height * 5) / 8 + 2   // 377px
+                        // 2番目の線と4番目の線の位置を計算（6等分システム）
+                        const secondLineY = (appState.currentPlay.field.height * 2) / 6   // 150px
+                        const fourthLineY = (appState.currentPlay.field.height * 4) / 6   // 300px
                         
                         // 現在の位置に応じて反転先を決定
                         let newY
-                        if (Math.abs(currentY - thirdLineY) < Math.abs(currentY - fifthLineY)) {
-                          // 現在3番目の線に近い場合は5番目の線へ
-                          newY = fifthLineY
+                        if (Math.abs(currentY - secondLineY) < Math.abs(currentY - fourthLineY)) {
+                          // 現在2番目の線に近い場合は4番目の線へ
+                          newY = fourthLineY
                         } else {
-                          // 現在5番目の線に近い場合は3番目の線へ
-                          newY = thirdLineY
+                          // 現在4番目の線に近い場合は2番目の線へ
+                          newY = secondLineY
                         }
                         
                         updatedCenter = {
                           ...appState.currentPlay.center,
                           y: newY
                         }
-                        debugLog(appState, `🔄 センターを更新: ${currentY} → ${newY}`)
+                        debugLog(appState, `🔄 センターを更新 (6等分): ${currentY} → ${newY}`)
                       } else {
-                        // センターが存在しない場合は3番目の線に配置
-                        const thirdLineY = (appState.currentPlay.field.height * 3) / 8 - 20
+                        // センターが存在しない場合は4番目の線に配置（新規プレイと同じ）
+                        const fourthLineY = (appState.currentPlay.field.height * 4) / 6
                         
                         updatedCenter = {
                           x: appState.currentPlay.field.width / 2,
-                          y: thirdLineY
+                          y: fourthLineY
                         }
-                        debugLog(appState, `🔄 センターを新規作成: y=${thirdLineY}`)
+                        debugLog(appState, `🔄 センターを新規作成 (6等分): y=${fourthLineY}`)
                       }
                       
                       debugLog(appState, `🔄 更新されたセンター:`, updatedCenter)

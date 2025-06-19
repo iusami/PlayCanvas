@@ -489,8 +489,9 @@ const App: React.FC = () => {
   const isFieldFlipped = (center: { x: number; y: number } | undefined, fieldHeight: number) => {
     if (!center) return false
     
-    const secondLineY = (fieldHeight * 2) / 6 - 20  // 6等分の2番目
-    const fourthLineY = (fieldHeight * 4) / 6 + 2   // 6等分の4番目
+    // 6等分システムに統一：2番目と4番目の線で判定
+    const secondLineY = (fieldHeight * 2) / 6
+    const fourthLineY = (fieldHeight * 4) / 6
     
     return Math.abs(center.y - secondLineY) < Math.abs(center.y - fourthLineY)
   }
