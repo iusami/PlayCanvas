@@ -390,16 +390,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       
                       
                       const updatedPlayers = appState.currentPlay.players.map((player) => {
-                        // チーム選択に基づいてフィルタリング
-                        const shouldFlip = selectedFlipTeam === 'all' || 
-                                         (selectedFlipTeam === 'offense' && player.team === 'offense') ||
-                                         (selectedFlipTeam === 'defense' && player.team === 'defense')
-                        
-                        if (!shouldFlip) {
-                          // 反転対象でない場合はそのまま返す
-                          return player
-                        }
-                        
+                        // 上下反転では常に全プレーヤーを反転（選択的フィルタリングなし）
                         const flippedY = flipAxisY + (flipAxisY - player.y)
                         
                         // 反転後の位置に配置制限を適用（更新されたセンターを考慮）
