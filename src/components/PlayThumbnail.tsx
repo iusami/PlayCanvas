@@ -252,18 +252,24 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
   const renderCenter = () => {
     if (!play.center) return null
     
-    const centerLineY = (play.field.height * 4) / 6  // 6等分の4番目
-    const centerY = centerLineY - 8  // センターの下端を中央線に合わせる（16px高さの半分）
+    // フィールド反転状態を検出
+    const fieldHeight = play.field.height
+    const secondLineY = (fieldHeight * 2) / 6  // 6等分の2番目
+    const fourthLineY = (fieldHeight * 4) / 6  // 6等分の4番目
+    const isFlipped = Math.abs(play.center.y - secondLineY) < Math.abs(play.center.y - fourthLineY)
+    
+    // 反転状態に応じてoffsetYを設定
+    const offsetY = isFlipped ? 16 : 0  // 反転時は下端基準(16)、通常時は上端基準(0)
     
     return (
       <Rect
         key="center"
         x={play.center.x}
-        y={centerY}
+        y={play.center.y}
         width={16} // サムネイルでは小さく
         height={16}
         offsetX={8}
-        offsetY={8} // 下端基準にする（16pxの半分）
+        offsetY={offsetY}
         fill="#ffffff" // 白色の背景
         stroke="#000000"
         strokeWidth={2}

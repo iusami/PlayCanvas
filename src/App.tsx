@@ -267,7 +267,7 @@ const App: React.FC = () => {
       players: [],
       arrows: [],
       texts: [],
-      center: { x: fieldWidth / 2, y: centerLineY - 20 }, // センターの下端を太い線に合わせる（センターの高さ20px）
+      center: { x: fieldWidth / 2, y: centerLineY }, // センターの上端を太い線に合わせる
       textBoxEntries: createEmptyTextBoxEntries() // 空のテキストボックス10行を初期化
     }
     

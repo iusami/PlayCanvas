@@ -2997,6 +2997,15 @@ const FootballCanvas = forwardRef(({
   const renderCenter = () => {
     if (!play?.center) return null
     
+    // フィールド反転状態を検出
+    const fieldHeight = play.field.height
+    const secondLineY = (fieldHeight * 2) / 6  // 6等分の2番目
+    const fourthLineY = (fieldHeight * 4) / 6  // 6等分の4番目
+    const isFlipped = Math.abs(play.center.y - secondLineY) < Math.abs(play.center.y - fourthLineY)
+    
+    // 反転状態に応じてoffsetYを設定
+    const offsetY = isFlipped ? 20 : 0  // 反転時は下端基準(20)、通常時は上端基準(0)
+    
     return (
       <Rect
         key="center"
@@ -3006,7 +3015,7 @@ const FootballCanvas = forwardRef(({
         width={20}
         height={20}
         offsetX={10}
-        offsetY={10} // 下端を基準にする（センターの高さ20pxの半分）
+        offsetY={offsetY}
         fill="#ffffff" // 白色の背景
         stroke="#000000" // 黒色の枠線
         strokeWidth={3}
