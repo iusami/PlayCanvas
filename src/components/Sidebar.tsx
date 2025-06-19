@@ -229,7 +229,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               {/* チーム選択 */}
               <div className="mb-3">
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  反転対象チーム
+                  反転対象チーム <span className="text-gray-500">(左右反転のみに機能します)</span>
                 </label>
                 <div className="flex space-x-2">
                   <label className="flex items-center text-xs">
