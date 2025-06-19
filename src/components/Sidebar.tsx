@@ -107,7 +107,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     const halfSize = playerSize / 2
     
     // オフセット距離設定（中央線から少し離した位置）
-    const offenseSnapOffset = 15 // オフェンス用の距離（中央線より下に）
     const defenseSnapOffset = 15 // ディフェンス用の距離（中央線より上に）
     
     const constrainedX = Math.max(halfSize, Math.min(fieldWidth - halfSize, x))
@@ -116,10 +115,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンス：プレイヤーの上端が中央線より下（フィールド上半分で制約）
-        // 反転時は上半分（y < centerLineY）で動作、上端 >= centerLineY - offenseSnapOffset
-        // つまり: center.y >= centerLineY - offenseSnapOffset + halfSize
-        const maxY = centerLineY - offenseSnapOffset - halfSize
+        // 反転時オフェンス：プレイヤーの下端が中央線と同じ高さまで配置可能（フィールド上半分で制約）
+        const maxY = centerLineY - halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
@@ -128,10 +125,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     } else {
       if (team === 'offense') {
-        // 通常時オフェンス：プレイヤーの上端が中央線より下になるよう制約
-        // プレイヤーの上端 = center.y - halfSize >= centerLineY + offenseSnapOffset
-        // つまり: center.y >= centerLineY + offenseSnapOffset + halfSize
-        const minY = centerLineY + offenseSnapOffset + halfSize
+        // 通常時オフェンス：プレイヤーの上端が中央線と同じ高さまで配置可能
+        const minY = centerLineY + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       } else {
         // 通常時ディフェンス：下端が中央線より上
