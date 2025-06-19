@@ -317,21 +317,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                         x: flipXCoordinate(fieldCenterX, text.x) // x座標を反転
                       }))
                       
-                      // センターも現在位置から反転（リセットしない）
+                      // センター反転の条件分岐: オフェンスが含まれる場合のみセンターを反転
                       let updatedCenter = appState.currentPlay.center
-                      if (appState.currentPlay.center) {
+                      const shouldFlipCenter = selectedFlipTeam === 'all' || selectedFlipTeam === 'offense'
+                      
+                      if (shouldFlipCenter && appState.currentPlay.center) {
                         updatedCenter = {
                           ...appState.currentPlay.center,
                           x: flipXCoordinate(fieldCenterX, appState.currentPlay.center.x)
                         }
-                      } else {
-                        // センターが存在しない場合はデフォルト位置から反転
+                      } else if (shouldFlipCenter && !appState.currentPlay.center) {
+                        // センターが存在しない場合はデフォルト位置を設定
                         const defaultCenterY = (appState.currentPlay.field.height * 5) / 8
                         updatedCenter = {
                           x: fieldCenterX, // 中央なので反転しても同じ
                           y: defaultCenterY
                         }
                       }
+                      // ディフェンスのみの場合は、センターをそのまま維持
                       
                       onUpdatePlay({ 
                         players: updatedPlayers, 
