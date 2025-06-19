@@ -43,6 +43,9 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     return flipped
   }
 
+  // フィールド反転状態を一度だけ計算（パフォーマンス最適化）
+  const fieldFlipped = isFieldFlipped()
+
   const drawField = () => {
     const fieldWidth = play.field.width
     const fieldHeight = play.field.height
@@ -66,9 +69,6 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     )
 
     if (play.field.yardLines) {
-      // フィールド反転状態を判定
-      const flipped = isFieldFlipped()
-      
       // 6本の水平線を均等に配置（フィールドを6等分）
       // 上部を削除して6本線のみ描画
       for (let i = 1; i <= 6; i++) {
@@ -76,7 +76,7 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         let strokeWidth = 1
         
         // 反転時は2番目、通常時は4番目の線を太く（中央線）
-        if ((flipped && i === 2) || (!flipped && i === 4)) {
+        if ((fieldFlipped && i === 2) || (!fieldFlipped && i === 4)) {
           strokeWidth = 2
         }
         
@@ -108,7 +108,6 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     const size = player.size * 0.8 // サムネイルでは少し小さく
     
     // フィールド反転状態に基づいてプレーヤーの向きを決定
-    const fieldFlipped = isFieldFlipped()
     const shouldFlipPlayer = fieldFlipped
     
     switch (player.type) {
