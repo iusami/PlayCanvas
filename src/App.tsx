@@ -510,6 +510,21 @@ const App: React.FC = () => {
     const centerLineY = getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
+    // デバッグ：入力パラメータと基本計算
+    console.log(`\n🎯 [App.tsx] プレイヤー配置制約デバッグ`)
+    console.log(`入力: x=${x}, y=${y}, team=${team}, playerSize=${playerSize}`)
+    console.log(`フィールド: width=${fieldWidth}, height=${fieldHeight}`)
+    console.log(`センター位置: ${center ? `(${center.x}, ${center.y})` : 'なし'}`)
+    console.log(`反転状態: ${flipped}`)
+    console.log(`中央線Y: ${centerLineY}`)
+    console.log(`プレイヤー半径: ${halfSize}`)
+    
+    // プレイヤーの実際の上端・下端位置を計算
+    const playerTopY = y - halfSize    // プレイヤーの上端
+    const playerBottomY = y + halfSize // プレイヤーの下端
+    console.log(`プレイヤー位置: 上端=${playerTopY}, 中心=${y}, 下端=${playerBottomY}`)
+    console.log(`中央線との関係: 上端-中央線=${playerTopY - centerLineY}, 下端-中央線=${playerBottomY - centerLineY}`)
+    
     // オフセット距離設定（中央線から少し離した位置）
     const offenseSnapOffset = 15 // オフェンス用の距離（中央線より下に）
     const defenseSnapOffset = 15 // ディフェンス用の距離（中央線より上に）
@@ -518,32 +533,66 @@ const App: React.FC = () => {
     
     let constrainedY = y
     
+    console.log(`\n🔧 制約計算開始`)
+    
     if (flipped) {
+      console.log(`📍 反転時の制約計算`)
       if (team === 'offense') {
-        // 反転時オフェンス：センターと同じy座標まで動かせる（フィールドの上半分）
-        // オフェンスプレイヤーの最小Y座標 = センターのY座標
-        const minY = center ? center.y : centerLineY - offenseSnapOffset - halfSize
-        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
+        // 反転時オフェンス：プレイヤーの上端が中央線より下（フィールド上半分で制約）
+        // 反転時は上半分（y < centerLineY）で動作、上端 >= centerLineY - offenseSnapOffset
+        // つまり: center.y >= centerLineY - offenseSnapOffset + halfSize
+        const maxY = centerLineY - offenseSnapOffset - halfSize
+        console.log(`反転時オフェンス制約: maxY=${maxY} (修正: 上端が中央線より下、上半分制約)`)
+        console.log(`計算式: centerLineY(${centerLineY}) - offenseSnapOffset(${offenseSnapOffset}) - halfSize(${halfSize})`)
+        constrainedY = Math.max(halfSize, Math.min(maxY, y))
+        console.log(`制約適用: Math.max(${halfSize}, Math.min(${maxY}, ${y})) = ${constrainedY}`)
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
         const minY = FIELD_CONSTRAINTS.DEFENSE_MIN_Y_FLIPPED
+        console.log(`反転時ディフェンス制約: minY=${minY} (定数)`)
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
+        console.log(`制約適用: Math.max(${minY}, Math.min(${fieldHeight - halfSize}, ${y})) = ${constrainedY}`)
       }
     } else {
+      console.log(`📍 通常時の制約計算`)
       if (team === 'offense') {
-        // 通常時オフェンス：センターと同じy座標まで動かせる
-        // オフェンスプレイヤーの最大Y座標 = センターのY座標
-        const maxY = center ? center.y : centerLineY + offenseSnapOffset + halfSize
-        constrainedY = Math.max(halfSize, Math.min(maxY, y))
+        // 通常時オフェンス：プレイヤーの上端が中央線より下になるよう制約
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + offenseSnapOffset
+        // つまり: center.y >= centerLineY + offenseSnapOffset + halfSize
+        const minY = centerLineY + offenseSnapOffset + halfSize
+        console.log(`通常時オフェンス制約: minY=${minY} (修正: 上端が中央線より下)`)
+        console.log(`計算式: centerLineY(${centerLineY}) + offenseSnapOffset(${offenseSnapOffset}) + halfSize(${halfSize})`)
+        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
+        console.log(`制約適用: Math.max(${minY}, Math.min(${fieldHeight - halfSize}, ${y})) = ${constrainedY}`)
       } else {
         // 通常時ディフェンス：下端が中央線より上
         // プレイヤーの下端 = center.y + halfSize
         // 下端 <= centerLineY - defenseSnapOffset
         // center.y <= centerLineY - defenseSnapOffset - halfSize
         const maxY = centerLineY - defenseSnapOffset - halfSize
+        console.log(`通常時ディフェンス制約: maxY=${maxY}`)
+        console.log(`計算式: centerLineY(${centerLineY}) - defenseSnapOffset(${defenseSnapOffset}) - halfSize(${halfSize})`)
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
+        console.log(`制約適用: Math.max(${halfSize}, Math.min(${maxY}, ${y})) = ${constrainedY}`)
       }
     }
+    
+    // 最終結果の分析
+    const finalPlayerTopY = constrainedY - halfSize
+    const finalPlayerBottomY = constrainedY + halfSize
+    console.log(`\n📊 最終結果分析`)
+    console.log(`制約後プレイヤー位置: 上端=${finalPlayerTopY}, 中心=${constrainedY}, 下端=${finalPlayerBottomY}`)
+    console.log(`中央線との関係: 上端-中央線=${finalPlayerTopY - centerLineY}, 下端-中央線=${finalPlayerBottomY - centerLineY}`)
+    
+    if (team === 'offense') {
+      const isTopBelowCenter = finalPlayerTopY > centerLineY
+      console.log(`✅ オフェンス要求チェック: 上端が中央線より下? ${isTopBelowCenter} (${finalPlayerTopY} > ${centerLineY})`)
+    } else {
+      const isBottomAboveCenter = finalPlayerBottomY < centerLineY
+      console.log(`✅ ディフェンス要求チェック: 下端が中央線より上? ${isBottomAboveCenter} (${finalPlayerBottomY} < ${centerLineY})`)
+    }
+    
+    console.log(`🏁 最終座標: (${constrainedX}, ${constrainedY})`)
     
     return { x: constrainedX, y: constrainedY }
   }
