@@ -125,8 +125,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     } else {
       if (team === 'offense') {
-        // 通常時オフェンス：プレイヤーの上端が中央線より15px下まで配置可能
-        const minY = centerLineY - 15 + halfSize
+        // 通常時オフェンス：プレイヤーの上端が中央線より15px下以下に配置（プレイヤーの上端 = center.y - halfSize >= centerLineY + 15）
+        const minY = centerLineY + 15 + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       } else {
         // 通常時ディフェンス：下端が中央線より上

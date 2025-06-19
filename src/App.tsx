@@ -539,9 +539,9 @@ const App: React.FC = () => {
     } else {
       if (team === 'offense') {
         // 通常時オフェンス：プレイヤーの上端が中央線より15px下まで配置可能
-        // プレイヤーの上端 = center.y - halfSize >= centerLineY - 15
-        // つまり: center.y >= centerLineY - 15 + halfSize  
-        const minY = centerLineY - 15 + halfSize
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 15
+        // つまり: center.y >= centerLineY + 15 + halfSize  
+        const minY = centerLineY + 15 + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       } else {
         // 通常時ディフェンス：下端が中央線より上
