@@ -27,6 +27,22 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
   const offsetX = (width - scaledWidth) / 2
   const offsetY = (height - scaledHeight) / 2
 
+  // フィールド反転判定（FootballCanvas.tsxから移植）
+  const isFieldFlipped = () => {
+    if (!play?.center) {
+      return false
+    }
+    
+    const secondLineY = (play.field.height * 2) / 6 - 20  // 6等分の2番目
+    const fourthLineY = (play.field.height * 4) / 6 + 2   // 6等分の4番目
+    
+    const distToSecond = Math.abs(play.center.y - secondLineY)
+    const distToFourth = Math.abs(play.center.y - fourthLineY)
+    const flipped = distToSecond < distToFourth
+    
+    return flipped
+  }
+
   const drawField = () => {
     const fieldWidth = play.field.width
     const fieldHeight = play.field.height
@@ -50,14 +66,17 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     )
 
     if (play.field.yardLines) {
+      // フィールド反転状態を判定
+      const flipped = isFieldFlipped()
+      
       // 6本の水平線を均等に配置（フィールドを6等分）
       // 上部を削除して6本線のみ描画
       for (let i = 1; i <= 6; i++) {
         const y = (fieldHeight * i) / 6
         let strokeWidth = 1
         
-        // 上から4番目の線は太く（中央線）
-        if (i === 4) {
+        // 反転時は2番目、通常時は4番目の線を太く（中央線）
+        if ((flipped && i === 2) || (!flipped && i === 4)) {
           strokeWidth = 2
         }
         
@@ -103,7 +122,14 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         return (
           <Line
             {...baseProps}
-            points={[
+            points={player.flipped ? [
+              // 上向き三角形
+              0, -size / 2,
+              -size / 2, size / 2,
+              size / 2, size / 2,
+              0, -size / 2
+            ] : [
+              // 下向き三角形（デフォルト）
               0, size / 2,
               -size / 2, -size / 2,
               size / 2, -size / 2,
@@ -132,7 +158,13 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         return (
           <Line
             {...baseProps}
-            points={[
+            points={player.flipped ? [
+              // 上向きV
+              -size / 2, size / 4,
+              0, -size / 2,
+              size / 2, size / 4
+            ] : [
+              // 下向きV（デフォルト）
               -size / 2, -size / 4,
               0, size / 2,
               size / 2, -size / 4
