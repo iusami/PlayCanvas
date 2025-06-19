@@ -506,8 +506,8 @@ const App: React.FC = () => {
     playerSize: number = 20
   ) => {
     const flipped = isFieldFlipped(center, fieldHeight)
-    // 反転時は実際の中央線位置（center.y）を使用、通常時は固定値を使用
-    const centerLineY = flipped && center ? center.y : getCenterLineY(fieldHeight)
+    // 常に固定の中央線位置を使用（centerの実際位置ではなく）
+    const centerLineY = getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
     // オフセット距離設定（中央線から少し離した位置）
@@ -521,7 +521,7 @@ const App: React.FC = () => {
     if (flipped) {
       if (team === 'offense') {
         // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
-        const maxY = centerLineY + 10 // 205 + 10 = 215px
+        const maxY = centerLineY + offenseSnapOffset
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）

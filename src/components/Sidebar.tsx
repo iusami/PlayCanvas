@@ -120,8 +120,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     appState: AppState
   ) => {
     const flipped = isFieldFlipped(center, fieldHeight)
-    // 反転時は実際の中央線位置（center.y）を使用、通常時は固定値を使用
-    const centerLineY = flipped && center ? center.y : getCenterLineY(fieldHeight)
+    // 常に固定の中央線位置を使用（centerの実際位置ではなく）
+    const centerLineY = getCenterLineY(fieldHeight)
     const halfSize = playerSize / 2
     
     // プレイヤー制限の詳細ログは削除（不要な詳細情報）
