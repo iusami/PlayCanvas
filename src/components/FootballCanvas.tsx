@@ -407,8 +407,8 @@ const FootballCanvas = forwardRef(({
     }
     
     const centerLineY = getCenterLineY(play.field.height)
-    const secondLineY = (play.field.height * 2) / 6 - 20  // 6等分の2番目
-    const fourthLineY = (play.field.height * 4) / 6 + 2   // 6等分の4番目
+    const secondLineY = (play.field.height * 2) / 6 - FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET  // 6等分の2番目
+    const fourthLineY = (play.field.height * 4) / 6 + FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET   // 6等分の4番目
     
     const distToSecond = Math.abs(play.center.y - secondLineY)
     const distToFourth = Math.abs(play.center.y - fourthLineY)

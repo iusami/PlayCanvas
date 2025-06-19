@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
-import { Play, Player, Arrow, TextElement } from '../types'
+import { Play, Player, Arrow, TextElement, FIELD_CONSTRAINTS } from '../types'
 
 interface PlayThumbnailProps {
   play: Play
@@ -26,6 +26,25 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
   const scaledHeight = play.field.height * scale
   const offsetX = (width - scaledWidth) / 2
   const offsetY = (height - scaledHeight) / 2
+
+  // フィールド反転判定（FootballCanvas.tsxと完全統一）
+  const isFieldFlipped = () => {
+    if (!play?.center) {
+      return false
+    }
+    
+    const secondLineY = (play.field.height * 2) / 6 - FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET  // 6等分の2番目
+    const fourthLineY = (play.field.height * 4) / 6 + FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET   // 6等分の4番目
+    
+    const distToSecond = Math.abs(play.center.y - secondLineY)
+    const distToFourth = Math.abs(play.center.y - fourthLineY)
+    const flipped = distToSecond < distToFourth
+    
+    return flipped
+  }
+
+  // フィールド反転状態を一度だけ計算（パフォーマンス最適化）
+  const fieldFlipped = isFieldFlipped()
 
   const drawField = () => {
     const fieldWidth = play.field.width
@@ -56,8 +75,8 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         const y = (fieldHeight * i) / 6
         let strokeWidth = 1
         
-        // 上から4番目の線は太く（中央線）
-        if (i === 4) {
+        // 反転時は2番目、通常時は4番目の線を太く（中央線）
+        if ((fieldFlipped && i === 2) || (!fieldFlipped && i === 4)) {
           strokeWidth = 2
         }
         
@@ -88,6 +107,9 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
     const fillColor = player.fillColor === 'transparent' ? '#ffffff' : (player.fillColor || '#ffffff')
     const size = player.size * 0.8 // サムネイルでは少し小さく
     
+    // フィールド反転状態に基づいてプレーヤーの向きを決定
+    const shouldFlipPlayer = fieldFlipped
+    
     switch (player.type) {
       case 'circle':
         return (
@@ -103,7 +125,14 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         return (
           <Line
             {...baseProps}
-            points={[
+            points={shouldFlipPlayer ? [
+              // 上向き三角形（フィールド反転時）
+              0, -size / 2,
+              -size / 2, size / 2,
+              size / 2, size / 2,
+              0, -size / 2
+            ] : [
+              // 下向き三角形（通常時）
               0, size / 2,
               -size / 2, -size / 2,
               size / 2, -size / 2,
@@ -132,7 +161,13 @@ const PlayThumbnail: React.FC<PlayThumbnailProps> = ({
         return (
           <Line
             {...baseProps}
-            points={[
+            points={shouldFlipPlayer ? [
+              // 上向きV（フィールド反転時）
+              -size / 2, size / 4,
+              0, -size / 2,
+              size / 2, size / 4
+            ] : [
+              // 下向きV（通常時）
               -size / 2, -size / 4,
               0, size / 2,
               size / 2, -size / 4

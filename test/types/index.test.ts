@@ -17,11 +17,21 @@ describe('FIELD_CONSTRAINTS', () => {
     expect(FIELD_CONSTRAINTS.FIELD_UPPER_LIMIT_LINE_INDEX).toBe(2)
   })
 
+  it('FIELD_FLIP_DETECTION_SECOND_LINE_OFFSETが正しい値であること', () => {
+    expect(FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET).toBe(20)
+  })
+
+  it('FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSETが正しい値であること', () => {
+    expect(FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET).toBe(2)
+  })
+
   it('FIELD_CONSTRAINTSが読み取り専用であること', () => {
     // TypeScriptレベルでの読み取り専用チェック（実行時エラーは発生しない）
     expect(FIELD_CONSTRAINTS).toEqual({ 
       DEFENSE_MIN_Y_FLIPPED: 225,
-      FIELD_UPPER_LIMIT_LINE_INDEX: 2
+      FIELD_UPPER_LIMIT_LINE_INDEX: 2,
+      FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET: 20,
+      FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET: 2
     })
     // オブジェクトが変更不可能であることを確認
     expect(Object.isFrozen(FIELD_CONSTRAINTS)).toBe(true)
@@ -31,7 +41,9 @@ describe('FIELD_CONSTRAINTS', () => {
     const keys = Object.keys(FIELD_CONSTRAINTS)
     expect(keys).toContain('DEFENSE_MIN_Y_FLIPPED')
     expect(keys).toContain('FIELD_UPPER_LIMIT_LINE_INDEX')
-    expect(keys).toHaveLength(2)
+    expect(keys).toContain('FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET')
+    expect(keys).toContain('FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET')
+    expect(keys).toHaveLength(4)
   })
 })
 
