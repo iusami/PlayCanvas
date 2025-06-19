@@ -56,6 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [playListView, setPlayListView] = useState<'simple' | 'advanced'>('simple')
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
   const [isEditingPlaylist, setIsEditingPlaylist] = useState(false)
+  const [selectedFlipTeam, setSelectedFlipTeam] = useState<'all' | 'offense' | 'defense'>('all')
 
 
   const playerTypes: { value: PlayerType; label: string }[] = [
@@ -224,19 +225,67 @@ const Sidebar: React.FC<SidebarProps> = ({
               <h3 className="text-sm font-medium text-gray-900 mb-2">
                 フォーメーション反転
               </h3>
-              <p className="text-xs text-gray-500 mb-2">
-                全てのプレイヤーを反転します
-              </p>
+              
+              {/* チーム選択 */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  反転対象チーム <span className="text-gray-500">(左右反転のみに機能します)</span>
+                </label>
+                <div className="flex space-x-2">
+                  <label className="flex items-center text-xs">
+                    <input
+                      type="radio"
+                      name="flipTeam"
+                      value="all"
+                      checked={selectedFlipTeam === 'all'}
+                      onChange={(e) => setSelectedFlipTeam(e.target.value as 'all' | 'offense' | 'defense')}
+                      className="mr-1"
+                    />
+                    全て
+                  </label>
+                  <label className="flex items-center text-xs">
+                    <input
+                      type="radio"
+                      name="flipTeam"
+                      value="offense"
+                      checked={selectedFlipTeam === 'offense'}
+                      onChange={(e) => setSelectedFlipTeam(e.target.value as 'all' | 'offense' | 'defense')}
+                      className="mr-1"
+                    />
+                    オフェンス
+                  </label>
+                  <label className="flex items-center text-xs">
+                    <input
+                      type="radio"
+                      name="flipTeam"
+                      value="defense"
+                      checked={selectedFlipTeam === 'defense'}
+                      onChange={(e) => setSelectedFlipTeam(e.target.value as 'all' | 'offense' | 'defense')}
+                      className="mr-1"
+                    />
+                    ディフェンス
+                  </label>
+                </div>
+              </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => {
                     if (appState.currentPlay && onUpdatePlay) {
                       // 左右反転（フィールド中心を軸）
                       const fieldCenterX = appState.currentPlay.field.width / 2
-                      const updatedPlayers = appState.currentPlay.players.map(player => ({
-                        ...player, 
-                        x: flipXCoordinate(fieldCenterX, player.x)
-                      }))
+                      
+                      // 選択的チーム反転: 選択されたチームのプレーヤーのみ反転
+                      const updatedPlayers = appState.currentPlay.players.map(player => {
+                        // チーム選択に基づいてフィルタリング
+                        const shouldFlip = selectedFlipTeam === 'all' || 
+                                         (selectedFlipTeam === 'offense' && player.team === 'offense') ||
+                                         (selectedFlipTeam === 'defense' && player.team === 'defense')
+                        
+                        return shouldFlip ? {
+                          ...player, 
+                          x: flipXCoordinate(fieldCenterX, player.x)
+                        } : player
+                      })
                       
                       // 全ての矢印も反転（セグメントも含む）
                       const updatedArrows = appState.currentPlay.arrows.map(arrow => {
@@ -268,21 +317,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                         x: flipXCoordinate(fieldCenterX, text.x) // x座標を反転
                       }))
                       
-                      // センターも現在位置から反転（リセットしない）
+                      // センター反転の条件分岐: オフェンスが含まれる場合のみセンターを反転
                       let updatedCenter = appState.currentPlay.center
-                      if (appState.currentPlay.center) {
+                      const shouldFlipCenter = selectedFlipTeam === 'all' || selectedFlipTeam === 'offense'
+                      
+                      if (shouldFlipCenter && appState.currentPlay.center) {
                         updatedCenter = {
                           ...appState.currentPlay.center,
                           x: flipXCoordinate(fieldCenterX, appState.currentPlay.center.x)
                         }
-                      } else {
-                        // センターが存在しない場合はデフォルト位置から反転
+                      } else if (shouldFlipCenter && !appState.currentPlay.center) {
+                        // センターが存在しない場合はデフォルト位置を設定
                         const defaultCenterY = (appState.currentPlay.field.height * 5) / 8
                         updatedCenter = {
                           x: fieldCenterX, // 中央なので反転しても同じ
                           y: defaultCenterY
                         }
                       }
+                      // ディフェンスのみの場合は、センターをそのまま維持
                       
                       onUpdatePlay({ 
                         players: updatedPlayers, 
@@ -338,8 +390,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                       
                       
                       const updatedPlayers = appState.currentPlay.players.map((player) => {
+                        // 上下反転では常に全プレーヤーを反転（選択的フィルタリングなし）
                         const flippedY = flipAxisY + (flipAxisY - player.y)
-                        
                         
                         // 反転後の位置に配置制限を適用（更新されたセンターを考慮）
                         const constrained = constrainPlayerPosition(
@@ -351,7 +403,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                           updatedCenter,
                           player.size
                         )
-                        
                         
                         return {
                           ...player,
