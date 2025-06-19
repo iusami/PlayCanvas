@@ -136,8 +136,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
-        const maxY = centerLineY + offenseSnapOffset // 205 + offenseSnapOffset = 215px
+        // 反転時オフェンス：上端が中央線より下（フィールドの上半分）
+        // プレイヤーの上端 = center.y - halfSize
+        // 上端 <= centerLineY + offenseSnapOffset
+        // center.y <= centerLineY + offenseSnapOffset + halfSize
+        const maxY = centerLineY + offenseSnapOffset + halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
         debugLog(appState, `🔧 反転時オフェンス: maxY=${maxY}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
@@ -148,13 +151,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     } else {
       if (team === 'offense') {
-        // 通常時オフェンスは中央線より少し下から
-        const minY = centerLineY + offenseSnapOffset
+        // 通常時オフェンス：上端が中央線より下
+        // プレイヤーの上端 = center.y - halfSize
+        // 上端 >= centerLineY + offenseSnapOffset
+        // center.y >= centerLineY + offenseSnapOffset + halfSize
+        const minY = centerLineY + offenseSnapOffset + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
         debugLog(appState, `🔧 通常時オフェンス: minY=${minY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       } else {
-        // 通常時ディフェンスは中央線より少し上まで
-        const maxY = centerLineY - defenseSnapOffset
+        // 通常時ディフェンス：下端が中央線より上
+        // プレイヤーの下端 = center.y + halfSize
+        // 下端 <= centerLineY - defenseSnapOffset
+        // center.y <= centerLineY - defenseSnapOffset - halfSize
+        const maxY = centerLineY - defenseSnapOffset - halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
         debugLog(appState, `🔧 通常時ディフェンス: maxY=${maxY.toFixed(1)}, 制限前=${y.toFixed(1)} → 制限後=${constrainedY.toFixed(1)}`)
       }

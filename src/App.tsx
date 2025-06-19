@@ -520,8 +520,11 @@ const App: React.FC = () => {
     
     if (flipped) {
       if (team === 'offense') {
-        // 反転時オフェンスは中央線より少し下まで（フィールドの上半分）
-        const maxY = centerLineY + offenseSnapOffset
+        // 反転時オフェンス：上端が中央線より下（フィールドの上半分）
+        // プレイヤーの上端 = center.y - halfSize
+        // 上端 <= centerLineY + offenseSnapOffset
+        // center.y <= centerLineY + offenseSnapOffset + halfSize
+        const maxY = centerLineY + offenseSnapOffset + halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       } else {
         // 反転時ディフェンスは定数で定義された最小Y座標以上（フィールドの下半分）
@@ -530,12 +533,18 @@ const App: React.FC = () => {
       }
     } else {
       if (team === 'offense') {
-        // 通常時オフェンスは中央線より少し下から
-        const minY = centerLineY + offenseSnapOffset
+        // 通常時オフェンス：上端が中央線より下
+        // プレイヤーの上端 = center.y - halfSize
+        // 上端 >= centerLineY + offenseSnapOffset
+        // center.y >= centerLineY + offenseSnapOffset + halfSize
+        const minY = centerLineY + offenseSnapOffset + halfSize
         constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
       } else {
-        // 通常時ディフェンスは中央線より少し上まで
-        const maxY = centerLineY - defenseSnapOffset
+        // 通常時ディフェンス：下端が中央線より上
+        // プレイヤーの下端 = center.y + halfSize
+        // 下端 <= centerLineY - defenseSnapOffset
+        // center.y <= centerLineY - defenseSnapOffset - halfSize
+        const maxY = centerLineY - defenseSnapOffset - halfSize
         constrainedY = Math.max(halfSize, Math.min(maxY, y))
       }
     }
