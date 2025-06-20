@@ -112,6 +112,14 @@ beforeEach(() => {
 afterEach(() => {
   // モックを復元
   vi.restoreAllMocks()
+  
+  // タイマーとイベントをクリア（安全にチェック）
+  try {
+    vi.clearAllTimers()
+    vi.runOnlyPendingTimers()
+  } catch (e) {
+    // タイマーモックがセットアップされていない場合は無視
+  }
 })
 
 // Konva コンポーネント作成ヘルパー

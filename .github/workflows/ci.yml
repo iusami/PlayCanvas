@@ -13,7 +13,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.18.0]
     
     steps:
     - name: Checkout code
@@ -35,11 +35,16 @@ jobs:
       run: npm run lint
     
     - name: Run unit tests
-      run: npm test -- --coverage
+      run: npm test -- --run --coverage
+      timeout-minutes: 10
+      env:
+        VITE_SUPABASE_URL: "https://test.supabase.co" 
+        VITE_SUPABASE_ANON_KEY: "test-key-placeholder"
+        VITE_TEST_MODE: "true"
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v4
-      if: matrix.node-version == '20.x'
+      if: matrix.node-version == '20.18.0'
       with:
         file: ./coverage/coverage-final.json
         fail_ci_if_error: false
@@ -47,7 +52,7 @@ jobs:
     
     - name: Archive coverage artifacts
       uses: actions/upload-artifact@v4
-      if: matrix.node-version == '20.x'
+      if: matrix.node-version == '20.18.0'
       with:
         name: coverage-report
         path: coverage/

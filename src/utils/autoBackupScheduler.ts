@@ -174,4 +174,22 @@ export class AutoBackupScheduler {
       this.isProcessing = false
     }
   }
+
+  /**
+   * テスト専用: 内部状態をリセット
+   * @internal テストでのみ使用すること
+   */
+  static resetForTesting(): void {
+    // テスト環境でのみ動作するよう制限
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test' && 
+        typeof import.meta !== 'undefined' && import.meta.env?.VITE_TEST_MODE !== 'true') {
+      console.warn('resetForTesting() should only be called in test environment')
+      return
+    }
+
+    this.stop() // 既存のタイマーを停止
+    this.isRunning = false
+    this.isProcessing = false
+    this.intervalId = null
+  }
 }

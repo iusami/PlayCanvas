@@ -107,7 +107,7 @@ describe('BackupManager Component', () => {
     it('エクスポートボタンをクリックするとエクスポート処理が実行されること', async () => {
       render(<BackupManager {...defaultProps} />)
 
-      const exportButton = screen.getByText('バックアップファイルをダウンロード')
+      const exportButton = screen.getByRole('button', { name: /バックアップファイルをダウンロード/i })
       fireEvent.click(exportButton)
 
       await waitFor(() => {
@@ -143,7 +143,7 @@ describe('BackupManager Component', () => {
 
       render(<BackupManager {...defaultProps} />)
 
-      fireEvent.click(screen.getByText('バックアップファイルをダウンロード'))
+      fireEvent.click(screen.getByRole('button', { name: /バックアップファイルをダウンロード/i }))
 
       await waitFor(() => {
         expect(mockOnError).toHaveBeenCalledWith('エクスポート失敗')
@@ -343,7 +343,7 @@ describe('BackupManager Component', () => {
 
       render(<BackupManager {...defaultProps} />)
 
-      fireEvent.click(screen.getByText('バックアップファイルをダウンロード'))
+      fireEvent.click(screen.getByRole('button', { name: /バックアップファイルをダウンロード/i }))
 
       // ローディング中の確認
       await waitFor(() => {
@@ -380,7 +380,7 @@ describe('BackupManager Component', () => {
 
       render(<BackupManager {...defaultProps} />)
 
-      fireEvent.click(screen.getByText('バックアップファイルをダウンロード'))
+      fireEvent.click(screen.getByRole('button', { name: /バックアップファイルをダウンロード/i }))
 
       await waitFor(() => {
         expect(mockOnError).toHaveBeenCalledWith('バックアップの作成に失敗しました')

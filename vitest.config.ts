@@ -14,6 +14,14 @@ export default defineConfig({
     // テスト環境の設定
     environment: 'jsdom',
     
+    // jsdom環境の詳細設定
+    environmentOptions: {
+      jsdom: {
+        resources: 'usable',
+        runScripts: 'dangerously'
+      }
+    },
+    
     // グローバル設定
     globals: true,
     
@@ -53,7 +61,9 @@ export default defineConfig({
       reportsDirectory: './coverage'
     },
     
-    // テストのタイムアウト設定
+    // テストのタイムアウト設定 
+    // 統合テストで重いコンポーネント（React + Konva）を考慮したタイムアウト値
+    // PlaylistWorkspace、FootballCanvas等の複雑なレンダリングに対応
     testTimeout: 10000,
     
     // watchモードの設定
@@ -66,9 +76,9 @@ export default defineConfig({
     reporter: ['verbose'],
     
     // ファイル並列実行の設定
-    fileParallelism: false,
+    fileParallelism: true,
     
-    // テスト並列実行の設定  
+    // テスト並列実行の設定
     maxConcurrency: 5,
     
     // モック設定
@@ -81,6 +91,24 @@ export default defineConfig({
     // 環境変数とグローバル定義
     define: {
       global: 'globalThis',
+    },
+    
+    // テスト環境の環境変数設定
+    env: {
+      VITE_TEST_MODE: 'true'
+    },
+    
+    // ログ出力制御
+    logHeapUsage: true,
+    silent: false,
+    
+    // プールオプション
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+        isolate: true
+      }
     }
   }
 })
