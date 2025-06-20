@@ -87,35 +87,7 @@ Object.defineProperty(window, 'HTMLElement', {
 })
 
 // テスト前の共通セットアップ
-beforeEach(async () => {
-  // CI環境では事前にDOM完全クリア
-  if (process.env.CI) {
-    // React DOM の完全初期化
-    const rootElement = document.getElementById('root')
-    if (rootElement) {
-      rootElement.innerHTML = ''
-    }
-    
-    // 全てのDOM要素を削除して再構築
-    document.body.innerHTML = '<div id="root"></div>'
-    document.head.innerHTML = ''
-    
-    // イベントリスナーの完全除去
-    const newBody = document.createElement('body')
-    newBody.innerHTML = '<div id="root"></div>'
-    const newHead = document.createElement('head')
-    
-    if (document.body.parentNode) {
-      document.body.parentNode.replaceChild(newBody, document.body)
-    }
-    if (document.head.parentNode) {
-      document.head.parentNode.replaceChild(newHead, document.head)
-    }
-    
-    // 非同期処理の完了を確実に待機
-    await new Promise(resolve => setTimeout(resolve, 100))
-  }
-
+beforeEach(() => {
   // localStorage をクリア
   localStorageMock.clear()
   localStorageMock.getItem.mockClear()
@@ -134,13 +106,10 @@ beforeEach(async () => {
   // コンソールエラーを非表示にする（テスト時のノイズ削減）
   vi.spyOn(console, 'error').mockImplementation(() => {})
   vi.spyOn(console, 'warn').mockImplementation(() => {})
-  
-  // 全てのモックを事前にクリア
-  vi.clearAllMocks()
 })
 
-// テスト後のクリーンアップ（強化版）
-afterEach(async () => {
+// テスト後のクリーンアップ
+afterEach(() => {
   // モックを復元
   vi.restoreAllMocks()
   
@@ -150,39 +119,6 @@ afterEach(async () => {
     vi.runOnlyPendingTimers()
   } catch (e) {
     // タイマーモックがセットアップされていない場合は無視
-  }
-  
-  // CI環境では追加のクリーンアップ
-  if (process.env.CI) {
-    // React コンポーネントの状態をクリア
-    const rootElement = document.getElementById('root')
-    if (rootElement) {
-      rootElement.innerHTML = ''
-    }
-    
-    // DOM完全クリア
-    document.body.innerHTML = '<div id="root"></div>'
-    document.head.innerHTML = ''
-    
-    // イベントリスナーをクリア
-    const newBody = document.createElement('body')
-    newBody.innerHTML = '<div id="root"></div>'
-    const newHead = document.createElement('head')
-    
-    if (document.body.parentNode) {
-      document.body.parentNode.replaceChild(newBody, document.body)
-    }
-    if (document.head.parentNode) {
-      document.head.parentNode.replaceChild(newHead, document.head)
-    }
-    
-    // より長い待機時間でクリーンアップを確実にする
-    await new Promise(resolve => setTimeout(resolve, 200))
-    
-    // ガベージコレクションを促進
-    if (global.gc) {
-      global.gc()
-    }
   }
 })
 

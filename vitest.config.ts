@@ -14,6 +14,14 @@ export default defineConfig({
     // テスト環境の設定
     environment: 'jsdom',
     
+    // jsdom環境の詳細設定
+    environmentOptions: {
+      jsdom: {
+        resources: 'usable',
+        runScripts: 'dangerously'
+      }
+    },
+    
     // グローバル設定
     globals: true,
     
@@ -60,8 +68,8 @@ export default defineConfig({
       } : undefined
     },
     
-    // テストのタイムアウト設定（CI環境を考慮して大幅延長）
-    testTimeout: process.env.CI ? 60000 : 30000,
+    // テストのタイムアウト設定（CI環境を考慮して調整）
+    testTimeout: process.env.CI ? 30000 : 15000,
     
     // watchモードの設定
     watch: false,
@@ -104,8 +112,12 @@ export default defineConfig({
     silent: process.env.CI,
     
     // プールオプション（CI環境でのパフォーマンス向上）
-    pool: process.env.CI ? 'forks' : 'threads',
+    pool: process.env.CI ? 'threads' : 'threads',
     poolOptions: {
+      threads: {
+        singleThread: process.env.CI ? true : false,
+        isolate: true
+      },
       forks: {
         singleFork: true,
         isolate: true,
