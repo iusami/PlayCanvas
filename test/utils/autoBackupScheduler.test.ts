@@ -51,9 +51,7 @@ describe('AutoBackupScheduler', () => {
     mockNotification.requestPermission = vi.fn().mockResolvedValue('granted')
     
     // AutoBackupSchedulerの内部状態をリセット
-    AutoBackupScheduler.stop()
-    // プライベートフィールドを直接リセット
-    ;(AutoBackupScheduler as any).isProcessing = false
+    AutoBackupScheduler.resetForTesting()
   })
 
   afterEach(() => {
