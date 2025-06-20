@@ -46,7 +46,7 @@ export default defineConfig({
     // カバレッジ設定
     coverage: {
       provider: 'v8',
-      reporter: process.env.CI ? ['json'] : ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/**',
         'build/**',
@@ -58,18 +58,11 @@ export default defineConfig({
         '**/main.tsx',
         '**/index.css'
       ],
-      reportsDirectory: './coverage',
-      // CI環境でのメモリ使用量を制限
-      thresholds: process.env.CI ? {
-        statements: 0,
-        branches: 0,
-        functions: 0,
-        lines: 0
-      } : undefined
+      reportsDirectory: './coverage'
     },
     
-    // テストのタイムアウト設定（CI環境を考慮して調整）
-    testTimeout: process.env.CI ? 30000 : 15000,
+    // テストのタイムアウト設定（一律で設定）
+    testTimeout: 15000,
     
     // watchモードの設定
     watch: false,
@@ -77,14 +70,14 @@ export default defineConfig({
     // UI設定（必要に応じてコメントアウト解除）
     // ui: true,
     
-    // レポーター設定（CI環境向けに調整）
-    reporter: process.env.CI ? ['default'] : ['verbose'],
+    // レポーター設定
+    reporter: ['verbose'],
     
-    // ファイル並列実行の設定（CI環境では無効）
-    fileParallelism: !process.env.CI,
+    // ファイル並列実行の設定
+    fileParallelism: true,
     
-    // テスト並列実行の設定（CI環境では並列数を制限）
-    maxConcurrency: process.env.CI ? 1 : 5,
+    // テスト並列実行の設定
+    maxConcurrency: 5,
     
     // モック設定
     server: {
@@ -100,52 +93,20 @@ export default defineConfig({
     
     // テスト環境の環境変数設定
     env: {
-      VITE_TEST_MODE: 'true',
-      ...(process.env.CI && {
-        VITE_SUPABASE_URL: 'https://test.supabase.co',
-        VITE_SUPABASE_ANON_KEY: 'test-key-placeholder'
-      })
+      VITE_TEST_MODE: 'true'
     },
     
-    // CI環境でのログ出力制御
-    logHeapUsage: !process.env.CI,
-    silent: process.env.CI,
+    // ログ出力制御
+    logHeapUsage: true,
+    silent: false,
     
-    // プールオプション（CI環境でのパフォーマンス向上）
-    pool: process.env.CI ? 'threads' : 'threads',
+    // プールオプション
+    pool: 'threads',
     poolOptions: {
       threads: {
-        singleThread: process.env.CI ? true : false,
+        singleThread: false,
         isolate: true
-      },
-      forks: {
-        singleFork: true,
-        isolate: true,
-        // CI環境では追加の安全措置
-        ...(process.env.CI && {
-          execArgv: ['--no-warnings'],
-          env: {
-            NODE_ENV: 'test',
-            VITE_TEST_MODE: 'true'
-          }
-        })
       }
-    },
-    
-    // CI環境での追加設定
-    ...(process.env.CI && {
-      isolate: true,
-      sequence: {
-        hooks: 'stack',
-        shuffle: false,
-        concurrent: false
-      },
-      // 完全シーケンシャル実行を強制
-      maxConcurrency: 1,
-      fileParallelism: false,
-      // テスト間の待機時間
-      setupTimeout: 30000,
-      teardownTimeout: 30000
-    })
+    }
   }
 })
