@@ -20,14 +20,17 @@ Object.defineProperty(global, 'Notification', {
   configurable: true
 })
 
-// window.setInterval と window.clearInterval をモック
-Object.defineProperty(global, 'setInterval', {
-  value: vi.fn(),
+// window タイマーをモック
+const mockSetInterval = vi.fn()
+const mockClearInterval = vi.fn()
+
+Object.defineProperty(window, 'setInterval', {
+  value: mockSetInterval,
   writable: true
 })
 
-Object.defineProperty(global, 'clearInterval', {
-  value: vi.fn(),
+Object.defineProperty(window, 'clearInterval', {
+  value: mockClearInterval,
   writable: true
 })
 
@@ -35,7 +38,8 @@ describe('AutoBackupScheduler', () => {
   beforeEach(() => {
     localStorageMock.clear()
     vi.clearAllMocks()
-    vi.useFakeTimers()
+    mockSetInterval.mockClear()
+    mockClearInterval.mockClear()
     
     // Notification APIのデフォルト設定
     Object.defineProperty(mockNotification, 'permission', {
@@ -48,12 +52,15 @@ describe('AutoBackupScheduler', () => {
     
     // AutoBackupSchedulerの内部状態をリセット
     AutoBackupScheduler.stop()
+    // プライベートフィールドを直接リセット
+    ;(AutoBackupScheduler as any).isProcessing = false
   })
 
   afterEach(() => {
-    vi.useRealTimers()
     vi.restoreAllMocks()
     AutoBackupScheduler.stop()
+    // プライベートフィールドを直接リセット
+    ;(AutoBackupScheduler as any).isProcessing = false
   })
 
   describe('start', () => {
@@ -63,7 +70,7 @@ describe('AutoBackupScheduler', () => {
       AutoBackupScheduler.start()
       
       expect(consoleSpy).toHaveBeenCalledWith('自動バックアップスケジューラーを開始しました')
-      expect(setInterval).toHaveBeenCalledWith(expect.any(Function), 60 * 60 * 1000)
+      expect(mockSetInterval).toHaveBeenCalledWith(expect.any(Function), 60 * 60 * 1000)
       
       const status = AutoBackupScheduler.getStatus()
       expect(status.isRunning).toBe(true)
@@ -74,10 +81,10 @@ describe('AutoBackupScheduler', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
       
       AutoBackupScheduler.start()
-      expect(setInterval).toHaveBeenCalledTimes(1)
+      expect(mockSetInterval).toHaveBeenCalledTimes(1)
       
       AutoBackupScheduler.start() // 2回目の開始
-      expect(setInterval).toHaveBeenCalledTimes(1) // 変わらず1回
+      expect(mockSetInterval).toHaveBeenCalledTimes(1) // 変わらず1回
     })
 
     it('開始時に初回チェックを実行すること', async () => {
@@ -85,8 +92,8 @@ describe('AutoBackupScheduler', () => {
       
       AutoBackupScheduler.start()
       
-      // 非同期処理の完了を待つ
-      await vi.runAllTimersAsync()
+      // 初回チェックは同期的に実行されるのでタイマーは不要
+      await new Promise(resolve => setTimeout(resolve, 0))
       
       expect(AutoBackupManager.shouldCreateBackup).toHaveBeenCalledTimes(1)
     })
@@ -100,7 +107,7 @@ describe('AutoBackupScheduler', () => {
       AutoBackupScheduler.stop()
       
       expect(consoleSpy).toHaveBeenCalledWith('自動バックアップスケジューラーを停止しました')
-      expect(clearInterval).toHaveBeenCalled()
+      expect(mockClearInterval).toHaveBeenCalled()
       
       const status = AutoBackupScheduler.getStatus()
       expect(status.isRunning).toBe(false)
@@ -111,7 +118,7 @@ describe('AutoBackupScheduler', () => {
       
       AutoBackupScheduler.stop()
       
-      expect(clearInterval).not.toHaveBeenCalled()
+      expect(mockClearInterval).not.toHaveBeenCalled()
       expect(consoleSpy).not.toHaveBeenCalledWith('自動バックアップスケジューラーを停止しました')
     })
   })
@@ -133,7 +140,9 @@ describe('AutoBackupScheduler', () => {
       })
 
       AutoBackupScheduler.start()
-      await vi.runAllTimersAsync()
+      
+      // 初回チェックの完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(AutoBackupManager.shouldCreateBackup).toHaveBeenCalled()
       expect(AutoBackupManager.createAutoBackup).toHaveBeenCalled()
@@ -146,7 +155,9 @@ describe('AutoBackupScheduler', () => {
       vi.mocked(AutoBackupManager.shouldCreateBackup).mockResolvedValue(false)
 
       AutoBackupScheduler.start()
-      await vi.runAllTimersAsync()
+      
+      // 初回チェックの完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(AutoBackupManager.shouldCreateBackup).toHaveBeenCalled()
       expect(AutoBackupManager.createAutoBackup).not.toHaveBeenCalled()
@@ -163,7 +174,9 @@ describe('AutoBackupScheduler', () => {
       })
 
       AutoBackupScheduler.start()
-      await vi.runAllTimersAsync()
+      
+      // 初回チェックの完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('自動バックアップに失敗しました:', 'バックアップ作成失敗')
     })
@@ -175,7 +188,9 @@ describe('AutoBackupScheduler', () => {
       vi.mocked(AutoBackupManager.shouldCreateBackup).mockRejectedValue(error)
 
       AutoBackupScheduler.start()
-      await vi.runAllTimersAsync()
+      
+      // 初回チェックの完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('自動バックアップチェック中にエラーが発生しました:', error)
     })
@@ -190,8 +205,12 @@ describe('AutoBackupScheduler', () => {
 
       AutoBackupScheduler.start()
       
-      // 1時間後のタイマーを手動で実行
-      vi.advanceTimersByTime(60 * 60 * 1000)
+      // 初回チェックが処理中になるのを待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
+      
+      // setIntervalのコールバックを手動で実行
+      const intervalCallback = mockSetInterval.mock.calls[0][0]
+      intervalCallback()
       
       expect(consoleSpy).toHaveBeenCalledWith('前回の自動バックアップ処理がまだ実行中のため、今回の処理をスキップします')
     })
@@ -216,7 +235,9 @@ describe('AutoBackupScheduler', () => {
       })
 
       AutoBackupScheduler.start()
-      await vi.runAllTimersAsync()
+      
+      // 初回チェックの完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(mockNotification).toHaveBeenCalledWith('Football Canvas - 自動バックアップ', {
         body: 'バックアップ作成成功',
@@ -239,7 +260,9 @@ describe('AutoBackupScheduler', () => {
       })
 
       AutoBackupScheduler.start()
-      await vi.runAllTimersAsync()
+      
+      // 初回チェックの完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
 
       expect(mockNotification).not.toHaveBeenCalled()
     })
@@ -318,6 +341,9 @@ describe('AutoBackupScheduler', () => {
 
   describe('runManualCheck', () => {
     it('手動チェックでバックアップが必要な場合、正常に実行すること', async () => {
+      // 処理中状態を明示的にリセット
+      ;(AutoBackupScheduler as any).isProcessing = false
+      
       vi.mocked(AutoBackupManager.shouldCreateBackup).mockResolvedValue(true)
       vi.mocked(AutoBackupManager.createAutoBackup).mockResolvedValue({
         success: true,
@@ -334,6 +360,9 @@ describe('AutoBackupScheduler', () => {
     })
 
     it('手動チェックでバックアップが不要な場合、適切なメッセージを返すこと', async () => {
+      // 処理中状態を明示的にリセット
+      ;(AutoBackupScheduler as any).isProcessing = false
+      
       vi.mocked(AutoBackupManager.shouldCreateBackup).mockResolvedValue(false)
 
       const result = await AutoBackupScheduler.runManualCheck()
@@ -360,6 +389,9 @@ describe('AutoBackupScheduler', () => {
     it('手動チェック中にエラーが発生した場合、エラーを返すこと', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const error = new Error('手動チェックエラー')
+      
+      // 処理中状態を明示的にリセット
+      ;(AutoBackupScheduler as any).isProcessing = false
       
       vi.mocked(AutoBackupManager.shouldCreateBackup).mockRejectedValue(error)
 
@@ -388,22 +420,26 @@ describe('AutoBackupScheduler', () => {
 
   describe('定期実行', () => {
     it('1時間ごとに定期チェックが実行されること', async () => {
+      // 処理中状態を明示的にリセット
+      ;(AutoBackupScheduler as any).isProcessing = false
+      
       vi.mocked(AutoBackupManager.shouldCreateBackup).mockResolvedValue(false)
 
       AutoBackupScheduler.start()
       
-      // 初回チェック
-      await vi.runAllTimersAsync()
+      // 初回チェックの完了を待つ
+      await new Promise(resolve => setTimeout(resolve, 0))
       expect(AutoBackupManager.shouldCreateBackup).toHaveBeenCalledTimes(1)
 
-      // 1時間後
-      vi.advanceTimersByTime(60 * 60 * 1000)
-      await vi.runAllTimersAsync()
+      // setIntervalのコールバックを手動で実行（1回目）
+      const intervalCallback = mockSetInterval.mock.calls[0][0]
+      intervalCallback()
+      await new Promise(resolve => setTimeout(resolve, 0))
       expect(AutoBackupManager.shouldCreateBackup).toHaveBeenCalledTimes(2)
 
-      // さらに1時間後
-      vi.advanceTimersByTime(60 * 60 * 1000)
-      await vi.runAllTimersAsync()
+      // setIntervalのコールバックを手動で実行（2回目）
+      intervalCallback()
+      await new Promise(resolve => setTimeout(resolve, 0))
       expect(AutoBackupManager.shouldCreateBackup).toHaveBeenCalledTimes(3)
     })
   })
