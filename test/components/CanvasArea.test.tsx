@@ -503,6 +503,8 @@ describe('CanvasArea Component', () => {
         configurable: true,
         value: 768,
       })
+      // resize イベントを発火してレイアウト更新をトリガー
+      window.dispatchEvent(new Event('resize'))
 
       rerender(<CanvasArea {...defaultProps} />)
       
