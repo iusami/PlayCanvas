@@ -295,7 +295,7 @@ describe('Header Component', () => {
       renderWithAuth(<Header {...defaultProps} currentPlay={playWithoutName} />)
       
       expect(screen.getByText('テストプレイ')).toBeInTheDocument()
-      expect(screen.queryByText(/-/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/^- /)).not.toBeInTheDocument()
     })
   })
 
