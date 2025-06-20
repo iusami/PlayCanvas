@@ -90,16 +90,42 @@ export default defineConfig({
       global: 'globalThis',
     },
     
+    // テスト環境の環境変数設定
+    env: {
+      VITE_TEST_MODE: 'true',
+      ...(process.env.CI && {
+        VITE_SUPABASE_URL: 'https://test.supabase.co',
+        VITE_SUPABASE_ANON_KEY: 'test-key-placeholder'
+      })
+    },
+    
     // CI環境でのログ出力制御
     logHeapUsage: !process.env.CI,
     silent: process.env.CI,
     
     // プールオプション（CI環境でのパフォーマンス向上）
-    pool: 'forks',
+    pool: process.env.CI ? 'forks' : 'threads',
     poolOptions: {
       forks: {
-        singleFork: process.env.CI
+        singleFork: true,
+        isolate: true,
+        // CI環境では追加の安全措置
+        ...(process.env.CI && {
+          execArgv: ['--no-warnings'],
+          env: {
+            NODE_ENV: 'test',
+            VITE_TEST_MODE: 'true'
+          }
+        })
       }
-    }
+    },
+    
+    // CI環境での追加設定
+    ...(process.env.CI && {
+      isolate: true,
+      sequence: {
+        hooks: 'stack'
+      }
+    })
   }
 })

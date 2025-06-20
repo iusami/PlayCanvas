@@ -20,8 +20,12 @@ export const setupIntegrationTestEnv = () => {
     afterEach(async () => {
       cleanup()
       
-      // タイマーとイベントリスナーをクリア
-      vi.clearAllTimers()
+      // タイマーとイベントリスナーをクリア（安全にチェック）
+      try {
+        vi.clearAllTimers()
+      } catch (e) {
+        // タイマーモックがない場合は無視
+      }
       vi.clearAllMocks()
       
       // DOMを完全にクリア
@@ -48,27 +52,25 @@ export const setupIntegrationTestEnv = () => {
  * 
  * @returns Testing Library render result
  */
-export const renderAppWithAuth = () => {
+export const renderAppWithAuth = async () => {
   // CI環境では事前にクリーンアップ
   if (process.env.CI) {
     cleanup()
     document.body.innerHTML = ''
     // 小さな遅延を追加してクリーンアップを確実にする
-    return new Promise(resolve => {
-      setTimeout(() => {
-        const result = render(
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        )
-        resolve(result)
-      }, 50)
-    })
+    await new Promise(resolve => setTimeout(resolve, 50))
   }
   
-  return render(
+  const result = render(
     <AuthProvider>
       <App />
     </AuthProvider>
   )
+  
+  // CI環境では追加の待機
+  if (process.env.CI) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  
+  return result
 }

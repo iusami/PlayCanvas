@@ -108,10 +108,34 @@ beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(() => {})
 })
 
-// テスト後のクリーンアップ
-afterEach(() => {
+// テスト後のクリーンアップ（強化版）
+afterEach(async () => {
   // モックを復元
   vi.restoreAllMocks()
+  
+  // タイマーとイベントをクリア（安全にチェック）
+  try {
+    vi.clearAllTimers()
+    vi.runOnlyPendingTimers()
+  } catch (e) {
+    // タイマーモックがセットアップされていない場合は無視
+  }
+  
+  // CI環境では追加のクリーンアップ
+  if (process.env.CI) {
+    // DOM完全クリア
+    document.body.innerHTML = ''
+    document.head.innerHTML = ''
+    
+    // イベントリスナーをクリア
+    const newBody = document.createElement('body')
+    const newHead = document.createElement('head')
+    document.documentElement.replaceChild(newBody, document.body)
+    document.documentElement.replaceChild(newHead, document.head)
+    
+    // 非同期処理完了を待機
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
 })
 
 // Konva コンポーネント作成ヘルパー

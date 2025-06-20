@@ -6,9 +6,9 @@ import { localStorageMock } from '../setup'
 // AutoBackupManagerをモック
 vi.mock('../../src/utils/autoBackup', () => ({
   AutoBackupManager: {
-    shouldCreateBackup: vi.fn(),
-    createAutoBackup: vi.fn(),
-    cleanupOldBackups: vi.fn(),
+    shouldCreateBackup: vi.fn(() => true),
+    createAutoBackup: vi.fn(() => ({ success: true, filename: 'auto-backup-test.json' })),
+    cleanupOldBackups: vi.fn(() => ({ success: true })),
   }
 }))
 
