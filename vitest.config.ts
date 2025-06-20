@@ -61,8 +61,10 @@ export default defineConfig({
       reportsDirectory: './coverage'
     },
     
-    // テストのタイムアウト設定（一律で設定）
-    testTimeout: 15000,
+    // テストのタイムアウト設定 
+    // 統合テストで重いコンポーネント（React + Konva）を考慮したタイムアウト値
+    // PlaylistWorkspace、FootballCanvas等の複雑なレンダリングに対応
+    testTimeout: 10000,
     
     // watchモードの設定
     watch: false,
