@@ -1,21 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import App from '../../src/App'
-import { AuthProvider } from '../../src/contexts/AuthContext'
 import { localStorageMock } from '../setup'
+import { setupIntegrationTestEnv, renderAppWithAuth } from '../testUtils/integrationTestHelpers'
 
 // テスト環境を設定
-vi.stubEnv('VITE_TEST_MODE', 'true')
-
-// AppコンポーネントをAuthProviderでラップするヘルパー
-const renderAppWithAuth = () => {
-  return render(
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  )
-}
+setupIntegrationTestEnv()
 
 // 統合テスト: プレイ作成からプレイリストへの追加まで
 describe('プレイ作成統合フロー', () => {
