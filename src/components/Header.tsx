@@ -79,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({
     onShowMessage(message, 'error')
   }
   return (
-    <header className="h-14 bg-white border-b border-gray-300 flex items-center justify-between px-4 shadow-sm">
+    <header role="banner" className="h-14 bg-white border-b border-gray-300 flex items-center justify-between px-4 shadow-sm">
       <div className="flex items-center space-x-4">
         <h1 className="text-xl font-bold text-gray-900">Football Canvas</h1>
         <div className="flex items-center space-x-2">

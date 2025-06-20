@@ -17,10 +17,11 @@ describe('基本機能統合テスト', () => {
   it('アプリケーションが正常にレンダリングされ、基本UIが表示されること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. アプリケーションが正常に表示されることを確認
-    expect(screen.getByText('Football Canvas')).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getAllByText('Football Canvas')).toHaveLength(1)
 
     // 2. 基本的なボタンが表示されることを確認
     expect(screen.getByRole('button', { name: /新しいプレイを作成/ })).toBeInTheDocument()
@@ -36,7 +37,7 @@ describe('基本機能統合テスト', () => {
   it('新しいプレイ作成機能が動作すること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. 新しいプレイボタンをクリック
     const addPlayButton = screen.getByRole('button', { name: /新しいプレイを作成/ })
@@ -53,7 +54,7 @@ describe('基本機能統合テスト', () => {
   it('サイドバーのタブ切り替えが機能すること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. 初期状態でツールタブがアクティブであることを確認
     const toolsTab = screen.getByRole('button', { name: /ツール/ })

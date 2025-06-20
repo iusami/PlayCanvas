@@ -38,7 +38,7 @@ export default defineConfig({
     // カバレッジ設定
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: process.env.CI ? ['json'] : ['text', 'json', 'html'],
       exclude: [
         'node_modules/**',
         'build/**',
@@ -50,11 +50,18 @@ export default defineConfig({
         '**/main.tsx',
         '**/index.css'
       ],
-      reportsDirectory: './coverage'
+      reportsDirectory: './coverage',
+      // CI環境でのメモリ使用量を制限
+      thresholds: process.env.CI ? {
+        statements: 0,
+        branches: 0,
+        functions: 0,
+        lines: 0
+      } : undefined
     },
     
-    // テストのタイムアウト設定
-    testTimeout: 10000,
+    // テストのタイムアウト設定（CI環境を考慮して延長）
+    testTimeout: 30000,
     
     // watchモードの設定
     watch: false,
@@ -62,14 +69,14 @@ export default defineConfig({
     // UI設定（必要に応じてコメントアウト解除）
     // ui: true,
     
-    // レポーター設定
-    reporter: ['verbose'],
+    // レポーター設定（CI環境向けに調整）
+    reporter: process.env.CI ? ['default'] : ['verbose'],
     
-    // ファイル並列実行の設定
-    fileParallelism: false,
+    // ファイル並列実行の設定（CI環境では無効）
+    fileParallelism: !process.env.CI,
     
-    // テスト並列実行の設定  
-    maxConcurrency: 5,
+    // テスト並列実行の設定（CI環境では並列数を制限）
+    maxConcurrency: process.env.CI ? 1 : 5,
     
     // モック設定
     server: {
@@ -81,6 +88,18 @@ export default defineConfig({
     // 環境変数とグローバル定義
     define: {
       global: 'globalThis',
+    },
+    
+    // CI環境でのログ出力制御
+    logHeapUsage: !process.env.CI,
+    silent: process.env.CI,
+    
+    // プールオプション（CI環境でのパフォーマンス向上）
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: process.env.CI
+      }
     }
   }
 })

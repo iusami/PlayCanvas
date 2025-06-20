@@ -40,10 +40,11 @@ describe('バックアップ・復元統合フロー', () => {
 
     localStorageMock.setItem('football-canvas-plays', JSON.stringify(testPlays))
 
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. アプリケーションが正常に表示されることを確認
-    expect(screen.getByText('Football Canvas')).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getAllByText('Football Canvas')).toHaveLength(1)
 
     // 2. 基本的なボタンが表示されることを確認
     expect(screen.getByRole('button', { name: /新しいプレイを作成/ })).toBeInTheDocument()
@@ -57,7 +58,7 @@ describe('バックアップ・復元統合フロー', () => {
   it('新しいプレイ追加ボタンが動作すること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. 新しいプレイボタンをクリック
     const addPlayButton = screen.getByRole('button', { name: /新しいプレイを作成/ })

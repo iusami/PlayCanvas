@@ -17,10 +17,11 @@ describe('選択的チーム反転統合フロー', () => {
   it('アプリケーションに選択的反転のUIコントロールが表示されること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. アプリケーションが正常に表示されることを確認
-    expect(screen.getByText('Football Canvas')).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getAllByText('Football Canvas')).toHaveLength(1)
 
     // 2. 反転関連のUIコントロールが表示されることを確認
     expect(screen.getByRole('button', { name: /左右反転/ })).toBeInTheDocument()
@@ -35,7 +36,7 @@ describe('選択的チーム反転統合フロー', () => {
   it('反転機能の選択オプションが操作できること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. 初期状態で「全て」が選択されていることを確認
     const allOption = screen.getByRole('radio', { name: /全て/ })

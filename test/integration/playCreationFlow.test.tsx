@@ -17,10 +17,11 @@ describe('プレイ作成統合フロー', () => {
   it('アプリケーションが正常にレンダリングされること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. アプリケーションが正常に表示されることを確認
-    expect(screen.getByText('Football Canvas')).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getAllByText('Football Canvas')).toHaveLength(1)
 
     // 2. 基本的なボタンが表示されることを確認
     expect(screen.getByRole('button', { name: /新しいプレイを作成/ })).toBeInTheDocument()
@@ -42,7 +43,7 @@ describe('プレイ作成統合フロー', () => {
   it('プレイ一覧ボタンが正常に動作すること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. プレイ一覧ボタンをクリック
     const playLibraryButtons = screen.getAllByRole('button', { name: /プレイ一覧/ })
@@ -50,26 +51,26 @@ describe('プレイ作成統合フロー', () => {
     await user.click(playLibraryButton)
 
     // 2. 基本的な要素が存在することを確認（実際の動作は複雑な実装に依存）
-    expect(screen.getByText('Football Canvas')).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
   })
 
   it('プレイリスト管理ボタンが正常に動作すること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. プレイリスト管理ボタンをクリック
     const playlistButton = screen.getByRole('button', { name: /プレイリスト管理/ })
     await user.click(playlistButton)
 
     // 2. 基本的な要素が存在することを確認（実際の動作は複雑な実装に依存）
-    expect(screen.getByText('Football Canvas')).toBeInTheDocument()
+    expect(screen.getByRole('banner')).toBeInTheDocument()
   })
 
   it('サイドバーのタブ切り替えが正常に動作すること', async () => {
     const user = userEvent.setup()
     
-    renderAppWithAuth()
+    await renderAppWithAuth()
 
     // 1. 初期状態でツールタブがアクティブであることを確認
     const toolsTab = screen.getByRole('button', { name: /ツール/ })
