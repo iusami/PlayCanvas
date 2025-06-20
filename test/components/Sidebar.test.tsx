@@ -265,10 +265,70 @@ describe('Sidebar Component', () => {
       expect(screen.getByText('左右反転')).toBeInTheDocument()
     })
 
+    it('反転対象チーム選択が表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('反転対象チーム')).toBeInTheDocument()
+      expect(screen.getByText('(左右反転のみに機能します)')).toBeInTheDocument()
+      expect(screen.getByLabelText('全て')).toBeInTheDocument()
+      expect(screen.getByLabelText('オフェンス')).toBeInTheDocument()
+      expect(screen.getByLabelText('ディフェンス')).toBeInTheDocument()
+    })
+
+    it('初期状態では「全て」が選択されていること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByLabelText('全て')).toBeChecked()
+      expect(screen.getByLabelText('オフェンス')).not.toBeChecked()
+      expect(screen.getByLabelText('ディフェンス')).not.toBeChecked()
+    })
+
+    it('チーム選択を変更できること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      const offenseRadio = screen.getByLabelText('オフェンス')
+      await user.click(offenseRadio)
+      
+      expect(offenseRadio).toBeChecked()
+      expect(screen.getByLabelText('全て')).not.toBeChecked()
+      expect(screen.getByLabelText('ディフェンス')).not.toBeChecked()
+    })
+
     it('左右反転ボタンをクリックするとonUpdatePlayが呼ばれること', async () => {
       const user = userEvent.setup()
       render(<Sidebar {...defaultProps} />)
       
+      const flipButton = screen.getByText('左右反転')
+      await user.click(flipButton)
+      
+      expect(mockOnUpdatePlay).toHaveBeenCalled()
+    })
+
+    it('オフェンスのみ選択時でも左右反転が機能すること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      // オフェンスのみを選択
+      const offenseRadio = screen.getByLabelText('オフェンス')
+      await user.click(offenseRadio)
+      
+      // 反転実行
+      const flipButton = screen.getByText('左右反転')
+      await user.click(flipButton)
+      
+      expect(mockOnUpdatePlay).toHaveBeenCalled()
+    })
+
+    it('ディフェンスのみ選択時でも左右反転が機能すること', async () => {
+      const user = userEvent.setup()
+      render(<Sidebar {...defaultProps} />)
+      
+      // ディフェンスのみを選択
+      const defenseRadio = screen.getByLabelText('ディフェンス')
+      await user.click(defenseRadio)
+      
+      // 反転実行
       const flipButton = screen.getByText('左右反転')
       await user.click(flipButton)
       
@@ -400,6 +460,122 @@ describe('Sidebar Component', () => {
       expect(mockUpdateAppState).toHaveBeenCalledWith({
         selectedFillColor: '#ff0000'
       })
+    })
+  })
+
+  describe('プレイヤー選択時の機能', () => {
+    it('プレイヤー選択時の基本的な機能をテストする', () => {
+      const propsWithSelectedPlayers = {
+        ...defaultProps,
+        appState: {
+          ...createMockAppState(),
+          selectedTool: 'select' as const,
+          selectedElementIds: ['player-1', 'player-2']
+        }
+      }
+
+      render(<Sidebar {...propsWithSelectedPlayers} />)
+      
+      // selectツールが選択されていることを確認
+      expect(screen.getByText('選択')).toBeInTheDocument()
+    })
+
+    it('選択ツールでプレイヤーが選択されている場合の表示確認', () => {
+      const propsWithSelectedPlayers = {
+        ...defaultProps,
+        appState: {
+          ...createMockAppState(),
+          selectedTool: 'select' as const,
+          selectedElementIds: ['player-1']
+        }
+      }
+
+      render(<Sidebar {...propsWithSelectedPlayers} />)
+      
+      // 選択ツールのUIが表示されることを確認
+      expect(screen.getByText('フォーメーション反転')).toBeInTheDocument()
+    })
+  })
+
+  describe('矢印ツール', () => {
+    const arrowToolProps = {
+      ...defaultProps,
+      appState: {
+        ...createMockAppState(),
+        selectedTool: 'arrow' as const
+      }
+    }
+
+    it('矢印ツール選択時に適切なオプションが表示されること', () => {
+      render(<Sidebar {...arrowToolProps} />)
+      
+      expect(screen.getByText('矢印の種類')).toBeInTheDocument()
+      expect(screen.getByText('線の太さ')).toBeInTheDocument()
+      expect(screen.getByText('色')).toBeInTheDocument()
+    })
+
+    it('線の太さを変更できること', async () => {
+      render(<Sidebar {...arrowToolProps} />)
+      
+      const strokeWidthSlider = screen.getByDisplayValue('2')
+      fireEvent.change(strokeWidthSlider, { target: { value: '4' } })
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        selectedStrokeWidth: 4
+      })
+    })
+  })
+
+  describe('テキストツール', () => {
+    const textToolProps = {
+      ...defaultProps,
+      appState: {
+        ...createMockAppState(),
+        selectedTool: 'text' as const
+      }
+    }
+
+    it('テキストツール選択時に適切なオプションが表示されること', () => {
+      render(<Sidebar {...textToolProps} />)
+      
+      expect(screen.getByText('フォントサイズ')).toBeInTheDocument()
+      expect(screen.getByText('フォント')).toBeInTheDocument()
+      expect(screen.getByText('色')).toBeInTheDocument()
+    })
+
+    it('フォントサイズを変更できること', async () => {
+      render(<Sidebar {...textToolProps} />)
+      
+      const fontSizeSlider = screen.getByDisplayValue('16')
+      fireEvent.change(fontSizeSlider, { target: { value: '20' } })
+      
+      expect(mockUpdateAppState).toHaveBeenCalledWith({
+        selectedFontSize: 20
+      })
+    })
+  })
+
+  describe('スナップ機能', () => {
+    it('中央線スナップ機能が表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('中央線スナップ')).toBeInTheDocument()
+      expect(screen.getByText('中央線にスナップ')).toBeInTheDocument()
+    })
+
+    it('スナップ範囲の設定が表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText(/スナップ範囲:/)).toBeInTheDocument()
+      const rangeSlider = screen.getByDisplayValue('15')
+      expect(rangeSlider).toHaveAttribute('type', 'range')
+    })
+
+    it('スナップ機能の説明が表示されること', () => {
+      render(<Sidebar {...defaultProps} />)
+      
+      expect(screen.getByText('💡 中央線スナップについて:')).toBeInTheDocument()
+      expect(screen.getByText('• プレイヤーが中央線に近づくと自動でスナップ')).toBeInTheDocument()
     })
   })
 })
