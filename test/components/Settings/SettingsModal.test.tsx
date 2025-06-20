@@ -70,8 +70,8 @@ describe('SettingsModal Component', () => {
       render(<SettingsModal {...defaultProps} />)
 
       await waitFor(() => {
-        expect(screen.getByText('設定')).toBeInTheDocument()
-        expect(screen.getByText('一般設定')).toBeInTheDocument()
+        expect(screen.getByRole('heading', { level: 2, name: /設定/i })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /一般設定/i })).toBeInTheDocument()
         expect(screen.getByText('自動バックアップ')).toBeInTheDocument()
       })
     })
@@ -351,7 +351,7 @@ describe('SettingsModal Component', () => {
       render(<SettingsModal {...defaultProps} />)
 
       await waitFor(() => {
-        expect(screen.getByText('設定')).toBeInTheDocument()
+        expect(screen.getByRole('heading', { level: 2, name: /設定/i })).toBeInTheDocument()
       })
 
       const closeButton = screen.getByText('×')
@@ -364,7 +364,7 @@ describe('SettingsModal Component', () => {
       render(<SettingsModal {...defaultProps} />)
 
       await waitFor(() => {
-        expect(screen.getByText('設定')).toBeInTheDocument()
+        expect(screen.getByRole('heading', { level: 2, name: /設定/i })).toBeInTheDocument()
       })
 
       const cancelButton = screen.getByText('キャンセル')

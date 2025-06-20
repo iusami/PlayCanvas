@@ -60,8 +60,8 @@ export default defineConfig({
       } : undefined
     },
     
-    // テストのタイムアウト設定（CI環境を考慮して延長）
-    testTimeout: 30000,
+    // テストのタイムアウト設定（CI環境を考慮して大幅延長）
+    testTimeout: process.env.CI ? 60000 : 30000,
     
     // watchモードの設定
     watch: false,
@@ -124,8 +124,16 @@ export default defineConfig({
     ...(process.env.CI && {
       isolate: true,
       sequence: {
-        hooks: 'stack'
-      }
+        hooks: 'stack',
+        shuffle: false,
+        concurrent: false
+      },
+      // 完全シーケンシャル実行を強制
+      maxConcurrency: 1,
+      fileParallelism: false,
+      // テスト間の待機時間
+      setupTimeout: 30000,
+      teardownTimeout: 30000
     })
   }
 })

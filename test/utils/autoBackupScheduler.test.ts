@@ -54,11 +54,16 @@ describe('AutoBackupScheduler', () => {
     AutoBackupScheduler.resetForTesting()
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.restoreAllMocks()
     AutoBackupScheduler.stop()
     // プライベートフィールドを直接リセット
     ;(AutoBackupScheduler as any).isProcessing = false
+    
+    // CI環境では追加の待機時間でクリーンアップを確実にする
+    if (process.env.CI) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
   })
 
   describe('start', () => {

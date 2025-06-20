@@ -56,9 +56,16 @@ export const renderAppWithAuth = async () => {
   // CI環境では事前にクリーンアップ
   if (process.env.CI) {
     cleanup()
-    document.body.innerHTML = ''
-    // 小さな遅延を追加してクリーンアップを確実にする
-    await new Promise(resolve => setTimeout(resolve, 50))
+    
+    // DOM を完全に初期化
+    const rootElement = document.getElementById('root')
+    if (rootElement) {
+      rootElement.innerHTML = ''
+    }
+    document.body.innerHTML = '<div id="root"></div>'
+    
+    // 前のレンダリングの完全なクリアを待機
+    await new Promise(resolve => setTimeout(resolve, 300))
   }
   
   const result = render(
@@ -67,9 +74,32 @@ export const renderAppWithAuth = async () => {
     </AuthProvider>
   )
   
-  // CI環境では追加の待機
+  // CI環境では React コンポーネントの完全な初期化を待機
   if (process.env.CI) {
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // DOM が安定するまで待機
+    await new Promise(resolve => {
+      const observer = new MutationObserver(() => {
+        // DOM 変更が止まったら解決
+        setTimeout(() => {
+          observer.disconnect()
+          resolve(undefined)
+        }, 100)
+      })
+      
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true
+      })
+      
+      // 最大3秒でタイムアウト
+      setTimeout(() => {
+        observer.disconnect()
+        resolve(undefined)
+      }, 3000)
+    })
   }
   
   return result
