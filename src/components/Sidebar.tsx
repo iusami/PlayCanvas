@@ -357,6 +357,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                       
                       // センターを現在位置に応じて反転（プレーヤー処理の前に実行）
                       let updatedCenter = appState.currentPlay.center
+                      let isReturningToOriginal = false
+                      
                       if (appState.currentPlay.center) {
                         const currentY = appState.currentPlay.center.y
                         
@@ -367,10 +369,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                         // 現在の位置に応じて反転先を決定
                         let newY
                         if (Math.abs(currentY - secondLineY) < Math.abs(currentY - fourthLineY)) {
-                          // 現在2番目の線に近い場合は4番目の線へ
+                          // 現在2番目の線に近い場合は4番目の線へ（通常状態に戻る）
                           newY = fourthLineY
+                          isReturningToOriginal = true
                         } else {
-                          // 現在4番目の線に近い場合は2番目の線へ
+                          // 現在4番目の線に近い場合は2番目の線へ（反転状態）
                           newY = secondLineY
                         }
                         
@@ -393,21 +396,33 @@ const Sidebar: React.FC<SidebarProps> = ({
                         // 上下反転では常に全プレーヤーを反転（選択的フィルタリングなし）
                         const flippedY = flipAxisY + (flipAxisY - player.y)
                         
-                        // 反転後の位置に配置制限を適用（更新されたセンターを考慮）
-                        const constrained = constrainPlayerPosition(
-                          player.x, 
-                          flippedY, 
-                          player.team, 
-                          appState.currentPlay!.field.width, 
-                          appState.currentPlay!.field.height, 
-                          updatedCenter,
-                          player.size
-                        )
+                        // 通常状態に戻る場合は制約を緩和（元の位置の復元を優先）
+                        let finalY = flippedY
+                        let finalX = player.x
+                        
+                        if (isReturningToOriginal) {
+                          // 通常状態に戻る際は、制約を適用せずに反転位置をそのまま使用
+                          finalY = flippedY
+                          finalX = player.x
+                        } else {
+                          // 反転状態への移行時のみ制約を適用
+                          const constrained = constrainPlayerPosition(
+                            player.x, 
+                            flippedY, 
+                            player.team, 
+                            appState.currentPlay!.field.width, 
+                            appState.currentPlay!.field.height, 
+                            updatedCenter,
+                            player.size
+                          )
+                          finalY = constrained.y
+                          finalX = constrained.x
+                        }
                         
                         return {
                           ...player,
-                          x: constrained.x,
-                          y: constrained.y,
+                          x: finalX,
+                          y: finalY,
                           flipped: player.type === 'triangle' || player.type === 'chevron' ? !player.flipped : player.flipped
                         }
                       })
