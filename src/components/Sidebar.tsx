@@ -377,6 +377,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                           newY = secondLineY
                         }
                         
+                        // newYで計算した新しいセンター位置でupdatedCenterを更新
+                        // constrainPlayerPositionが正しいセンター位置を使用するために必要
                         updatedCenter = {
                           ...appState.currentPlay.center,
                           y: newY
