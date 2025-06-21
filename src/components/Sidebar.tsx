@@ -398,16 +398,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                         // 上下反転では常に全プレーヤーを反転（選択的フィルタリングなし）
                         const flippedY = flipAxisY + (flipAxisY - player.y)
                         
-                        // 通常状態に戻る場合は制約を緩和（元の位置の復元を優先）
+                        // 制約適用の判定：通常状態復帰時またはディフェンスプレイヤーの場合は制約を緩和
                         let finalY = flippedY
                         let finalX = player.x
                         
-                        if (isReturningToOriginal) {
-                          // 通常状態に戻る際は、制約を適用せずに反転位置をそのまま使用
+                        if (isReturningToOriginal || player.team === 'defense') {
+                          // 以下の場合は制約を適用せずに反転位置をそのまま使用：
+                          // 1. 通常状態に戻る際（元の位置の復元を優先）
+                          // 2. ディフェンスプレイヤー（5本目の線への押し込みを防ぐ）
                           finalY = flippedY
                           finalX = player.x
                         } else {
-                          // 反転状態への移行時のみ制約を適用
+                          // オフェンスプレイヤーの反転状態への移行時のみ制約を適用
                           const constrained = constrainPlayerPosition(
                             player.x, 
                             flippedY, 
