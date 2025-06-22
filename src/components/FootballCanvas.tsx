@@ -1166,32 +1166,28 @@ const FootballCanvas = forwardRef(({
     // ドラッグしているプレイヤー自体にも制約を適用
     const draggedPlayer = play.players.find(p => p.id === playerId)
     if (draggedPlayer) {
-      const currentX = (e.target as any).x()
-      const currentY = (e.target as any).y()
+      // 制約適用前の生の座標を保存（移動量計算用）
+      const rawX = (e.target as any).x()
+      const rawY = (e.target as any).y()
       
       // ドラッグ中のプレイヤーに制約を適用
-      const constrained = constrainPlayerPosition(currentX, currentY, draggedPlayer.team, draggedPlayer.size)
+      const constrained = constrainPlayerPosition(rawX, rawY, draggedPlayer.team, draggedPlayer.size)
       
       // 制約範囲外に出ようとした場合、その位置で止める
-      if (constrained.x !== currentX || constrained.y !== currentY) {
+      if (constrained.x !== rawX || constrained.y !== rawY) {
         e.target.x(constrained.x)
         e.target.y(constrained.y)
       }
-    }
 
-    // グループ移動中の場合、他のプレイヤーもリアルタイムで移動
-    if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-      if (!draggedPlayer) return
+      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動
+      if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
+        // 制約適用前の生の移動量を計算（他のプレイヤーへの影響を防ぐ）
+        const deltaX = rawX - draggedPlayer.x
+        const deltaY = rawY - draggedPlayer.y
 
-      // 制約適用後の移動量を計算
-      const constrainedX = (e.target as any).x()
-      const constrainedY = (e.target as any).y()
-      const deltaX = constrainedX - draggedPlayer.x
-      const deltaY = constrainedY - draggedPlayer.y
-
-      // 他のプレイヤーのKonvaオブジェクトも移動（制約チェック付き）
-      const stage = e.target.getStage()
-      if (stage) {
+        // 他のプレイヤーのKonvaオブジェクトも移動（制約チェック付き）
+        const stage = e.target.getStage()
+        if (stage) {
         appState.selectedElementIds.forEach(selectedId => {
           if (selectedId !== playerId) {
             const otherPlayer = play.players.find(p => p.id === selectedId)
@@ -1322,6 +1318,7 @@ const FootballCanvas = forwardRef(({
           }
         })
         stage.batchDraw()
+        }
       }
     }
   }
