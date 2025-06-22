@@ -454,23 +454,13 @@ const FootballCanvas = forwardRef(({
     if (flipped) {
       // 反転時: オフェンスが上、ディフェンスが下
       if (team === 'offense') {
-        // 反転時オフェンス：中央線より少し上の位置まで配置可能（フィールド上半分で制約）
-        // より緩い制限に変更：プレイヤーの上端が中央線より5px上まで
-        // プレイヤーの上端 = center.y - halfSize >= centerLineY - 5
-        // つまり: center.y >= centerLineY - 5 + halfSize
-        const minimalOffset = 5  // 制限を緩和
-        const minY = centerLineY - minimalOffset + halfSize
-        
-        // フィールド上限制約を適用：上から2つ目の線以下まで  
-        const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
-        
-        // オフェンスの有効範囲：フィールド上限から中央線付近まで（より広範囲）
-        const finalMinY = Math.max(effectiveTopLimit, minY)
+        // 反転時オフェンス：フィールド上限制約を無効化して数学的矛盾を回避
+        // プレイヤーの上端が最低でもhalfSize分は確保、中央線付近まで自由に移動可能
+        const minY = halfSize  // フィールド最上端からhalfSize分のマージン
         const maxY = centerLineY + halfSize  // 中央線を少し越えても許可
-        constrainedY = Math.max(finalMinY, Math.min(maxY, y))
+        constrainedY = Math.max(minY, Math.min(maxY, y))
         
-        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, minY=${minY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
-        console.log(`🔍 反転オフェンス: 最終範囲=${finalMinY.toFixed(1)}〜${maxY.toFixed(1)}`)
+        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, 制限範囲=${minY.toFixed(1)}〜${maxY.toFixed(1)}`)
         console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)}`)
       } else {
         // 反転時ディフェンス：プレイヤーの上端が中央線より10px下まで配置可能（フィールド下半分で制約）
@@ -1438,7 +1428,7 @@ const FootballCanvas = forwardRef(({
         })
       }
       
-      return // 早期リターンでシングル移動処理をスキップ
+      // 複数プレーヤー移動時もリンクされた矢印の更新が必要なので、処理を継続
     } else {
       // 単一プレイヤーの移動（制限→スナップの順序で処理）
       const draggedPlayer = play.players.find(p => p.id === playerId)
