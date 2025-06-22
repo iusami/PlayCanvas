@@ -655,8 +655,9 @@ const FootballCanvas = forwardRef(({
       if (flipped) {
         // 反転時: オフェンスが上、ディフェンスが下
         if (targetTeam === 'offense') {
-          // 反転オフェンス：中央線より少し上にスナップ
-          const snapLineY = centerLineY - defenseSnapOffset  // 375 - 10 = 365
+          // 反転オフェンス：制約上限に合わせてスナップ（centerLineY + halfSize）
+          const halfSize = 20 / 2  // プレーヤーサイズの半分
+          const snapLineY = centerLineY + halfSize  // 制約の上限値と一致
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         } else {
