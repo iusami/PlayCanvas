@@ -424,6 +424,50 @@ const App: React.FC = () => {
     }
   }
 
+  // 複数プレイを一括削除
+  const deletePlays = async (playIds: string[]) => {
+    if (playIds.length === 0) return
+
+    try {
+      // 一括削除処理（順次実行で安全に削除）
+      for (const playId of playIds) {
+        await PlayStorage.deletePlay(playId)
+      }
+      
+      // 一度だけ状態更新
+      const savedPlays = await PlayStorage.getAllPlays()
+      setPlays(savedPlays)
+      
+      // 削除されたプレイが現在選択中の場合、選択を解除
+      if (appState.currentPlay && playIds.includes(appState.currentPlay.id)) {
+        updateAppState({ currentPlay: null })
+      }
+      
+      // プレイリストからも削除されたプレイを除去
+      const updatedPlaylists = playlists.map(playlist => ({
+        ...playlist,
+        playIds: playlist.playIds.filter(id => !playIds.includes(id)),
+        updatedAt: new Date()
+      }))
+      
+      // 変更があったプレイリストのみ保存
+      for (const playlist of updatedPlaylists) {
+        const originalPlaylist = playlists.find(p => p.id === playlist.id)
+        if (originalPlaylist && playlist.playIds.length !== originalPlaylist.playIds.length) {
+          await PlaylistStorage.savePlaylist(playlist)
+        }
+      }
+      
+      const savedPlaylists = await PlaylistStorage.getAllPlaylists()
+      setPlaylists(savedPlaylists)
+      
+      showMessage(`${playIds.length}個のプレイが削除されました`, 'success')
+    } catch (error) {
+      console.error('一括削除に失敗しました:', error)
+      showMessage('一括削除に失敗しました', 'error')
+    }
+  }
+
   // プレイリスト管理関数
   const createPlaylist = async (playlistData: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -759,6 +803,7 @@ const App: React.FC = () => {
             setIsPlayLibraryOpen(false)
           }}
           onDeletePlay={deletePlay}
+          onDeletePlays={deletePlays}
           onDuplicatePlay={duplicatePlay}
           onClose={() => setIsPlayLibraryOpen(false)}
         />

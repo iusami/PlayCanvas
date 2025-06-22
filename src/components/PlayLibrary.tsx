@@ -7,6 +7,7 @@ interface PlayLibraryProps {
   currentPlay: Play | null
   onSelectPlay: (play: Play) => void
   onDeletePlay?: (playId: string) => void
+  onDeletePlays?: (playIds: string[]) => void
   onDuplicatePlay?: (playId: string) => void
   onClose: () => void
 }
@@ -20,6 +21,7 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
   currentPlay,
   onSelectPlay,
   onDeletePlay,
+  onDeletePlays,
   onDuplicatePlay,
   onClose
 }) => {
@@ -129,10 +131,21 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
       return
     }
 
-    if (onDeletePlay) {
+    // 一括削除関数が利用可能な場合はそれを使用、そうでなければ従来の方法
+    if (onDeletePlays) {
       setIsDeleting(true)
       try {
-        // Promise.allを使用して並列で削除処理を実行
+        await onDeletePlays(Array.from(selectedPlayIds))
+      } catch (error) {
+        console.error('一括削除処理でエラーが発生しました:', error)
+        alert('削除処理中にエラーが発生しました。一部のプレーが削除されていない可能性があります。')
+      } finally {
+        setIsDeleting(false)
+      }
+    } else if (onDeletePlay) {
+      setIsDeleting(true)
+      try {
+        // フォールバック：Promise.allを使用して並列で削除処理を実行
         await Promise.all(
           Array.from(selectedPlayIds).map(playId => onDeletePlay(playId))
         )
