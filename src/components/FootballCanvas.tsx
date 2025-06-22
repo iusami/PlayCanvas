@@ -1181,37 +1181,17 @@ const FootballCanvas = forwardRef(({
       const deltaX = (e.target as any).x() - draggedPlayer.x
       const deltaY = (e.target as any).y() - draggedPlayer.y
 
-      // [Phase2] ドラッグ中制限チェック：主導プレーヤーの位置制限を適用
-      const newDraggedX = draggedPlayer.x + deltaX
-      const newDraggedY = draggedPlayer.y + deltaY
-      const constrainedDraggedPos = constrainPlayerPosition(newDraggedX, newDraggedY, draggedPlayer.team, draggedPlayer.size)
-      
-      // 制限による調整量を計算
-      const constraintDeltaX = constrainedDraggedPos.x - newDraggedX
-      const constraintDeltaY = constrainedDraggedPos.y - newDraggedY
-      
-      debugLog(appState, `🚧 ドラッグ中制限: 元移動(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)}) → 制限調整(${constraintDeltaX.toFixed(1)}, ${constraintDeltaY.toFixed(1)})`)
-
-      // 他のプレイヤーのKonvaオブジェクトも移動（制限適用後）
+      // 他のプレイヤーのKonvaオブジェクトも移動
       const stage = e.target.getStage()
       if (stage) {
-        // まず主導プレーヤー自身に制限適用
-        e.target.x(constrainedDraggedPos.x)
-        e.target.y(constrainedDraggedPos.y)
-        
         appState.selectedElementIds.forEach(selectedId => {
           if (selectedId !== playerId) {
             const otherPlayer = play.players.find(p => p.id === selectedId)
             if (otherPlayer) {
-              // 他のプレーヤーにも同じ移動量と制限調整を適用
-              const otherNewX = otherPlayer.x + deltaX + constraintDeltaX
-              const otherNewY = otherPlayer.y + deltaY + constraintDeltaY
-              const otherConstrained = constrainPlayerPosition(otherNewX, otherNewY, otherPlayer.team, otherPlayer.size)
-              
               const konvaNode = stage.findOne(`#player-${selectedId}`)
               if (konvaNode) {
-                konvaNode.x(otherConstrained.x)
-                konvaNode.y(otherConstrained.y)
+                konvaNode.x(otherPlayer.x + deltaX)
+                konvaNode.y(otherPlayer.y + deltaY)
               }
             }
           }
@@ -1277,19 +1257,8 @@ const FootballCanvas = forwardRef(({
       const draggedPlayer = play.players.find(p => p.id === playerId)
       if (!draggedPlayer) return
 
-      // [Phase2] ドラッグ中制限チェック：単一プレーヤーの位置制限を適用
-      const newX = e.target.x()
-      const newY = e.target.y()
-      const constrainedPos = constrainPlayerPosition(newX, newY, draggedPlayer.team, draggedPlayer.size)
-      
-      // 制限適用後の座標にプレーヤーを固定
-      e.target.x(constrainedPos.x)
-      e.target.y(constrainedPos.y)
-      
-      const deltaX = constrainedPos.x - draggedPlayer.x
-      const deltaY = constrainedPos.y - draggedPlayer.y
-      
-      debugLog(appState, `🚧 単一ドラッグ中制限: ${playerId} (${newX.toFixed(1)}, ${newY.toFixed(1)}) → (${constrainedPos.x.toFixed(1)}, ${constrainedPos.y.toFixed(1)})`)
+      const deltaX = e.target.x() - draggedPlayer.x
+      const deltaY = e.target.y() - draggedPlayer.y
 
       const stage = e.target.getStage()
       if (stage) {
