@@ -1074,7 +1074,9 @@ const FootballCanvas = forwardRef(({
         size: 20,
         team: appState.selectedTeam,
         text: appState.selectedPlayerType === 'text' ? 'A' : undefined,
-        flipped: false // デフォルトは反転していない状態
+        flipped: (appState.selectedPlayerType === 'triangle' || appState.selectedPlayerType === 'chevron') 
+          ? isFieldFlipped() 
+          : false // triangle/chevronは上下反転状態に応じて向きを設定
       }
 
       onUpdatePlay({
