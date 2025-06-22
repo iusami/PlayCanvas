@@ -454,19 +454,24 @@ const FootballCanvas = forwardRef(({
     if (flipped) {
       // 反転時: オフェンスが上、ディフェンスが下
       if (team === 'offense') {
-        // 反転時オフェンス：プレイヤーの下端が中央線より15px上まで配置可能（フィールド上半分で制約）
-        // プレイヤーの下端 = center.y + halfSize <= centerLineY - 15
-        // つまり: center.y <= centerLineY - 15 - halfSize
-        const maxY = centerLineY - offenseSnapOffset - halfSize
-        // フィールド上限制約を適用：上から2つ目の線以下まで
+        // 反転時オフェンス：中央線より少し上の位置まで配置可能（フィールド上半分で制約）
+        // より緩い制限に変更：プレイヤーの上端が中央線より5px上まで
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY - 5
+        // つまり: center.y >= centerLineY - 5 + halfSize
+        const minimalOffset = 5  // 制限を緩和
+        const minY = centerLineY - minimalOffset + halfSize
+        
+        // フィールド上限制約を適用：上から2つ目の線以下まで  
         const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
         
-        // オフェンスの有効範囲：フィールド上限からmaxYまで
-        constrainedY = Math.max(effectiveTopLimit, Math.min(maxY, y))
+        // オフェンスの有効範囲：フィールド上限から中央線付近まで（より広範囲）
+        const finalMinY = Math.max(effectiveTopLimit, minY)
+        const maxY = centerLineY + halfSize  // 中央線を少し越えても許可
+        constrainedY = Math.max(finalMinY, Math.min(maxY, y))
         
-        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
-        console.log(`🔍 反転オフェンス: プレイヤー下端=${constrainedY + halfSize}px (中央線-15px=${centerLineY - offenseSnapOffset}以下でないとダメ)`)
-        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${effectiveTopLimit.toFixed(1)}〜${maxY.toFixed(1)})`)
+        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, minY=${minY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
+        console.log(`🔍 反転オフェンス: 最終範囲=${finalMinY.toFixed(1)}〜${maxY.toFixed(1)}`)
+        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)}`)
       } else {
         // 反転時ディフェンス：プレイヤーの上端が中央線より10px下まで配置可能（フィールド下半分で制約）
         // プレイヤーの上端 = center.y - halfSize >= centerLineY + 10
