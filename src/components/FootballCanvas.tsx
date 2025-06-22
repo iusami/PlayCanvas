@@ -1318,21 +1318,30 @@ const FootballCanvas = forwardRef(({
     
     // 選択されているプレイヤーがドラッグされた場合、全て一緒に移動
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
+      // まず主導プレーヤーのスナップ調整量を計算
+      const draggedNewX = draggedPlayer.x + deltaX
+      const draggedNewY = draggedPlayer.y + deltaY
+      const draggedSnapped = getSnappedPosition(draggedNewX, draggedNewY, draggedPlayer.team)
+      
+      // スナップによる調整量を計算
+      const snapDeltaX = draggedSnapped.x - draggedNewX
+      const snapDeltaY = draggedSnapped.y - draggedNewY
+      
+      debugLog(appState, `🎯 グループ移動: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)})`)
+      debugLog(appState, `🎯 グループ移動: スナップ調整量(${snapDeltaX.toFixed(1)}, ${snapDeltaY.toFixed(1)})`)
+      
       newPlayers = play.players.map(player => {
         if (appState.selectedElementIds.includes(player.id)) {
-          const newX = player.x + deltaX
-          const newY = player.y + deltaY
-          // スナップ機能は主導プレイヤーのみに適用（グループ移動時の混乱を避けるため）
-          if (player.id === playerId) {
-            const snapped = getSnappedPosition(newX, newY, player.team)
-            // 配置制限を適用
-            const constrained = constrainPlayerPosition(snapped.x, snapped.y, player.team, player.size)
-            return { ...player, x: constrained.x, y: constrained.y }
-          } else {
-            // 他のプレーヤーにも配置制限を適用
-            const constrained = constrainPlayerPosition(newX, newY, player.team, player.size)
-            return { ...player, x: constrained.x, y: constrained.y }
-          }
+          // 全プレーヤーに同じ移動量とスナップ調整を適用
+          const newX = player.x + deltaX + snapDeltaX
+          const newY = player.y + deltaY + snapDeltaY
+          
+          // 全プレーヤーに配置制限を適用
+          const constrained = constrainPlayerPosition(newX, newY, player.team, player.size)
+          
+          debugLog(appState, `🎯 グループ移動: ${player.id} (${player.team}) ${newX.toFixed(1)},${newY.toFixed(1)} → ${constrained.x.toFixed(1)},${constrained.y.toFixed(1)}`)
+          
+          return { ...player, x: constrained.x, y: constrained.y }
         }
         return player
       })
