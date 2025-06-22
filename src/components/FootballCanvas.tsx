@@ -1162,16 +1162,33 @@ const FootballCanvas = forwardRef(({
   }
 
   const handlePlayerDragMove = (playerId: string, e: Konva.KonvaEventObject<DragEvent>) => {
+    // ドラッグしているプレイヤー自体にも制約を適用
+    const draggedPlayer = play.players.find(p => p.id === playerId)
+    if (draggedPlayer) {
+      const currentX = (e.target as any).x()
+      const currentY = (e.target as any).y()
+      
+      // ドラッグ中のプレイヤーに制約を適用
+      const constrained = constrainPlayerPosition(currentX, currentY, draggedPlayer.team, draggedPlayer.size)
+      
+      // 制約範囲外に出ようとした場合、その位置で止める
+      if (constrained.x !== currentX || constrained.y !== currentY) {
+        e.target.x(constrained.x)
+        e.target.y(constrained.y)
+      }
+    }
+
     // グループ移動中の場合、他のプレイヤーもリアルタイムで移動
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-      const draggedPlayer = play.players.find(p => p.id === playerId)
       if (!draggedPlayer) return
 
-      // 移動量を計算
-      const deltaX = (e.target as any).x() - draggedPlayer.x
-      const deltaY = (e.target as any).y() - draggedPlayer.y
+      // 制約適用後の移動量を計算
+      const constrainedX = (e.target as any).x()
+      const constrainedY = (e.target as any).y()
+      const deltaX = constrainedX - draggedPlayer.x
+      const deltaY = constrainedY - draggedPlayer.y
 
-      // 他のプレイヤーのKonvaオブジェクトも移動
+      // 他のプレイヤーのKonvaオブジェクトも移動（制約チェック付き）
       const stage = e.target.getStage()
       if (stage) {
         appState.selectedElementIds.forEach(selectedId => {
@@ -1180,8 +1197,15 @@ const FootballCanvas = forwardRef(({
             if (otherPlayer) {
               const konvaNode = stage.findOne(`#player-${selectedId}`)
               if (konvaNode) {
-                konvaNode.x(otherPlayer.x + deltaX)
-                konvaNode.y(otherPlayer.y + deltaY)
+                // 移動先座標を計算
+                const newX = otherPlayer.x + deltaX
+                const newY = otherPlayer.y + deltaY
+                
+                // 制約を適用（ドラッグ中にも制限範囲外への移動を防ぐ）
+                const constrained = constrainPlayerPosition(newX, newY, otherPlayer.team, otherPlayer.size)
+                
+                konvaNode.x(constrained.x)
+                konvaNode.y(constrained.y)
               }
             }
           }
@@ -1313,30 +1337,23 @@ const FootballCanvas = forwardRef(({
     
     // 選択されているプレイヤーがドラッグされた場合、全て一緒に移動
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-      // まず主導プレーヤーのスナップ調整量を計算
-      const draggedNewX = draggedPlayer.x + deltaX
-      const draggedNewY = draggedPlayer.y + deltaY
-      const draggedSnapped = getSnappedPosition(draggedNewX, draggedNewY, draggedPlayer.team)
-      
-      // スナップによる調整量を計算
-      const snapDeltaX = draggedSnapped.x - draggedNewX
-      const snapDeltaY = draggedSnapped.y - draggedNewY
-      
-      debugLog(appState, `🎯 グループ移動: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)})`)
-      debugLog(appState, `🎯 グループ移動: スナップ調整量(${snapDeltaX.toFixed(1)}, ${snapDeltaY.toFixed(1)})`)
+      debugLog(appState, `🎯 グループ移動開始: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)})`)
       
       newPlayers = play.players.map(player => {
         if (appState.selectedElementIds.includes(player.id)) {
-          // 全プレーヤーに同じ移動量とスナップ調整を適用
-          const newX = player.x + deltaX + snapDeltaX
-          const newY = player.y + deltaY + snapDeltaY
+          // 各プレーヤーに移動量を適用
+          const newX = player.x + deltaX
+          const newY = player.y + deltaY
           
-          // 全プレーヤーに配置制限を適用
+          // 各プレーヤーに個別に制約を適用（チーム毎の制約を正しく適用）
           const constrained = constrainPlayerPosition(newX, newY, player.team, player.size)
           
-          debugLog(appState, `🎯 グループ移動: ${player.id} (${player.team}) ${newX.toFixed(1)},${newY.toFixed(1)} → ${constrained.x.toFixed(1)},${constrained.y.toFixed(1)}`)
+          // 制約適用後にスナップを適用
+          const snapped = getSnappedPosition(constrained.x, constrained.y, player.team)
           
-          return { ...player, x: constrained.x, y: constrained.y }
+          debugLog(appState, `🎯 グループ移動: ${player.id} (${player.team}) 移動後(${newX.toFixed(1)},${newY.toFixed(1)}) → 制約後(${constrained.x.toFixed(1)},${constrained.y.toFixed(1)}) → スナップ後(${snapped.x.toFixed(1)},${snapped.y.toFixed(1)})`)
+          
+          return { ...player, x: snapped.x, y: snapped.y }
         }
         return player
       })
