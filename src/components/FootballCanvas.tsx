@@ -484,17 +484,18 @@ const FootballCanvas = forwardRef(({
     } else {
       // 通常時: オフェンスが下、ディフェンスが上
       if (team === 'offense') {
-        // 通常時オフェンス：プレイヤーの上端が中央線より15px下まで配置可能
-        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 15
-        // つまり: center.y >= centerLineY + 15 + halfSize
-        const minY = centerLineY + offenseSnapOffset + halfSize
+        // 通常時オフェンス：プレイヤーの上端が中央線より少し下から配置可能（最小制限、軽減版）
+        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 5
+        // つまり: center.y >= centerLineY + 5 + halfSize
+        const minimalOffset = 5  // 元の15から5に軽減
+        const minY = centerLineY + minimalOffset + halfSize
         const fieldBottomLimit = play.field.height - halfSize
         
         // オフェンスの有効範囲：minYからフィールド下端まで
         constrainedY = Math.max(minY, Math.min(fieldBottomLimit, y))
         
         console.log(`🔍 通常オフェンス: centerLineY=${centerLineY.toFixed(1)}, minY=${minY.toFixed(1)}, fieldBottomLimit=${fieldBottomLimit}`)
-        console.log(`🔍 通常オフェンス: プレイヤー上端=${constrainedY - halfSize}px (中央線+15px=${centerLineY + offenseSnapOffset}以下でないとダメ)`)
+        console.log(`🔍 通常オフェンス: プレイヤー上端=${constrainedY - halfSize}px (中央線+5px=${centerLineY + minimalOffset}以下でないとダメ)`)
         console.log(`🔍 通常オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${minY.toFixed(1)}〜${fieldBottomLimit})`)
       } else {
         // ディフェンスは中央線より少し上まで（ディフェンス用オフセット適用）
