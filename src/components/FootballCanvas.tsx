@@ -454,10 +454,11 @@ const FootballCanvas = forwardRef(({
     if (flipped) {
       // 反転時: オフェンスが上、ディフェンスが下
       if (team === 'offense') {
-        // 反転時オフェンス：フィールド上限制約を無効化して数学的矛盾を回避
-        // プレイヤーの上端が最低でもhalfSize分は確保、中央線付近まで自由に移動可能
+        // 反転時オフェンス：スナップ位置を制約上限とする
+        // スナップ位置 = centerLineY - defenseSnapOffset = centerLineY - 15
         const minY = halfSize  // フィールド最上端からhalfSize分のマージン
-        const maxY = centerLineY + halfSize  // 中央線を少し越えても許可
+        const defenseSnapOffset = 15  // スナップ位置計算用
+        const maxY = centerLineY - defenseSnapOffset  // スナップ位置と一致
         constrainedY = Math.max(minY, Math.min(maxY, y))
         
         console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, 制限範囲=${minY.toFixed(1)}〜${maxY.toFixed(1)}`)
@@ -655,9 +656,8 @@ const FootballCanvas = forwardRef(({
       if (flipped) {
         // 反転時: オフェンスが上、ディフェンスが下
         if (targetTeam === 'offense') {
-          // 反転オフェンス：制約上限に合わせてスナップ（centerLineY + halfSize）
-          const halfSize = 20 / 2  // プレーヤーサイズの半分
-          const snapLineY = centerLineY + halfSize  // 制約の上限値と一致
+          // 反転オフェンス：中央線より少し上にスナップ
+          const snapLineY = centerLineY - defenseSnapOffset  // 375 - 15 = 360
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         } else {
