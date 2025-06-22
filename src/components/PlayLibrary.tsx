@@ -30,6 +30,7 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
   const [selectedPlayIds, setSelectedPlayIds] = useState<Set<string>>(new Set())
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [lastClickedIndex, setLastClickedIndex] = useState<number>(-1)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // フィルタリングとソート
   const filteredAndSortedPlays = useMemo(() => {
@@ -120,7 +121,7 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
     }
   }
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedPlayIds.size === 0) return
     
     const selectedCount = selectedPlayIds.size
@@ -129,9 +130,18 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
     }
 
     if (onDeletePlay) {
-      selectedPlayIds.forEach(playId => {
-        onDeletePlay(playId)
-      })
+      setIsDeleting(true)
+      try {
+        // Promise.allを使用して並列で削除処理を実行
+        await Promise.all(
+          Array.from(selectedPlayIds).map(playId => onDeletePlay(playId))
+        )
+      } catch (error) {
+        console.error('削除処理でエラーが発生しました:', error)
+        alert('削除処理中にエラーが発生しました。一部のプレーが削除されていない可能性があります。')
+      } finally {
+        setIsDeleting(false)
+      }
     }
     
     setSelectedPlayIds(new Set())
@@ -198,14 +208,15 @@ const PlayLibrary: React.FC<PlayLibraryProps> = ({
                 </button>
                 <button
                   onClick={handleBulkDelete}
-                  disabled={selectedPlayIds.size === 0}
+                  disabled={selectedPlayIds.size === 0 || isDeleting}
                   className="px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  削除 ({selectedPlayIds.size})
+                  {isDeleting ? '削除中...' : `削除 (${selectedPlayIds.size})`}
                 </button>
                 <button
                   onClick={handleCancelSelection}
-                  className="px-3 py-2 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
+                  disabled={isDeleting}
+                  className="px-3 py-2 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   キャンセル
                 </button>
