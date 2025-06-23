@@ -1179,13 +1179,15 @@ const FootballCanvas = forwardRef(({
         e.target.y(constrained.y)
       }
 
-      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動
+      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動（視覚的プレビューのみ）
       if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-        // 制約適用前の生の移動量を計算（他のプレイヤーへの影響を防ぐ）
+        // 制約適用前の生の移動量を計算
         const deltaX = rawX - draggedPlayer.x
         const deltaY = rawY - draggedPlayer.y
+        
+        debugLog(appState, `🎯 リアルタイム移動: メイン=${playerId} delta=(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)})`)
 
-        // 他のプレイヤーのKonvaオブジェクトも移動（制約チェック付き）
+        // 他のプレイヤーのKonvaオブジェクトも視覚的に移動（状態は後で一括更新）
         const stage = e.target.getStage()
         if (stage) {
         appState.selectedElementIds.forEach(selectedId => {
@@ -1194,12 +1196,14 @@ const FootballCanvas = forwardRef(({
             if (otherPlayer) {
               const konvaNode = stage.findOne(`#player-${selectedId}`)
               if (konvaNode) {
-                // 移動先座標を計算
+                // 元の状態座標を基準に移動先を計算（Konva座標ではなく状態座標を使用）
                 const newX = otherPlayer.x + deltaX
                 const newY = otherPlayer.y + deltaY
                 
-                // 制約を適用（ドラッグ中にも制限範囲外への移動を防ぐ）
+                // 制約を適用
                 const constrained = constrainPlayerPosition(newX, newY, otherPlayer.team, otherPlayer.size)
+                
+                debugLog(appState, `🎯 他プレーヤー視覚移動: ${selectedId} (${otherPlayer.x.toFixed(1)},${otherPlayer.y.toFixed(1)}) → (${constrained.x.toFixed(1)},${constrained.y.toFixed(1)})`)
                 
                 konvaNode.x(constrained.x)
                 konvaNode.y(constrained.y)
@@ -1356,7 +1360,7 @@ const FootballCanvas = forwardRef(({
         return player
       })
       
-      // 重要: Konvaオブジェクトの座標を状態に同期させる
+      // 重要: 状態からKonvaオブジェクトに最終座標を同期（二重移動防止）
       const stage = e.target.getStage()
       if (stage) {
         appState.selectedElementIds.forEach(selectedId => {
@@ -1364,7 +1368,8 @@ const FootballCanvas = forwardRef(({
           if (updatedPlayer) {
             const playerNode = stage.findOne(`#player-${selectedId}`)
             if (playerNode) {
-              debugLog(appState, `🔄 Konva同期: ${selectedId} → (${updatedPlayer.x.toFixed(1)}, ${updatedPlayer.y.toFixed(1)})`)
+              debugLog(appState, `🔄 最終Konva同期: ${selectedId} 状態(${updatedPlayer.x.toFixed(1)}, ${updatedPlayer.y.toFixed(1)}) → Konva(${playerNode.x().toFixed(1)}, ${playerNode.y().toFixed(1)})`)
+              // 状態の最終座標でKonvaオブジェクトを上書き
               playerNode.x(updatedPlayer.x)
               playerNode.y(updatedPlayer.y)
             }
