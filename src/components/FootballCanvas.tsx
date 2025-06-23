@@ -1196,14 +1196,16 @@ const FootballCanvas = forwardRef(({
             if (otherPlayer) {
               const konvaNode = stage.findOne(`#player-${selectedId}`)
               if (konvaNode) {
-                // 元の状態座標を基準に移動先を計算（Konva座標ではなく状態座標を使用）
-                const newX = otherPlayer.x + deltaX
-                const newY = otherPlayer.y + deltaY
+                // Konvaオブジェクトの実際の現在位置を基準に移動先を計算（突然移動防止）
+                const currentKonvaX = konvaNode.x()
+                const currentKonvaY = konvaNode.y()
+                const newX = currentKonvaX + deltaX
+                const newY = currentKonvaY + deltaY
                 
                 // 制約を適用
                 const constrained = constrainPlayerPosition(newX, newY, otherPlayer.team, otherPlayer.size)
                 
-                debugLog(appState, `🎯 他プレーヤー視覚移動: ${selectedId} (${otherPlayer.x.toFixed(1)},${otherPlayer.y.toFixed(1)}) → (${constrained.x.toFixed(1)},${constrained.y.toFixed(1)})`)
+                debugLog(appState, `🎯 他プレーヤー視覚移動: ${selectedId} Konva(${currentKonvaX.toFixed(1)},${currentKonvaY.toFixed(1)}) vs 状態(${otherPlayer.x.toFixed(1)},${otherPlayer.y.toFixed(1)}) → 移動後(${constrained.x.toFixed(1)},${constrained.y.toFixed(1)})`)
                 
                 konvaNode.x(constrained.x)
                 konvaNode.y(constrained.y)
