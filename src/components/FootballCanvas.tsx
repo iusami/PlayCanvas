@@ -1162,6 +1162,33 @@ const FootballCanvas = forwardRef(({
     }
   }
 
+  const handlePlayerDragStart = (playerId: string, e: Konva.KonvaEventObject<DragEvent>) => {
+    // 複数選択時：全選択プレーヤーのKonva座標をReact状態座標と同期
+    if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
+      const stage = e.target.getStage()
+      if (stage) {
+        debugLog(appState, `🎯 ドラッグ開始座標同期: 選択プレーヤー数=${appState.selectedElementIds.length}`)
+        
+        appState.selectedElementIds.forEach(selectedId => {
+          const player = play.players.find(p => p.id === selectedId)
+          if (player) {
+            const konvaNode = stage.findOne(`#player-${selectedId}`)
+            if (konvaNode) {
+              const beforeX = konvaNode.x()
+              const beforeY = konvaNode.y()
+              
+              // React状態座標に強制同期
+              konvaNode.x(player.x)
+              konvaNode.y(player.y)
+              
+              debugLog(appState, `🎯 座標同期: ${selectedId} Konva(${beforeX.toFixed(1)},${beforeY.toFixed(1)}) → 状態(${player.x.toFixed(1)},${player.y.toFixed(1)})`)
+            }
+          }
+        })
+      }
+    }
+  }
+
   const handlePlayerDragMove = (playerId: string, e: Konva.KonvaEventObject<DragEvent>) => {
     // ドラッグしているプレイヤー自体にも制約を適用
     const draggedPlayer = play.players.find(p => p.id === playerId)
@@ -2876,6 +2903,31 @@ const FootballCanvas = forwardRef(({
     }
   }, [play?.center?.y])
 
+  // プレーヤー座標の継続的同期（突然移動問題の根本解決）
+  useEffect(() => {
+    if (stageRef.current && play?.players && play.players.length > 0) {
+      debugLog(appState, `🎯 座標同期チェック: プレーヤー数=${play.players.length}`)
+      
+      play.players.forEach(player => {
+        const konvaNode = stageRef.current?.findOne(`#player-${player.id}`)
+        if (konvaNode) {
+          const currentX = konvaNode.x()
+          const currentY = konvaNode.y()
+          
+          // React状態と0.1px以上の差異がある場合のみ同期
+          const deltaX = Math.abs(currentX - player.x)
+          const deltaY = Math.abs(currentY - player.y)
+          
+          if (deltaX > 0.1 || deltaY > 0.1) {
+            konvaNode.x(player.x)
+            konvaNode.y(player.y)
+            debugLog(appState, `🎯 座標強制同期: ${player.id} Konva(${currentX.toFixed(1)},${currentY.toFixed(1)}) → 状態(${player.x.toFixed(1)},${player.y.toFixed(1)}) delta=(${deltaX.toFixed(1)},${deltaY.toFixed(1)})`)
+          }
+        }
+      })
+    }
+  }, [play?.players, appState.debugMode]) // プレーヤー配列変更時とデバッグモード変更時に実行
+
   const handleCenterDragStart = () => {
     if (!play?.center) return
     // ドラッグ開始時のY座標を保存
@@ -3098,6 +3150,7 @@ const FootballCanvas = forwardRef(({
       x: player.x,
       y: player.y,
       draggable: appState.selectedTool === 'select',
+      onDragStart: (e: Konva.KonvaEventObject<DragEvent>) => handlePlayerDragStart(player.id, e),
       onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => handlePlayerDragMove(player.id, e),
       onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => handlePlayerDragEnd(player.id, e),
       onClick: (e: Konva.KonvaEventObject<MouseEvent>) => handlePlayerClick(player.id, e),
