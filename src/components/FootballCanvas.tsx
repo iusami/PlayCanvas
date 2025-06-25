@@ -1,6 +1,7 @@
-import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react'
+import React, { useRef, useEffect, useState, forwardRef, useCallback, useMemo } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import Konva from 'konva'
+import { debounce } from 'lodash'
 import { AppState, Play, Player, Arrow, TextElement, ArrowSegment, FIELD_CONSTRAINTS } from '../types'
 
 // テキスト測定用のグローバルインスタンス（パフォーマンス最適化）
@@ -2958,18 +2959,12 @@ const FootballCanvas = forwardRef(({
     }
   }, [play?.center?.y])
 
-  // プレーヤー座標の継続的同期（突然移動問題の根本解決）
-  useEffect(() => {
+  // プレーヤー座標同期処理（パフォーマンス最適化版）
+  const syncPlayerPositions = useCallback(() => {
     // ドラッグ終了直後のみ座標同期をスキップ（位置ずれ防止）
-    // ドラッグ進行中は座標同期を許可（突然移動防止）
     if (isDragJustEnded.current) {
       debugLog(appState, `🎯 ドラッグ終了直後のため座標同期スキップ（位置ずれ防止）`)
       return
-    }
-    
-    // ドラッグ進行中でも座標同期を実行（突然移動防止のため）
-    if (isDragInProgress.current) {
-      debugLog(appState, `🎯 ドラッグ進行中でも座標同期実行（突然移動防止）`)
     }
     
     if (stageRef.current && play?.players && play.players.length > 0) {
@@ -2993,7 +2988,18 @@ const FootballCanvas = forwardRef(({
         }
       })
     }
-  }, [play?.players, appState.debugMode]) // プレーヤー配列変更時とデバッグモード変更時に実行
+  }, [play?.players, appState.debugMode])
+
+  // デバウンスされた座標同期関数（lodashパフォーマンス最適化）
+  const debouncedSyncPositions = useMemo(() => 
+    debounce(syncPlayerPositions, 16), // 60FPS相当（16ms）でスロットリング
+    [syncPlayerPositions]
+  )
+
+  // プレーヤー座標の継続的同期（パフォーマンス最適化版）
+  useEffect(() => {
+    debouncedSyncPositions()
+  }, [play?.players]) // デバッグモード依存を削除（座標同期に不要）
 
   const handleCenterDragStart = () => {
     if (!play?.center) return
