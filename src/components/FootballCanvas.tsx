@@ -1163,6 +1163,9 @@ const FootballCanvas = forwardRef(({
   }
 
   const handlePlayerDragStart = (playerId: string, e: Konva.KonvaEventObject<DragEvent>) => {
+    // ドラッグ操作開始フラグを設定（useEffect干渉防止）
+    isDragOperation.current = true
+    
     // 複数選択時：全選択プレーヤーのKonva座標をReact状態座標と同期
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
       const stage = e.target.getStage()
@@ -1578,6 +1581,12 @@ const FootballCanvas = forwardRef(({
         }
       })
     }
+    
+    // ドラッグ操作終了後、短時間後にフラグをリセット（useEffect干渉防止解除）
+    setTimeout(() => {
+      isDragOperation.current = false
+      debugLog(appState, `🎯 ドラッグ操作フラグリセット: useEffect座標同期再開`)
+    }, 100) // 100ms後にリセット
   }
 
   // 統一プレビュー計算関数: 信頼できる開始点を取得
@@ -2906,6 +2915,9 @@ const FootballCanvas = forwardRef(({
   // センターのドラッグ開始時のY座標を保存
   const centerDragStartY = useRef<number | null>(null)
 
+  // ドラッグ操作中フラグ（useEffect座標同期の干渉防止）
+  const isDragOperation = useRef(false)
+
   // センターのY座標が変更された時にrefを更新
   useEffect(() => {
     if (play?.center) {
@@ -2915,6 +2927,12 @@ const FootballCanvas = forwardRef(({
 
   // プレーヤー座標の継続的同期（突然移動問題の根本解決）
   useEffect(() => {
+    // ドラッグ操作中は座標同期をスキップ（位置ずれ防止）
+    if (isDragOperation.current) {
+      debugLog(appState, `🎯 ドラッグ中のため座標同期スキップ`)
+      return
+    }
+    
     if (stageRef.current && play?.players && play.players.length > 0) {
       debugLog(appState, `🎯 座標同期チェック: プレーヤー数=${play.players.length}`)
       
