@@ -1365,23 +1365,31 @@ const FootballCanvas = forwardRef(({
     
     // 選択されているプレイヤーがドラッグされた場合、全て一緒に移動
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-      debugLog(appState, `🎯 グループ移動開始: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)}) ※リアルタイム移動復活、Konva同期削除で二重移動防止`)
+      debugLog(appState, `🎯 グループ移動終了: 実座標取得方式で位置ずれ防止`)
       
+      const stage = e.target.getStage()
       newPlayers = play.players.map(player => {
         if (appState.selectedElementIds.includes(player.id)) {
-          // 各プレーヤーに移動量を適用
-          const newX = player.x + deltaX
-          const newY = player.y + deltaY
-          
-          // 各プレーヤーに個別に制約を適用（チーム毎の制約を正しく適用）
-          const constrained = constrainPlayerPosition(newX, newY, player.team, player.size)
-          
-          // 制約適用後にスナップを適用
-          const snapped = getSnappedPosition(constrained.x, constrained.y, player.team)
-          
-          debugLog(appState, `🎯 グループ移動: ${player.id} (${player.team}) 移動後(${newX.toFixed(1)},${newY.toFixed(1)}) → 制約後(${constrained.x.toFixed(1)},${constrained.y.toFixed(1)}) → スナップ後(${snapped.x.toFixed(1)},${snapped.y.toFixed(1)})`)
-          
-          return { ...player, x: snapped.x, y: snapped.y }
+          // 実際のKonva座標を直接取得（位置ずれ防止）
+          const konvaNode = stage?.findOne(`#player-${player.id}`)
+          if (konvaNode) {
+            const actualX = konvaNode.x()
+            const actualY = konvaNode.y()
+            
+            // 最小限の制約チェック（リアルタイム移動で既に適用済み）
+            const constrained = constrainPlayerPosition(actualX, actualY, player.team, player.size)
+            
+            debugLog(appState, `🎯 実座標取得: ${player.id} Konva(${actualX.toFixed(1)},${actualY.toFixed(1)}) → 制約後(${constrained.x.toFixed(1)},${constrained.y.toFixed(1)})`)
+            
+            return { ...player, x: constrained.x, y: constrained.y }
+          } else {
+            // Konvaノードが見つからない場合はフォールバック
+            const newX = player.x + deltaX
+            const newY = player.y + deltaY
+            const constrained = constrainPlayerPosition(newX, newY, player.team, player.size)
+            debugLog(appState, `⚠️ Konvaノード未発見: ${player.id} フォールバック処理`)
+            return { ...player, x: constrained.x, y: constrained.y }
+          }
         }
         return player
       })
