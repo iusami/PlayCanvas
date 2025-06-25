@@ -8,3 +8,4 @@ docs/images/
 build/
 .env.local
 .env.test
+docs/daily*

@@ -1,6 +1,7 @@
-import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react'
+import React, { useRef, useEffect, useState, forwardRef, useCallback, useMemo } from 'react'
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import Konva from 'konva'
+import { debounce } from 'lodash'
 import { AppState, Play, Player, Arrow, TextElement, ArrowSegment, FIELD_CONSTRAINTS } from '../types'
 
 // テキスト測定用のグローバルインスタンス（パフォーマンス最適化）
@@ -454,19 +455,15 @@ const FootballCanvas = forwardRef(({
     if (flipped) {
       // 反転時: オフェンスが上、ディフェンスが下
       if (team === 'offense') {
-        // 反転時オフェンス：プレイヤーの下端が中央線より15px上まで配置可能（フィールド上半分で制約）
-        // プレイヤーの下端 = center.y + halfSize <= centerLineY - 15
-        // つまり: center.y <= centerLineY - 15 - halfSize
-        const maxY = centerLineY - offenseSnapOffset - halfSize
-        // フィールド上限制約を適用：上から2つ目の線以下まで
-        const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
+        // 反転時オフェンス：スナップ位置を制約上限とする
+        // スナップ位置 = centerLineY - defenseSnapOffset = centerLineY - 15
+        const minY = halfSize  // フィールド最上端からhalfSize分のマージン
+        const defenseSnapOffset = 15  // スナップ位置計算用
+        const maxY = centerLineY - defenseSnapOffset  // スナップ位置と一致
+        constrainedY = Math.max(minY, Math.min(maxY, y))
         
-        // オフェンスの有効範囲：フィールド上限からmaxYまで
-        constrainedY = Math.max(effectiveTopLimit, Math.min(maxY, y))
-        
-        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
-        console.log(`🔍 反転オフェンス: プレイヤー下端=${constrainedY + halfSize}px (中央線-15px=${centerLineY - offenseSnapOffset}以下でないとダメ)`)
-        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${effectiveTopLimit.toFixed(1)}〜${maxY.toFixed(1)})`)
+        console.log(`🔍 反転オフェンス: centerLineY=${centerLineY.toFixed(1)}, 制限範囲=${minY.toFixed(1)}〜${maxY.toFixed(1)}`)
+        console.log(`🔍 反転オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)}`)
       } else {
         // 反転時ディフェンス：プレイヤーの上端が中央線より10px下まで配置可能（フィールド下半分で制約）
         // プレイヤーの上端 = center.y - halfSize >= centerLineY + 10
@@ -661,7 +658,7 @@ const FootballCanvas = forwardRef(({
         // 反転時: オフェンスが上、ディフェンスが下
         if (targetTeam === 'offense') {
           // 反転オフェンス：中央線より少し上にスナップ
-          const snapLineY = centerLineY - defenseSnapOffset  // 375 - 10 = 365
+          const snapLineY = centerLineY - defenseSnapOffset  // 375 - 15 = 360
           distanceToCenter = Math.abs(targetY - snapLineY)
           snapTargetY = snapLineY
         } else {
@@ -1166,33 +1163,105 @@ const FootballCanvas = forwardRef(({
     }
   }
 
-  const handlePlayerDragMove = (playerId: string, e: Konva.KonvaEventObject<DragEvent>) => {
-    // グループ移動中の場合、他のプレイヤーもリアルタイムで移動
+  const handlePlayerDragStart = (playerId: string, e: Konva.KonvaEventObject<DragEvent>) => {
+    // ドラッグ進行中フラグを設定
+    isDragInProgress.current = true
+    // ドラッグ終了直後フラグをリセット（新ドラッグ開始時）
+    isDragJustEnded.current = false
+    
+    // 複数選択時：Konva座標を記録（React状態非同期性に依存しない突然移動防止）
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-      const draggedPlayer = play.players.find(p => p.id === playerId)
-      if (!draggedPlayer) return
-
-      // 移動量を計算
-      const deltaX = (e.target as any).x() - draggedPlayer.x
-      const deltaY = (e.target as any).y() - draggedPlayer.y
-
-      // 他のプレイヤーのKonvaオブジェクトも移動
       const stage = e.target.getStage()
       if (stage) {
+        debugLog(appState, `🎯 ドラッグ開始時Konva座標記録: 選択プレーヤー数=${appState.selectedElementIds.length}`)
+        
+        // 座標記録をクリアして新たに記録
+        dragStartPositions.current.clear()
+        
+        appState.selectedElementIds.forEach(selectedId => {
+          const konvaNode = stage.findOne(`#player-${selectedId}`)
+          if (konvaNode) {
+            const currentX = konvaNode.x()
+            const currentY = konvaNode.y()
+            
+            // 現在のKonva座標を記録（React状態は使用しない）
+            dragStartPositions.current.set(selectedId, { x: currentX, y: currentY })
+            
+            debugLog(appState, `🎯 Konva座標記録: ${selectedId} (${currentX.toFixed(1)}, ${currentY.toFixed(1)})`)
+          }
+        })
+        
+        debugLog(appState, `🎯 突然移動防止: 座標同期処理をスキップしKonvaベースで処理`)
+      }
+    }
+  }
+
+  const handlePlayerDragMove = (playerId: string, e: Konva.KonvaEventObject<DragEvent>) => {
+    // ドラッグしているプレイヤー自体にも制約を適用
+    const draggedPlayer = play.players.find(p => p.id === playerId)
+    if (draggedPlayer) {
+      // 制約適用前の生の座標を保存（移動量計算用）
+      const rawX = (e.target as any).x()
+      const rawY = (e.target as any).y()
+      
+      // ドラッグ中のプレイヤーに制約を適用
+      const constrained = constrainPlayerPosition(rawX, rawY, draggedPlayer.team, draggedPlayer.size)
+      
+      // 制約範囲外に出ようとした場合、その位置で止める
+      if (constrained.x !== rawX || constrained.y !== rawY) {
+        e.target.x(constrained.x)
+        e.target.y(constrained.y)
+      }
+
+      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動（Konvaベース処理）
+      // ※ React状態の非同期性に依存しないKonva座標ベースの移動処理
+      if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
+        // Konvaベース移動処理（突然移動問題の根本解決）
+        const draggedStartPos = dragStartPositions.current.get(playerId)
+        if (!draggedStartPos) {
+          debugLog(appState, `⚠️ ドラッグ開始位置が記録されていない: ${playerId}`)
+          return
+        }
+        
+        const deltaX = rawX - draggedStartPos.x
+        const deltaY = rawY - draggedStartPos.y
+        
+        debugLog(appState, `🎯 リアルタイム移動: メイン=${playerId} delta=(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)})`)
+
+        const stage = e.target.getStage()
+        if (stage) {
         appState.selectedElementIds.forEach(selectedId => {
           if (selectedId !== playerId) {
-            const otherPlayer = play.players.find(p => p.id === selectedId)
-            if (otherPlayer) {
-              const konvaNode = stage.findOne(`#player-${selectedId}`)
-              if (konvaNode) {
-                konvaNode.x(otherPlayer.x + deltaX)
-                konvaNode.y(otherPlayer.y + deltaY)
+            const konvaNode = stage.findOne(`#player-${selectedId}`)
+            if (konvaNode) {
+              // Konva開始座標をベースに使用（React状態非同期性に依存しない）
+              const startPos = dragStartPositions.current.get(selectedId)
+              if (!startPos) {
+                debugLog(appState, `⚠️ 他プレーヤーの開始位置が記録されていない: ${selectedId}`)
+                return
               }
+              
+              const newX = startPos.x + deltaX
+              const newY = startPos.y + deltaY
+              
+              // 他プレーヤーのチーム情報を取得（制約適用のため）
+              const otherPlayer = play.players.find(p => p.id === selectedId)
+              if (!otherPlayer) {
+                debugLog(appState, `⚠️ 他プレーヤー情報が見つからない: ${selectedId}`)
+                return
+              }
+              
+              const constrained = constrainPlayerPosition(newX, newY, otherPlayer.team, otherPlayer.size)
+              
+              debugLog(appState, `🎯 他プレーヤーKonvaベース移動: ${selectedId} 開始(${startPos.x.toFixed(1)},${startPos.y.toFixed(1)}) + delta(${deltaX.toFixed(1)},${deltaY.toFixed(1)}) → 移動後(${constrained.x.toFixed(1)},${constrained.y.toFixed(1)})`)
+                
+              konvaNode.x(constrained.x)
+              konvaNode.y(constrained.y)
             }
           }
         })
         
-        // リンクされた矢印もリアルタイムで移動
+        // リンクされた矢印もリアルタイムで移動（復活）
         appState.selectedElementIds.forEach(selectedId => {
           play.arrows.forEach(arrow => {
             if (arrow.linkedPlayerId === selectedId) {
@@ -1302,6 +1371,7 @@ const FootballCanvas = forwardRef(({
           }
         })
         stage.batchDraw()
+        }
       }
     }
   }
@@ -1318,24 +1388,40 @@ const FootballCanvas = forwardRef(({
     
     // 選択されているプレイヤーがドラッグされた場合、全て一緒に移動
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
+      debugLog(appState, `🎯 グループ移動終了: 実座標取得方式で位置ずれ防止`)
+      
+      const stage = e.target.getStage()
       newPlayers = play.players.map(player => {
         if (appState.selectedElementIds.includes(player.id)) {
-          const newX = player.x + deltaX
-          const newY = player.y + deltaY
-          // スナップ機能は主導プレイヤーのみに適用（グループ移動時の混乱を避けるため）
-          if (player.id === playerId) {
-            const snapped = getSnappedPosition(newX, newY, player.team)
-            // 配置制限を適用
-            const constrained = constrainPlayerPosition(snapped.x, snapped.y, player.team, player.size)
-            return { ...player, x: constrained.x, y: constrained.y }
+          // 実際のKonva座標を直接取得（位置ずれ防止）
+          const konvaNode = stage?.findOne(`#player-${player.id}`)
+          if (konvaNode) {
+            const actualX = konvaNode.x()
+            const actualY = konvaNode.y()
+            
+            // 制約チェック（確認のみ、適用はしない）
+            const constrained = constrainPlayerPosition(actualX, actualY, player.team, player.size)
+            const isConstrained = Math.abs(actualX - constrained.x) < 0.1 && Math.abs(actualY - constrained.y) < 0.1
+            
+            debugLog(appState, `🎯 実座標直接適用: ${player.id} Konva(${actualX.toFixed(1)},${actualY.toFixed(1)}) 制約OK=${isConstrained}`)
+            
+            // 制約二重適用を防ぐため、Konva座標をそのまま使用
+            return { ...player, x: actualX, y: actualY }
           } else {
-            // 他のプレーヤーにも配置制限を適用
+            // Konvaノードが見つからない場合はフォールバック
+            const newX = player.x + deltaX
+            const newY = player.y + deltaY
             const constrained = constrainPlayerPosition(newX, newY, player.team, player.size)
+            debugLog(appState, `⚠️ Konvaノード未発見: ${player.id} フォールバック処理`)
             return { ...player, x: constrained.x, y: constrained.y }
           }
         }
         return player
       })
+      
+      // 重要: リアルタイム移動で既にKonvaオブジェクトは正しい位置にあるため、追加同期は不要
+      // （二重移動防止のため、Konva同期処理を無効化）
+      debugLog(appState, `🔄 Konva同期スキップ: リアルタイム移動で既に正しい位置`)
       
       // グループ移動時も各プレイヤーのリンクされた矢印を更新
       const allNewArrows = play.arrows.map(arrow => {
@@ -1390,7 +1476,6 @@ const FootballCanvas = forwardRef(({
       })
       
       // ドラッグ終了後に矢印の一時的な点記録をリセット（グループ移動）
-      const stage = e.target.getStage()
       if (stage) {
         appState.selectedElementIds.forEach(selectedId => {
           play.arrows.forEach(arrow => {
@@ -1409,7 +1494,7 @@ const FootballCanvas = forwardRef(({
         })
       }
       
-      return // 早期リターンでシングル移動処理をスキップ
+      // 複数プレーヤー移動時もリンクされた矢印の更新が必要なので、処理を継続
     } else {
       // 単一プレイヤーの移動（制限→スナップの順序で処理）
       const draggedPlayer = play.players.find(p => p.id === playerId)
@@ -1516,6 +1601,22 @@ const FootballCanvas = forwardRef(({
         }
       })
     }
+    
+    // ドラッグ操作状態を更新（突然移動と位置ずれの両方を防止）
+    isDragInProgress.current = false  // ドラッグ終了
+    isDragJustEnded.current = true    // 位置ずれ防止フラグを設定
+    
+    debugLog(appState, `🎯 ドラッグ終了: 進行中=false, 終了直後=true`)
+    
+    // ドラッグ終了後のクリーンアップ処理（Konvaベース処理のため）
+    dragStartPositions.current.clear()
+    debugLog(appState, `🎯 ドラッグ終了: Konva開始位置記録をクリア`)
+    
+    // 短時間後に終了直後フラグをリセット（位置ずれ防止解除）
+    setTimeout(() => {
+      isDragJustEnded.current = false
+      debugLog(appState, `🎯 ドラッグ終了直後フラグリセット: useEffect座標同期再開`)
+    }, 100) // 100ms後にリセット
   }
 
   // 統一プレビュー計算関数: 信頼できる開始点を取得
@@ -2844,12 +2945,61 @@ const FootballCanvas = forwardRef(({
   // センターのドラッグ開始時のY座標を保存
   const centerDragStartY = useRef<number | null>(null)
 
+  // ドラッグ操作状態管理フラグ（突然移動と位置ずれの両方を防止）
+  const isDragInProgress = useRef(false)  // ドラッグ進行中
+  const isDragJustEnded = useRef(false)   // ドラッグ終了直後（短時間）
+
+  // ドラッグ開始時のKonva座標記録（React状態非同期性に依存しない突然移動防止）
+  const dragStartPositions = useRef<Map<string, {x: number, y: number}>>(new Map())
+
   // センターのY座標が変更された時にrefを更新
   useEffect(() => {
     if (play?.center) {
       centerDragStartY.current = play.center.y
     }
   }, [play?.center?.y])
+
+  // プレーヤー座標同期処理（パフォーマンス最適化版）
+  const syncPlayerPositions = useCallback(() => {
+    // ドラッグ終了直後のみ座標同期をスキップ（位置ずれ防止）
+    if (isDragJustEnded.current) {
+      debugLog(appState, `🎯 ドラッグ終了直後のため座標同期スキップ（位置ずれ防止）`)
+      return
+    }
+    
+    if (stageRef.current && play?.players && play.players.length > 0) {
+      debugLog(appState, `🎯 座標同期チェック: プレーヤー数=${play.players.length}`)
+      
+      play.players.forEach(player => {
+        const konvaNode = stageRef.current?.findOne(`#player-${player.id}`)
+        if (konvaNode) {
+          const currentX = konvaNode.x()
+          const currentY = konvaNode.y()
+          
+          // React状態と0.1px以上の差異がある場合のみ同期
+          const deltaX = Math.abs(currentX - player.x)
+          const deltaY = Math.abs(currentY - player.y)
+          
+          if (deltaX > 0.1 || deltaY > 0.1) {
+            konvaNode.x(player.x)
+            konvaNode.y(player.y)
+            debugLog(appState, `🎯 座標強制同期: ${player.id} Konva(${currentX.toFixed(1)},${currentY.toFixed(1)}) → 状態(${player.x.toFixed(1)},${player.y.toFixed(1)}) delta=(${deltaX.toFixed(1)},${deltaY.toFixed(1)})`)
+          }
+        }
+      })
+    }
+  }, [play?.players, appState.debugMode])
+
+  // デバウンスされた座標同期関数（lodashパフォーマンス最適化）
+  const debouncedSyncPositions = useMemo(() => 
+    debounce(syncPlayerPositions, 16), // 60FPS相当（16ms）でスロットリング
+    [syncPlayerPositions]
+  )
+
+  // プレーヤー座標の継続的同期（パフォーマンス最適化版）
+  useEffect(() => {
+    debouncedSyncPositions()
+  }, [play?.players]) // デバッグモード依存を削除（座標同期に不要）
 
   const handleCenterDragStart = () => {
     if (!play?.center) return
@@ -3073,6 +3223,7 @@ const FootballCanvas = forwardRef(({
       x: player.x,
       y: player.y,
       draggable: appState.selectedTool === 'select',
+      onDragStart: (e: Konva.KonvaEventObject<DragEvent>) => handlePlayerDragStart(player.id, e),
       onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => handlePlayerDragMove(player.id, e),
       onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => handlePlayerDragEnd(player.id, e),
       onClick: (e: Konva.KonvaEventObject<MouseEvent>) => handlePlayerClick(player.id, e),
