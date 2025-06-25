@@ -1376,12 +1376,14 @@ const FootballCanvas = forwardRef(({
             const actualX = konvaNode.x()
             const actualY = konvaNode.y()
             
-            // 最小限の制約チェック（リアルタイム移動で既に適用済み）
+            // 制約チェック（確認のみ、適用はしない）
             const constrained = constrainPlayerPosition(actualX, actualY, player.team, player.size)
+            const isConstrained = Math.abs(actualX - constrained.x) < 0.1 && Math.abs(actualY - constrained.y) < 0.1
             
-            debugLog(appState, `🎯 実座標取得: ${player.id} Konva(${actualX.toFixed(1)},${actualY.toFixed(1)}) → 制約後(${constrained.x.toFixed(1)},${constrained.y.toFixed(1)})`)
+            debugLog(appState, `🎯 実座標直接適用: ${player.id} Konva(${actualX.toFixed(1)},${actualY.toFixed(1)}) 制約OK=${isConstrained}`)
             
-            return { ...player, x: constrained.x, y: constrained.y }
+            // 制約二重適用を防ぐため、Konva座標をそのまま使用
+            return { ...player, x: actualX, y: actualY }
           } else {
             // Konvaノードが見つからない場合はフォールバック
             const newX = player.x + deltaX
