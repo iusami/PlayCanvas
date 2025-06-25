@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, forwardRef, useCallback, useMemo } 
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import Konva from 'konva'
 import { debounce } from 'lodash'
+import { getCenterLineY } from '../utils/playerUtils'
 import { AppState, Play, Player, Arrow, TextElement, ArrowSegment, FIELD_CONSTRAINTS } from '../types'
 
 // テキスト測定用のグローバルインスタンス（パフォーマンス最適化）
@@ -394,10 +395,7 @@ const FootballCanvas = forwardRef(({
     }
   }
 
-  // プレーヤー配置制限関連の基本関数
-  const getCenterLineY = (fieldHeight: number) => {
-    return (fieldHeight * 4) / 6  // 6等分の4番目（中央線）
-  }
+  // プレーヤー配置制限関連の基本関数（getCenterLineYはutils/playerUtils.tsに移動）
 
   const isFieldFlipped = () => {
     // フィールドが上下反転されているかを判定
