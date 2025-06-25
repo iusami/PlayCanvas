@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, forwardRef, useCallback, useMemo } 
 import { Stage, Layer, Rect, Line, Circle, Text, Group } from 'react-konva'
 import Konva from 'konva'
 import { debounce } from 'lodash'
+import { getCenterLineY, isFieldFlipped } from '../utils/playerUtils'
 import { AppState, Play, Player, Arrow, TextElement, ArrowSegment, FIELD_CONSTRAINTS } from '../types'
 
 // テキスト測定用のグローバルインスタンス（パフォーマンス最適化）
@@ -394,39 +395,14 @@ const FootballCanvas = forwardRef(({
     }
   }
 
-  // プレーヤー配置制限関連の基本関数
-  const getCenterLineY = (fieldHeight: number) => {
-    return (fieldHeight * 4) / 6  // 6等分の4番目（中央線）
-  }
+  // プレーヤー配置制限関連の基本関数（getCenterLineYはutils/playerUtils.tsに移動）
 
-  const isFieldFlipped = () => {
-    // フィールドが上下反転されているかを判定
-    // センターの位置とプレーヤーの分布から判定
-    if (!play?.center) {
-      console.log(`🔍 isFieldFlipped: センターなし → false`)
-      return false
-    }
-    
-    const centerLineY = getCenterLineY(play.field.height)
-    const secondLineY = (play.field.height * 2) / 6 - FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET  // 6等分の2番目
-    const fourthLineY = (play.field.height * 4) / 6 + FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET   // 6等分の4番目
-    
-    const distToSecond = Math.abs(play.center.y - secondLineY)
-    const distToFourth = Math.abs(play.center.y - fourthLineY)
-    const flipped = distToSecond < distToFourth
-    
-    console.log(`🔍 isFieldFlipped: センター(${play.center.x}, ${play.center.y})`)
-    console.log(`🔍 isFieldFlipped: 2番目の線=${secondLineY.toFixed(1)}, 4番目の線=${fourthLineY.toFixed(1)}, 中央線=${centerLineY.toFixed(1)}`)
-    console.log(`🔍 isFieldFlipped: 2番目まで距離=${distToSecond.toFixed(1)}, 4番目まで距離=${distToFourth.toFixed(1)} → ${flipped}`)
-    
-    // センターが2番目の線付近にいる場合は反転状態とみなす
-    return flipped
-  }
+  // isFieldFlipped関数はutils/playerUtils.tsから使用
 
 
 
   const constrainPlayerPosition = (x: number, y: number, team: 'offense' | 'defense', playerSize: number = 20) => {
-    const flipped = isFieldFlipped()
+    const flipped = isFieldFlipped(play?.center, play?.field?.height || 450, appState.debugMode)
     const halfSize = playerSize / 2
     
     // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
@@ -642,7 +618,7 @@ const FootballCanvas = forwardRef(({
 
     // チームが指定されている場合のみ中央線スナップを実行
     if (targetTeam) {
-      const flipped = isFieldFlipped()
+      const flipped = isFieldFlipped(play?.center, play?.field?.height || 450, appState.debugMode)
       // 反転時は実際の中央線位置（play.center.y）を使用、通常時は固定値を使用
       const centerLineY = flipped && play.center ? play.center.y : getCenterLineY(play.field.height)
       
@@ -1072,7 +1048,7 @@ const FootballCanvas = forwardRef(({
         team: appState.selectedTeam,
         text: appState.selectedPlayerType === 'text' ? 'A' : undefined,
         flipped: (appState.selectedPlayerType === 'triangle' || appState.selectedPlayerType === 'chevron') 
-          ? isFieldFlipped() 
+          ? isFieldFlipped(play?.center, play?.field?.height || 450, appState.debugMode) 
           : false // triangle/chevronは上下反転状態に応じて向きを設定
       }
 
@@ -2768,7 +2744,7 @@ const FootballCanvas = forwardRef(({
 
     if (play.field.yardLines) {
       // フィールド反転状態を判定
-      const flipped = isFieldFlipped()
+      const flipped = isFieldFlipped(play?.center, play?.field?.height || 450, appState.debugMode)
       
       // 6本の水平線を均等に配置（フィールドを6等分）
       // 上部を削除して6本線のみ描画

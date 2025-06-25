@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { AppState, Play, PlayerType, Playlist, FormationTemplate } from '../types'
+import { constrainPlayerPosition } from '../utils/playerUtils'
 import PlayListView from './PlayListView'
 import PlaylistManager from './PlaylistManager'
 import PlaylistEditor from './PlaylistEditor'
@@ -77,73 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ] as const
 
   // プレーヤー配置制限関連の関数
-  const getCenterLineY = (fieldHeight: number) => {
-    // 6等分システムに統一：4番目の線が中央線
-    return (fieldHeight * 4) / 6
-  }
-
-  const isFieldFlipped = (center: { x: number; y: number } | undefined, fieldHeight: number) => {
-    if (!center) return false
-    
-    // 6等分システムに統一：2番目と4番目の線で判定
-    const secondLineY = (fieldHeight * 2) / 6
-    const fourthLineY = (fieldHeight * 4) / 6
-    
-    return Math.abs(center.y - secondLineY) < Math.abs(center.y - fourthLineY)
-  }
-
-  const constrainPlayerPosition = (
-    x: number, 
-    y: number, 
-    team: 'offense' | 'defense', 
-    fieldWidth: number, 
-    fieldHeight: number, 
-    center: { x: number; y: number } | undefined,
-    playerSize: number = 20
-  ) => {
-    const flipped = isFieldFlipped(center, fieldHeight)
-    // 常に固定の中央線位置を使用（centerの実際位置ではなく）
-    const centerLineY = getCenterLineY(fieldHeight)
-    const halfSize = playerSize / 2
-    
-    // オフセット距離設定（中央線から少し離した位置）
-    const defenseSnapOffset = 15 // ディフェンス用の距離（中央線より上に）
-    
-    const constrainedX = Math.max(halfSize, Math.min(fieldWidth - halfSize, x))
-    
-    let constrainedY = y
-    
-    if (flipped) {
-      if (team === 'offense') {
-        // 反転時オフェンス：プレイヤーの下端が中央線より15px上まで配置可能（フィールド上半分で制約）
-        // プレイヤーの下端 = center.y + halfSize <= centerLineY - 15
-        // つまり: center.y <= centerLineY - 15 - halfSize
-        const maxY = centerLineY - 15 - halfSize
-        constrainedY = Math.max(halfSize, Math.min(maxY, y))
-      } else {
-        // 反転時ディフェンス：プレイヤーの上端が中央線より10px下まで配置可能（フィールド下半分で制約）
-        // プレイヤーの上端 = center.y - halfSize >= centerLineY + 10
-        // つまり: center.y >= centerLineY + 10 + halfSize
-        const minY = centerLineY + 10 + halfSize
-        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-      }
-    } else {
-      if (team === 'offense') {
-        // 通常時オフェンス：プレイヤーの上端が中央線より15px下以下に配置（プレイヤーの上端 = center.y - halfSize >= centerLineY + 15）
-        const minY = centerLineY + 15 + halfSize
-        constrainedY = Math.max(minY, Math.min(fieldHeight - halfSize, y))
-      } else {
-        // 通常時ディフェンス：下端が中央線より上
-        // プレイヤーの下端 = center.y + halfSize
-        // 下端 <= centerLineY - defenseSnapOffset
-        // center.y <= centerLineY - defenseSnapOffset - halfSize
-        const maxY = centerLineY - defenseSnapOffset - halfSize
-        constrainedY = Math.max(halfSize, Math.min(maxY, y))
-      }
-    }
-    
-    return { x: constrainedX, y: constrainedY }
-  }
+  // プレイヤー配置制限関連の関数はutils/playerUtils.tsに移動
 
   return (
     <div className="sidebar">
