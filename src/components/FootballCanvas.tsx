@@ -1179,11 +1179,10 @@ const FootballCanvas = forwardRef(({
         e.target.y(constrained.y)
       }
 
-      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動（二重移動防止のため無効化）
-      // ※ リアルタイム移動とドラッグ終了時処理で移動量が二重に適用される問題を防ぐため、
-      //   リアルタイム移動を無効化し、ドラッグ終了時のみで移動処理を実行
-      if (false && appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-        // 以下は無効化されたリアルタイム移動処理
+      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動（復活）
+      // ※ リアルタイムフィードバックを提供し、ドラッグ終了時の二重移動は別手段で防止
+      if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
+        // リアルタイム移動処理（復活）
         const deltaX = rawX - draggedPlayer.x
         const deltaY = rawY - draggedPlayer.y
         
@@ -1213,9 +1212,7 @@ const FootballCanvas = forwardRef(({
           }
         })
         
-        // リンクされた矢印もリアルタイムで移動（無効化）
-        // ※ 二重移動防止のため、リアルタイム矢印移動も無効化
-        /*
+        // リンクされた矢印もリアルタイムで移動（復活）
         appState.selectedElementIds.forEach(selectedId => {
           play.arrows.forEach(arrow => {
             if (arrow.linkedPlayerId === selectedId) {
@@ -1269,7 +1266,6 @@ const FootballCanvas = forwardRef(({
         })
         
         stage.batchDraw()
-        */
       }
     } else {
       // 単一プレイヤー移動時もリンクされた矢印をリアルタイム更新
@@ -1343,7 +1339,7 @@ const FootballCanvas = forwardRef(({
     
     // 選択されているプレイヤーがドラッグされた場合、全て一緒に移動
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-      debugLog(appState, `🎯 グループ移動開始: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)}) ※リアルタイム移動無効化により二重移動防止`)
+      debugLog(appState, `🎯 グループ移動開始: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)}) ※リアルタイム移動復活、Konva同期削除で二重移動防止`)
       
       newPlayers = play.players.map(player => {
         if (appState.selectedElementIds.includes(player.id)) {
@@ -1364,22 +1360,9 @@ const FootballCanvas = forwardRef(({
         return player
       })
       
-      // 重要: 状態からKonvaオブジェクトに最終座標を同期（二重移動防止）
-      const stage = e.target.getStage()
-      if (stage) {
-        appState.selectedElementIds.forEach(selectedId => {
-          const updatedPlayer = newPlayers.find(p => p.id === selectedId)
-          if (updatedPlayer) {
-            const playerNode = stage.findOne(`#player-${selectedId}`)
-            if (playerNode) {
-              debugLog(appState, `🔄 最終Konva同期: ${selectedId} 状態(${updatedPlayer.x.toFixed(1)}, ${updatedPlayer.y.toFixed(1)}) → Konva(${playerNode.x().toFixed(1)}, ${playerNode.y().toFixed(1)})`)
-              // 状態の最終座標でKonvaオブジェクトを上書き
-              playerNode.x(updatedPlayer.x)
-              playerNode.y(updatedPlayer.y)
-            }
-          }
-        })
-      }
+      // 重要: リアルタイム移動で既にKonvaオブジェクトは正しい位置にあるため、追加同期は不要
+      // （二重移動防止のため、Konva同期処理を無効化）
+      debugLog(appState, `🔄 Konva同期スキップ: リアルタイム移動で既に正しい位置`)
       
       // グループ移動時も各プレイヤーのリンクされた矢印を更新
       const allNewArrows = play.arrows.map(arrow => {
