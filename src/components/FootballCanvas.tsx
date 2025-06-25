@@ -1179,15 +1179,16 @@ const FootballCanvas = forwardRef(({
         e.target.y(constrained.y)
       }
 
-      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動（視覚的プレビューのみ）
-      if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-        // 制約適用前の生の移動量を計算
+      // グループ移動中の場合、他のプレイヤーもリアルタイムで移動（二重移動防止のため無効化）
+      // ※ リアルタイム移動とドラッグ終了時処理で移動量が二重に適用される問題を防ぐため、
+      //   リアルタイム移動を無効化し、ドラッグ終了時のみで移動処理を実行
+      if (false && appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
+        // 以下は無効化されたリアルタイム移動処理
         const deltaX = rawX - draggedPlayer.x
         const deltaY = rawY - draggedPlayer.y
         
         debugLog(appState, `🎯 リアルタイム移動: メイン=${playerId} delta=(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)})`)
 
-        // 他のプレイヤーのKonvaオブジェクトも視覚的に移動（状態は後で一括更新）
         const stage = e.target.getStage()
         if (stage) {
         appState.selectedElementIds.forEach(selectedId => {
@@ -1196,13 +1197,11 @@ const FootballCanvas = forwardRef(({
             if (otherPlayer) {
               const konvaNode = stage.findOne(`#player-${selectedId}`)
               if (konvaNode) {
-                // Konvaオブジェクトの実際の現在位置を基準に移動先を計算（突然移動防止）
                 const currentKonvaX = konvaNode.x()
                 const currentKonvaY = konvaNode.y()
                 const newX = currentKonvaX + deltaX
                 const newY = currentKonvaY + deltaY
                 
-                // 制約を適用
                 const constrained = constrainPlayerPosition(newX, newY, otherPlayer.team, otherPlayer.size)
                 
                 debugLog(appState, `🎯 他プレーヤー視覚移動: ${selectedId} Konva(${currentKonvaX.toFixed(1)},${currentKonvaY.toFixed(1)}) vs 状態(${otherPlayer.x.toFixed(1)},${otherPlayer.y.toFixed(1)}) → 移動後(${constrained.x.toFixed(1)},${constrained.y.toFixed(1)})`)
@@ -1214,7 +1213,9 @@ const FootballCanvas = forwardRef(({
           }
         })
         
-        // リンクされた矢印もリアルタイムで移動
+        // リンクされた矢印もリアルタイムで移動（無効化）
+        // ※ 二重移動防止のため、リアルタイム矢印移動も無効化
+        /*
         appState.selectedElementIds.forEach(selectedId => {
           play.arrows.forEach(arrow => {
             if (arrow.linkedPlayerId === selectedId) {
@@ -1268,6 +1269,7 @@ const FootballCanvas = forwardRef(({
         })
         
         stage.batchDraw()
+        */
       }
     } else {
       // 単一プレイヤー移動時もリンクされた矢印をリアルタイム更新
@@ -1341,7 +1343,7 @@ const FootballCanvas = forwardRef(({
     
     // 選択されているプレイヤーがドラッグされた場合、全て一緒に移動
     if (appState.selectedElementIds.includes(playerId) && appState.selectedElementIds.length > 1) {
-      debugLog(appState, `🎯 グループ移動開始: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)})`)
+      debugLog(appState, `🎯 グループ移動開始: 元移動量(${deltaX.toFixed(1)}, ${deltaY.toFixed(1)}) ※リアルタイム移動無効化により二重移動防止`)
       
       newPlayers = play.players.map(player => {
         if (appState.selectedElementIds.includes(player.id)) {
