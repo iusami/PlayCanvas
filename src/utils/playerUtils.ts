@@ -2,6 +2,8 @@
  * プレイヤー関連のユーティリティ関数集
  */
 
+import { FIELD_CONSTRAINTS } from '../types'
+
 /**
  * フィールドの中央線のY座標を取得
  * @param fieldHeight フィールドの高さ
@@ -15,16 +17,37 @@ export const getCenterLineY = (fieldHeight: number): number => {
  * フィールドが反転しているかどうかを判定
  * @param center センターの座標
  * @param fieldHeight フィールドの高さ
+ * @param enableDebugLog デバッグログを出力するかどうか（デフォルト: false）
  * @returns フィールドが反転している場合true
  */
-export const isFieldFlipped = (center: { x: number; y: number } | undefined, fieldHeight: number): boolean => {
-  if (!center) return false
+export const isFieldFlipped = (
+  center: { x: number; y: number } | undefined, 
+  fieldHeight: number, 
+  enableDebugLog: boolean = false
+): boolean => {
+  if (!center) {
+    if (enableDebugLog) {
+      console.log(`🔍 isFieldFlipped: センターなし → false`)
+    }
+    return false
+  }
   
-  // 6等分システムに統一：2番目と4番目の線で判定
-  const secondLineY = (fieldHeight * 2) / 6
-  const fourthLineY = (fieldHeight * 4) / 6
+  // FIELD_CONSTRAINTSのオフセットを使用した高精度判定
+  const centerLineY = getCenterLineY(fieldHeight)
+  const secondLineY = (fieldHeight * 2) / 6 - FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_SECOND_LINE_OFFSET
+  const fourthLineY = (fieldHeight * 4) / 6 + FIELD_CONSTRAINTS.FIELD_FLIP_DETECTION_FOURTH_LINE_OFFSET
   
-  return Math.abs(center.y - secondLineY) < Math.abs(center.y - fourthLineY)
+  const distToSecond = Math.abs(center.y - secondLineY)
+  const distToFourth = Math.abs(center.y - fourthLineY)
+  const flipped = distToSecond < distToFourth
+  
+  if (enableDebugLog) {
+    console.log(`🔍 isFieldFlipped: センター(${center.x}, ${center.y})`)
+    console.log(`🔍 isFieldFlipped: 2番目の線=${secondLineY.toFixed(1)}, 4番目の線=${fourthLineY.toFixed(1)}, 中央線=${centerLineY.toFixed(1)}`)
+    console.log(`🔍 isFieldFlipped: 2番目まで距離=${distToSecond.toFixed(1)}, 4番目まで距離=${distToFourth.toFixed(1)} → ${flipped}`)
+  }
+  
+  return flipped
 }
 
 /**
