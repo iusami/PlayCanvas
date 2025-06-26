@@ -179,25 +179,24 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             
             .canvas-section {
               float: left;
-              width: 65%;
-              padding-right: 10mm;
+              width: 58%;
+              margin-right: 2%;
               text-align: center;
               ${!directPrint ? 'border: 2px dashed #00ff00; /* ブラウザプレビュー時のデバッグ境界線 */' : ''}
             }
             
             .canvas-section img {
-              max-width: 100%;
-              max-height: 160mm;
-              width: auto;
+              width: 100%;
+              max-height: 120mm;
               height: auto;
               border: 1px solid #ddd;
               box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              object-fit: contain;
             }
             
             .notes-section {
               float: right;
-              width: 35%;
-              min-width: 55mm;
+              width: 40%;
               padding: 8px;
               border: 2px solid #007bff;
               background: #f8f9fa;
