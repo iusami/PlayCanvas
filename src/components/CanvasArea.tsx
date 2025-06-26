@@ -44,30 +44,251 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       }
     },
     print: () => {
-      if (stageRef.current) {
-        const dataURL = stageRef.current.toDataURL({ pixelRatio: 2 })
-        const printWindow = window.open('', '_blank')
-        if (printWindow) {
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>プリント - ${appState.currentPlay?.metadata.title || 'Football Play'}</title>
-                <style>
-                  body { margin: 0; padding: 20px; text-align: center; }
-                  img { max-width: 100%; height: auto; }
-                  h1 { font-family: Arial, sans-serif; color: #333; }
-                </style>
-              </head>
-              <body>
-                <h1>${appState.currentPlay?.metadata.title || 'Football Play'}</h1>
-                <img src="${dataURL}" alt="Football Play" />
-              </body>
-            </html>
-          `)
-          printWindow.document.close()
-          printWindow.focus()
-          printWindow.print()
+      console.log('🖨️ プリント機能開始')
+      
+      if (!stageRef.current) {
+        console.error('🖨️ エラー: stageRef.currentがnull')
+        alert('キャンバスが初期化されていません。しばらく待ってから再試行してください。')
+        return
+      }
+
+      if (!appState.currentPlay) {
+        console.error('🖨️ エラー: currentPlayがnull')
+        alert('プレイが選択されていません。')
+        return
+      }
+
+      console.log('🖨️ Konva Stage発見:', stageRef.current)
+      console.log('🖨️ Stage幅:', stageRef.current.width())
+      console.log('🖨️ Stage高さ:', stageRef.current.height())
+
+      try {
+        // 高解像度でキャンバスを画像化
+        const dataURL = stageRef.current.toDataURL({ 
+          pixelRatio: 2,
+          mimeType: 'image/png',
+          quality: 1.0
+        })
+        
+        console.log('🖨️ DataURL生成成功:', dataURL.substring(0, 100) + '...')
+        
+        if (!dataURL || dataURL === 'data:,') {
+          console.error('🖨️ エラー: 空のdataURL')
+          alert('キャンバスの画像化に失敗しました。プレイにコンテンツがあることを確認してください。')
+          return
         }
+
+        // プレイメタデータ取得
+        const play = appState.currentPlay
+        const metadata = play.metadata
+        
+        console.log('🖨️ プレイメタデータ:', metadata)
+
+        // 印刷ウィンドウを開く
+        const printWindow = window.open('', '_blank')
+        if (!printWindow) {
+          console.error('🖨️ エラー: printWindow作成失敗')
+          alert('印刷ウィンドウを開けませんでした。ポップアップブロッカーを確認してください。')
+          return
+        }
+
+        // 改良されたHTML構造（画像レイアウトベース）
+        const printHTML = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>プリント - ${metadata.title || 'Football Play'}</title>
+              <meta charset="UTF-8">
+              <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                
+                body { 
+                  font-family: 'Arial', sans-serif; 
+                  line-height: 1.6;
+                  color: #333;
+                  background: white;
+                }
+                
+                .print-container {
+                  width: 210mm;
+                  min-height: 297mm; /* A4サイズ */
+                  margin: 0 auto;
+                  padding: 20mm;
+                  display: grid;
+                  grid-template-areas: 
+                    "title title"
+                    "canvas notes";
+                  grid-template-columns: 2fr 1fr;
+                  grid-template-rows: auto 1fr;
+                  gap: 10mm;
+                }
+                
+                .title-section {
+                  grid-area: title;
+                  text-align: center;
+                  border-bottom: 2px solid #333;
+                  padding-bottom: 10px;
+                  margin-bottom: 15px;
+                }
+                
+                .title-section h1 {
+                  font-size: 24px;
+                  font-weight: bold;
+                  color: #333;
+                  margin-bottom: 5px;
+                }
+                
+                .subtitle {
+                  font-size: 14px;
+                  color: #666;
+                }
+                
+                .canvas-section {
+                  grid-area: canvas;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                }
+                
+                .canvas-section img {
+                  max-width: 100%;
+                  height: auto;
+                  border: 1px solid #ddd;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                
+                .notes-section {
+                  grid-area: notes;
+                  padding-left: 15px;
+                  border-left: 2px solid #ddd;
+                }
+                
+                .notes-title {
+                  font-size: 16px;
+                  font-weight: bold;
+                  color: #333;
+                  margin-bottom: 10px;
+                  border-bottom: 1px solid #eee;
+                  padding-bottom: 5px;
+                }
+                
+                .notes-item {
+                  margin-bottom: 12px;
+                  padding: 8px;
+                  background: #f9f9f9;
+                  border-radius: 6px;
+                  border-left: 3px solid #007bff;
+                }
+                
+                .notes-item-label {
+                  font-weight: bold;
+                  font-size: 12px;
+                  color: #555;
+                  margin-bottom: 3px;
+                }
+                
+                .notes-item-content {
+                  font-size: 11px;
+                  color: #333;
+                  line-height: 1.4;
+                }
+                
+                .tags {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 4px;
+                }
+                
+                .tag {
+                  background: #e3f2fd;
+                  color: #1976d2;
+                  padding: 2px 6px;
+                  border-radius: 12px;
+                  font-size: 10px;
+                  font-weight: 500;
+                }
+                
+                @media print {
+                  body { -webkit-print-color-adjust: exact; }
+                  .print-container { margin: 0; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="print-container">
+                <div class="title-section">
+                  <h1>${metadata.title || 'Football Play'}</h1>
+                  <div class="subtitle">${metadata.playName || ''} ${metadata.playType ? `(${metadata.playType})` : ''}</div>
+                </div>
+                
+                <div class="canvas-section">
+                  <img src="${dataURL}" alt="Football Play Diagram" />
+                </div>
+                
+                <div class="notes-section">
+                  <div class="notes-title">Notes</div>
+                  
+                  ${metadata.description ? `
+                    <div class="notes-item">
+                      <div class="notes-item-label">説明</div>
+                      <div class="notes-item-content">${metadata.description}</div>
+                    </div>
+                  ` : ''}
+                  
+                  ${metadata.offFormation ? `
+                    <div class="notes-item">
+                      <div class="notes-item-label">オフェンス</div>
+                      <div class="notes-item-content">${metadata.offFormation}</div>
+                    </div>
+                  ` : ''}
+                  
+                  ${metadata.defFormation ? `
+                    <div class="notes-item">
+                      <div class="notes-item-label">ディフェンス</div>
+                      <div class="notes-item-content">${metadata.defFormation}</div>
+                    </div>
+                  ` : ''}
+                  
+                  ${metadata.tags && metadata.tags.length > 0 ? `
+                    <div class="notes-item">
+                      <div class="notes-item-label">タグ</div>
+                      <div class="notes-item-content">
+                        <div class="tags">
+                          ${metadata.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                      </div>
+                    </div>
+                  ` : ''}
+                  
+                  <div class="notes-item">
+                    <div class="notes-item-label">作成日</div>
+                    <div class="notes-item-content">${new Date(metadata.createdAt).toLocaleDateString('ja-JP')}</div>
+                  </div>
+                </div>
+              </div>
+            </body>
+          </html>
+        `
+
+        console.log('🖨️ HTML生成完了、ウィンドウに書き込み中...')
+        printWindow.document.write(printHTML)
+        printWindow.document.close()
+        
+        // 画像読み込み完了を待ってから印刷
+        printWindow.onload = () => {
+          console.log('🖨️ 印刷ウィンドウ読み込み完了')
+          setTimeout(() => {
+            printWindow.focus()
+            printWindow.print()
+          }, 500) // 500ms待機で確実に画像読み込み
+        }
+
+        console.log('🖨️ プリント処理完了')
+
+      } catch (error) {
+        console.error('🖨️ プリント処理中エラー:', error)
+        alert(`印刷処理中にエラーが発生しました: ${error}`)
       }
     }
   }))
