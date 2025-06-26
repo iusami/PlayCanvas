@@ -78,17 +78,17 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
           return
         }
 
-        // プレイメタデータ取得
+        // プレイデータ取得
         const play = appState.currentPlay
         const metadata = play.metadata
+        const textBoxEntries = play.textBoxEntries || []
         
-        console.log('🖨️ プレイメタデータ詳細確認:')
+        console.log('🖨️ プレイデータ詳細確認:')
         console.log('  - title:', metadata.title || '(空)')
-        console.log('  - description:', metadata.description || '(空)')
-        console.log('  - offFormation:', metadata.offFormation || '(空)')
-        console.log('  - defFormation:', metadata.defFormation || '(空)')
-        console.log('  - tags:', metadata.tags || [])
-        console.log('  - createdAt:', metadata.createdAt)
+        console.log('  - textBoxEntries:', textBoxEntries.length, '個')
+        textBoxEntries.forEach((entry, index) => {
+          console.log(`    [${index + 1}] ${entry.shortText || '(空)'} : ${entry.longText || '(空)'}`)
+        })
 
         // ユーザーに選択肢を提供：ブラウザプレビューか直接印刷か
         const userChoice = confirm(
@@ -100,11 +100,11 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
         if (userChoice) {
           // ブラウザプレビューモード
           console.log('🖨️ ブラウザプレビューモード開始')
-          openPrintPreview(dataURL, metadata, false)
+          openPrintPreview(dataURL, metadata, textBoxEntries, false)
         } else {
           // 直接印刷モード
           console.log('🖨️ 直接印刷モード開始')
-          openPrintPreview(dataURL, metadata, true)
+          openPrintPreview(dataURL, metadata, textBoxEntries, true)
         }
 
       } catch (error) {
@@ -115,7 +115,7 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   }))
 
   // 印刷プレビュー関数（ブラウザプレビューと直接印刷の両方に対応）
-  const openPrintPreview = (dataURL: string, metadata: any, directPrint: boolean) => {
+  const openPrintPreview = (dataURL: string, metadata: any, textBoxEntries: any[], directPrint: boolean) => {
     console.log('🖨️ openPrintPreview開始', { directPrint })
     
     // より確実なFloat/inline-blockベースのレイアウト
@@ -319,10 +319,8 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             <div class="debug-info">
               <h3>🔍 デバッグ情報</h3>
               <p><strong>タイトル:</strong> ${metadata.title || '(空)'}</p>
-              <p><strong>説明:</strong> ${metadata.description || '(空)'}</p>
-              <p><strong>オフェンス:</strong> ${metadata.offFormation || '(空)'}</p>
-              <p><strong>ディフェンス:</strong> ${metadata.defFormation || '(空)'}</p>
-              <p><strong>タグ数:</strong> ${metadata.tags ? metadata.tags.length : 0}</p>
+              <p><strong>メモ項目数:</strong> ${textBoxEntries.length}個</p>
+              <p><strong>記入済み:</strong> ${textBoxEntries.filter(entry => entry.shortText || entry.longText).length}個</p>
               <p style="color: green;">✅ 緑点線: キャンバスエリア</p>
               <p style="color: red;">✅ 赤点線: メモエリア</p>
             </div>
@@ -342,47 +340,29 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
               <div class="notes-section">
                 <div class="notes-title">📝 メモ・説明</div>
                 
-                <!-- 説明セクション -->
-                <div class="notes-item">
-                  <div class="notes-item-label">📋 説明</div>
-                  <div class="notes-item-content">
-                    ${metadata.description || '<span class="notes-placeholder">説明なし</span>'}
-                  </div>
-                </div>
-                
-                <!-- オフェンスフォーメーション -->
-                <div class="notes-item">
-                  <div class="notes-item-label">⚡ オフェンス</div>
-                  <div class="notes-item-content">
-                    ${metadata.offFormation || '<span class="notes-placeholder">未設定</span>'}
-                  </div>
-                </div>
-                
-                <!-- ディフェンスフォーメーション -->
-                <div class="notes-item">
-                  <div class="notes-item-label">🛡️ ディフェンス</div>
-                  <div class="notes-item-content">
-                    ${metadata.defFormation || '<span class="notes-placeholder">未設定</span>'}
-                  </div>
-                </div>
-                
-                <!-- タグ -->
-                <div class="notes-item">
-                  <div class="notes-item-label">🏷️ タグ</div>
-                  <div class="notes-item-content">
-                    ${metadata.tags && metadata.tags.length > 0 ? `
-                      <div class="tags">
-                        ${metadata.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                ${textBoxEntries.map((entry, index) => `
+                  <div class="notes-item">
+                    <div class="notes-item-label">${index + 1}</div>
+                    <div class="notes-item-content">
+                      <div style="display: flex; gap: 8px;">
+                        <div style="min-width: 40px; font-weight: bold; color: #007bff;">
+                          ${entry.shortText || ''}
+                        </div>
+                        <div style="flex: 1;">
+                          ${entry.longText || '<span class="notes-placeholder">未記入</span>'}
+                        </div>
                       </div>
-                    ` : '<span class="notes-placeholder">タグなし</span>'}
+                    </div>
                   </div>
-                </div>
+                `).join('')}
                 
-                <!-- 作成日 -->
-                <div class="notes-item">
-                  <div class="notes-item-label">📅 作成日</div>
-                  <div class="notes-item-content">${new Date(metadata.createdAt).toLocaleDateString('ja-JP')}</div>
-                </div>
+                ${textBoxEntries.filter(entry => entry.shortText || entry.longText).length === 0 ? `
+                  <div class="notes-item">
+                    <div class="notes-item-content">
+                      <span class="notes-placeholder">メモが記入されていません</span>
+                    </div>
+                  </div>
+                ` : ''}
               </div>
             </div>
           </div>
