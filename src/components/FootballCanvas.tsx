@@ -472,11 +472,11 @@ const FootballCanvas = forwardRef(({
         console.log(`🔍 通常オフェンス: 入力Y=${y.toFixed(1)} → 制限Y=${constrainedY.toFixed(1)} (範囲: ${minY.toFixed(1)}〜${fieldBottomLimit})`)
       } else {
         // ディフェンスは中央線より少し上まで（ディフェンス用オフセット適用）
-        const maxY = centerLineY - defenseSnapOffset  // 375 - 10 = 365
-        // フィールド上限制約を適用：上から2つ目の線以下まで
-        const effectiveTopLimit = Math.max(halfSize, fieldUpperLimit)
+        const maxY = centerLineY - defenseSnapOffset
+        // フィールド上限制約を撤廃し、フィールド最上部まで動かせるようにする
+        const effectiveTopLimit = halfSize // プレーヤーの半分がはみ出ないように
         
-        // ディフェンスの有効範囲：フィールド上限からmaxYまで
+        // ディフェンスの有効範囲：フィールド最上部からmaxYまで
         constrainedY = Math.max(effectiveTopLimit, Math.min(maxY, y))
         
         console.log(`🔍 通常ディフェンス: centerLineY=${centerLineY.toFixed(1)}, maxY=${maxY.toFixed(1)}, effectiveTopLimit=${effectiveTopLimit.toFixed(1)}`)
