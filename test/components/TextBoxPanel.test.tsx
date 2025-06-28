@@ -42,7 +42,7 @@ describe('TextBoxPanel Component', () => {
         />
       )
       
-      expect(screen.getByText('メモ・説明')).toBeInTheDocument()
+      expect(screen.getByText('Note')).toBeInTheDocument()
       expect(screen.getByText('左列：記号・番号（3文字まで）｜ 右列：説明文')).toBeInTheDocument()
       expect(screen.getByText('プレイごとに自動保存されます')).toBeInTheDocument()
     })
@@ -394,7 +394,7 @@ describe('TextBoxPanel Component', () => {
         />
       )
       
-      expect(screen.getByText('メモ・説明')).toBeInTheDocument()
+      expect(screen.getByText('Note')).toBeInTheDocument()
     })
   })
 })
