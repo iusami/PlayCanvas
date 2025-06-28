@@ -68,7 +68,7 @@ const TextBoxPanel: React.FC<TextBoxPanelProps> = ({
   return (
     <div className="w-80 bg-white border-l border-gray-300 p-4 overflow-y-auto">
       <div className="mb-3">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">メモ・説明</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Note</h3>
         <div className="text-xs text-gray-500 mb-3">
           左列：記号・番号（3文字まで）｜ 右列：説明文
         </div>
