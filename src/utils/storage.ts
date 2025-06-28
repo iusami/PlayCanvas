@@ -203,9 +203,7 @@ export const SettingsStorage = {
         includeSettings: true,
         customFileName: undefined,
         lastBackupDate: undefined
-      },
-      theme: 'light',
-      language: 'ja'
+      }
     }
   },
 
