@@ -307,7 +307,7 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
               </div>
               
               <div class="notes-section">
-                <div class="notes-title">📝 メモ・説明</div>
+                <div class="notes-title">Note</div>
                 
                 ${textBoxEntries.map((entry, index) => `
                   <div class="notes-item">
