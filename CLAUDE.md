@@ -162,6 +162,13 @@ Playwright MCP（Multi-Context Protocol）は、Playwrightを使用してブラ�
 Playwright MCPを使用することで、ブラウザの操作をスクリプト化し、テストや自動化タスクを効率的に実行できます。
 したがってGUIに変更がある場合、Playwright MCPを使用してテストを行なってください。
 
+## gemini-web-searchについて
+`gemini-web-search` は Google Gemini を使用してウェブ検索を行うためのコマンドです。
+このコマンドを使用することで、Google Gemini の検索機能を利用して、ウェブ上の情報を取得することができます。
+新しく機能追加する場合やplan時に、まずは `gemini-web-search` コマンドを使用して、必要な情報をウェブから取得してください。
+自前で実装するだけでなく、一般的に利用可能なライブラリやAPIを活用することが推奨されます。
+
+
 ## Deno の使い方について
 
 ### npm 互換モード
