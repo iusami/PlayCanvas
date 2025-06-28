@@ -44,33 +44,368 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       }
     },
     print: () => {
-      if (stageRef.current) {
-        const dataURL = stageRef.current.toDataURL({ pixelRatio: 2 })
-        const printWindow = window.open('', '_blank')
-        if (printWindow) {
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>プリント - ${appState.currentPlay?.metadata.title || 'Football Play'}</title>
-                <style>
-                  body { margin: 0; padding: 20px; text-align: center; }
-                  img { max-width: 100%; height: auto; }
-                  h1 { font-family: Arial, sans-serif; color: #333; }
-                </style>
-              </head>
-              <body>
-                <h1>${appState.currentPlay?.metadata.title || 'Football Play'}</h1>
-                <img src="${dataURL}" alt="Football Play" />
-              </body>
-            </html>
-          `)
-          printWindow.document.close()
-          printWindow.focus()
-          printWindow.print()
+      console.log('🖨️ プリント機能開始')
+      
+      if (!stageRef.current) {
+        console.error('🖨️ エラー: stageRef.currentがnull')
+        alert('キャンバスが初期化されていません。しばらく待ってから再試行してください。')
+        return
+      }
+
+      if (!appState.currentPlay) {
+        console.error('🖨️ エラー: currentPlayがnull')
+        alert('プレイが選択されていません。')
+        return
+      }
+
+      console.log('🖨️ Konva Stage発見:', stageRef.current)
+      console.log('🖨️ Stage幅:', stageRef.current.width())
+      console.log('🖨️ Stage高さ:', stageRef.current.height())
+
+      try {
+        // 高解像度でキャンバスを画像化
+        const dataURL = stageRef.current.toDataURL({ 
+          pixelRatio: 2,
+          mimeType: 'image/png',
+          quality: 1.0
+        })
+        
+        console.log('🖨️ DataURL生成成功:', dataURL.substring(0, 100) + '...')
+        
+        if (!dataURL || dataURL === 'data:,') {
+          console.error('🖨️ エラー: 空のdataURL')
+          alert('キャンバスの画像化に失敗しました。プレイにコンテンツがあることを確認してください。')
+          return
         }
+
+        // プレイデータ取得
+        const play = appState.currentPlay
+        const metadata = play.metadata
+        const textBoxEntries = play.textBoxEntries || []
+        
+        console.log('🖨️ プレイデータ詳細確認:')
+        console.log('  - title:', metadata.title || '(空)')
+        console.log('  - textBoxEntries:', textBoxEntries.length, '個')
+        textBoxEntries.forEach((entry, index) => {
+          console.log(`    [${index + 1}] ${entry.shortText || '(空)'} : ${entry.longText || '(空)'}`)
+        })
+
+        // ユーザーに選択肢を提供：ブラウザプレビューか直接印刷か
+        const userChoice = confirm(
+          '印刷方法を選択してください：\n\n' +
+          'OK = ブラウザでプレビュー確認\n' +
+          'キャンセル = 直接印刷ダイアログを開く'
+        )
+
+        if (userChoice) {
+          // ブラウザプレビューモード
+          console.log('🖨️ ブラウザプレビューモード開始')
+          openPrintPreview(dataURL, metadata, textBoxEntries, false)
+        } else {
+          // 直接印刷モード
+          console.log('🖨️ 直接印刷モード開始')
+          openPrintPreview(dataURL, metadata, textBoxEntries, true)
+        }
+
+      } catch (error) {
+        console.error('🖨️ プリント処理中エラー:', error)
+        alert(`印刷処理中にエラーが発生しました: ${error}`)
       }
     }
   }))
+
+  // 印刷プレビュー関数（ブラウザプレビューと直接印刷の両方に対応）
+  const openPrintPreview = (dataURL: string, metadata: any, textBoxEntries: any[], directPrint: boolean) => {
+    console.log('🖨️ openPrintPreview開始', { directPrint })
+    
+    // より確実なFloat/inline-blockベースのレイアウト
+    const printHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>プリント - ${metadata.title || 'Football Play'}</title>
+          <meta charset="UTF-8">
+          <style>
+            * { 
+              margin: 0; 
+              padding: 0; 
+              box-sizing: border-box; 
+            }
+            
+            body { 
+              font-family: Arial, sans-serif; 
+              line-height: 1.4;
+              color: #333;
+              background: white;
+              /* A4サイズ対応 */
+              width: 210mm;
+              margin: 0 auto;
+              padding: 10mm;
+            }
+            
+            .print-container {
+              width: 100%;
+              max-width: 190mm; /* パディング考慮 */
+              margin: 0 auto;
+              background: white;
+            }
+            
+            .title-section {
+              width: 100%;
+              text-align: center;
+              border-bottom: 2px solid #333;
+              padding-bottom: 8px;
+              margin-bottom: 15px;
+            }
+            
+            .title-section h1 {
+              font-size: 20px;
+              font-weight: bold;
+              color: #333;
+              margin-bottom: 4px;
+            }
+            
+            .subtitle {
+              font-size: 12px;
+              color: #666;
+            }
+            
+            /* Float/inline-blockベースの確実な2カラムレイアウト */
+            .content-area {
+              width: 100%;
+              /* clearfix for float */
+              overflow: hidden;
+            }
+            
+            .canvas-section {
+              float: left;
+              width: 58%;
+              margin-right: 2%;
+              text-align: center;
+              ${!directPrint ? 'border: 2px dashed #00ff00; /* ブラウザプレビュー時のデバッグ境界線 */' : ''}
+            }
+            
+            .canvas-section img {
+              width: 100%;
+              max-height: 120mm;
+              height: auto;
+              border: 1px solid #ddd;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              object-fit: contain;
+            }
+            
+            .notes-section {
+              float: right;
+              width: 40%;
+              padding: 8px;
+              border: 2px solid #007bff;
+              background: #f8f9fa;
+              min-height: 120mm;
+              ${!directPrint ? 'outline: 3px dashed #ff0000; /* ブラウザプレビュー時のデバッグ境界線 */' : ''}
+            }
+            
+            .notes-title {
+              font-size: 14px;
+              font-weight: bold;
+              color: #333;
+              margin-bottom: 8px;
+              text-align: center;
+              border-bottom: 1px solid #ddd;
+              padding-bottom: 4px;
+            }
+            
+            .notes-item {
+              margin-bottom: 8px;
+              padding: 6px;
+              background: white;
+              border-left: 3px solid #007bff;
+              min-height: 25px;
+            }
+            
+            .notes-item-label {
+              font-weight: bold;
+              font-size: 10px;
+              color: #555;
+              margin-bottom: 2px;
+              display: block;
+            }
+            
+            .notes-item-content {
+              font-size: 9px;
+              color: #333;
+              line-height: 1.3;
+              min-height: 12px;
+            }
+            
+            .notes-placeholder {
+              font-style: italic;
+              color: #999;
+            }
+            
+            .tags {
+              display: block;
+            }
+            
+            .tag {
+              display: inline-block;
+              background: #e3f2fd;
+              color: #1976d2;
+              padding: 1px 4px;
+              margin: 1px;
+              border-radius: 8px;
+              font-size: 8px;
+              font-weight: 500;
+            }
+            
+            /* clearfix */
+            .content-area::after {
+              content: "";
+              display: table;
+              clear: both;
+            }
+            
+            /* 印刷時専用CSS */
+            @media print {
+              body { 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+                margin: 0;
+                padding: 8mm;
+              }
+              
+              .print-container {
+                margin: 0;
+              }
+              
+              /* デバッグ境界線を印刷時は非表示 */
+              .canvas-section {
+                border: none !important;
+              }
+              
+              .notes-section {
+                outline: none !important;
+                /* 印刷時に確実に表示 */
+                float: right !important;
+                width: 35% !important;
+                background: #f8f9fa !important;
+                border: 2px solid #007bff !important;
+                page-break-inside: avoid;
+              }
+            }
+            
+            /* デバッグ用スタイル（ブラウザプレビュー時のみ） */
+            ${!directPrint ? `
+              .debug-info {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                background: #ffffcc;
+                border: 2px solid #ffcc00;
+                padding: 10px;
+                font-size: 12px;
+                z-index: 1000;
+                max-width: 300px;
+              }
+              
+              .debug-info h3 {
+                margin-bottom: 5px;
+                color: #cc6600;
+              }
+            ` : ''}
+          </style>
+        </head>
+        <body>
+          ${!directPrint ? `
+            <div class="debug-info">
+              <h3>🔍 デバッグ情報</h3>
+              <p><strong>タイトル:</strong> ${metadata.title || '(空)'}</p>
+              <p><strong>メモ項目数:</strong> ${textBoxEntries.length}個</p>
+              <p><strong>記入済み:</strong> ${textBoxEntries.filter(entry => entry.shortText || entry.longText).length}個</p>
+              <p style="color: green;">✅ 緑点線: キャンバスエリア</p>
+              <p style="color: red;">✅ 赤点線: メモエリア</p>
+            </div>
+          ` : ''}
+          
+          <div class="print-container">
+            <div class="title-section">
+              <h1>${metadata.title || 'Football Play'}</h1>
+              <div class="subtitle">${metadata.playName || ''} ${metadata.playType ? `(${metadata.playType})` : ''}</div>
+            </div>
+            
+            <div class="content-area">
+              <div class="canvas-section">
+                <img src="${dataURL}" alt="Football Play Diagram" />
+              </div>
+              
+              <div class="notes-section">
+                <div class="notes-title">📝 メモ・説明</div>
+                
+                ${textBoxEntries.map((entry, index) => `
+                  <div class="notes-item">
+                    <div class="notes-item-label">${index + 1}</div>
+                    <div class="notes-item-content">
+                      <div style="display: flex; gap: 8px;">
+                        <div style="min-width: 40px; font-weight: bold; color: #007bff;">
+                          ${entry.shortText || ''}
+                        </div>
+                        <div style="flex: 1;">
+                          ${entry.longText || '<span class="notes-placeholder">未記入</span>'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+                
+                ${textBoxEntries.filter(entry => entry.shortText || entry.longText).length === 0 ? `
+                  <div class="notes-item">
+                    <div class="notes-item-content">
+                      <span class="notes-placeholder">メモが記入されていません</span>
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    console.log('🖨️ HTML生成完了 (文字数:', printHTML.length, ')')
+    console.log('🖨️ HTML内容確認（最初の800文字）:', printHTML.substring(0, 800))
+    
+    // 印刷ウィンドウを開く
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      console.error('🖨️ エラー: printWindow作成失敗')
+      alert('印刷ウィンドウを開けませんでした。ポップアップブロッカーを確認してください。')
+      return
+    }
+
+    console.log('🖨️ 印刷ウィンドウにHTML書き込み開始')
+    printWindow.document.write(printHTML)
+    printWindow.document.close()
+    
+    console.log('🖨️ HTML書き込み完了')
+
+    if (directPrint) {
+      // 直接印刷モード：少し待ってから印刷ダイアログを開く
+      setTimeout(() => {
+        console.log('🖨️ 印刷ダイアログを開いています...')
+        printWindow.focus()
+        printWindow.print()
+      }, 1500) // 1.5秒待機で確実に読み込み完了
+    } else {
+      // ブラウザプレビューモード：印刷は実行しない
+      console.log('🖨️ ブラウザプレビューモード - 印刷は実行しません')
+      setTimeout(() => {
+        printWindow.focus()
+        alert('ブラウザプレビューを確認してください。\n\n緑の点線: キャンバスエリア\n赤の点線: メモエリア\n\nメモエリアが右側に表示されているかを確認し、問題がなければ再度印刷ボタンを押して「キャンセル」を選択してください。')
+      }, 500)
+    }
+
+    console.log('🖨️ openPrintPreview完了')
+  }
+
   if (!appState.currentPlay) {
     return (
       <div className="canvas-container flex items-center justify-center">
