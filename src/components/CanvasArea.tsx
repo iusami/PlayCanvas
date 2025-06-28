@@ -81,31 +81,24 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
         // プレイデータ取得
         const play = appState.currentPlay
         const metadata = play.metadata
-        const textBoxEntries = play.textBoxEntries || []
+        const allTextBoxEntries = play.textBoxEntries || []
+        
+        // 空のエントリを除外（shortTextまたはlongTextのいずれかが存在するもののみ）
+        const textBoxEntries = allTextBoxEntries.filter(entry => 
+          entry.shortText?.trim() || entry.longText?.trim()
+        )
         
         console.log('🖨️ プレイデータ詳細確認:')
         console.log('  - title:', metadata.title || '(空)')
-        console.log('  - textBoxEntries:', textBoxEntries.length, '個')
+        console.log('  - 全textBoxEntries:', allTextBoxEntries.length, '個')
+        console.log('  - 記入済みtextBoxEntries:', textBoxEntries.length, '個')
         textBoxEntries.forEach((entry, index) => {
           console.log(`    [${index + 1}] ${entry.shortText || '(空)'} : ${entry.longText || '(空)'}`)
         })
 
-        // ユーザーに選択肢を提供：ブラウザプレビューか直接印刷か
-        const userChoice = confirm(
-          '印刷方法を選択してください：\n\n' +
-          'OK = ブラウザでプレビュー確認\n' +
-          'キャンセル = 直接印刷ダイアログを開く'
-        )
-
-        if (userChoice) {
-          // ブラウザプレビューモード
-          console.log('🖨️ ブラウザプレビューモード開始')
-          openPrintPreview(dataURL, metadata, textBoxEntries, false)
-        } else {
-          // 直接印刷モード
-          console.log('🖨️ 直接印刷モード開始')
-          openPrintPreview(dataURL, metadata, textBoxEntries, true)
-        }
+        // 印刷モードで実行
+        console.log('🖨️ 印刷モード開始')
+        openPrintPreview(dataURL, metadata, textBoxEntries)
 
       } catch (error) {
         console.error('🖨️ プリント処理中エラー:', error)
@@ -114,9 +107,9 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
     }
   }))
 
-  // 印刷プレビュー関数（ブラウザプレビューと直接印刷の両方に対応）
-  const openPrintPreview = (dataURL: string, metadata: any, textBoxEntries: any[], directPrint: boolean) => {
-    console.log('🖨️ openPrintPreview開始', { directPrint })
+  // 印刷プレビュー関数
+  const openPrintPreview = (dataURL: string, metadata: any, textBoxEntries: any[]) => {
+    console.log('🖨️ openPrintPreview開始')
     
     // より確実なFloat/inline-blockベースのレイアウト
     const printHTML = `
@@ -137,15 +130,15 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
               line-height: 1.4;
               color: #333;
               background: white;
-              /* A4サイズ対応 */
-              width: 210mm;
+              /* 横向きA4サイズ対応 */
+              width: 297mm;
               margin: 0 auto;
-              padding: 10mm;
+              padding: 8mm;
             }
             
             .print-container {
               width: 100%;
-              max-width: 190mm; /* パディング考慮 */
+              max-width: 281mm; /* 横向きA4パディング考慮 */
               margin: 0 auto;
               background: white;
             }
@@ -170,24 +163,24 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
               color: #666;
             }
             
-            /* Float/inline-blockベースの確実な2カラムレイアウト */
+            /* 左右配置レイアウト（横向きA4最適化） */
             .content-area {
               width: 100%;
-              /* clearfix for float */
-              overflow: hidden;
+              display: flex;
+              gap: 10mm;
+              align-items: flex-start;
             }
             
             .canvas-section {
-              float: left;
-              width: 58%;
-              margin-right: 2%;
+              flex: 2;
+              max-width: 200mm;
               text-align: center;
-              ${!directPrint ? 'border: 2px dashed #00ff00; /* ブラウザプレビュー時のデバッグ境界線 */' : ''}
             }
             
             .canvas-section img {
               width: 100%;
-              max-height: 120mm;
+              max-width: 200mm;
+              max-height: 140mm;
               height: auto;
               border: 1px solid #ddd;
               box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -195,46 +188,51 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             }
             
             .notes-section {
-              float: right;
-              width: 40%;
-              padding: 8px;
+              flex: 1;
+              max-width: 80mm;
+              padding: 6px;
               border: 2px solid #007bff;
               background: #f8f9fa;
-              min-height: 120mm;
-              ${!directPrint ? 'outline: 3px dashed #ff0000; /* ブラウザプレビュー時のデバッグ境界線 */' : ''}
+              min-height: 140mm;
             }
             
             .notes-title {
-              font-size: 14px;
+              font-size: 12px;
               font-weight: bold;
               color: #333;
-              margin-bottom: 8px;
+              margin-bottom: 6px;
               text-align: center;
               border-bottom: 1px solid #ddd;
-              padding-bottom: 4px;
+              padding-bottom: 3px;
+            }
+            
+            .notes-grid {
+              display: block;
+              margin-top: 6px;
             }
             
             .notes-item {
-              margin-bottom: 8px;
-              padding: 6px;
+              margin-bottom: 3px;
+              padding: 4px;
               background: white;
-              border-left: 3px solid #007bff;
-              min-height: 25px;
+              border-left: 2px solid #007bff;
+              min-height: 18px;
+              break-inside: avoid;
             }
             
             .notes-item-label {
               font-weight: bold;
-              font-size: 10px;
+              font-size: 8px;
               color: #555;
-              margin-bottom: 2px;
+              margin-bottom: 1px;
               display: block;
             }
             
             .notes-item-content {
-              font-size: 9px;
+              font-size: 7px;
               color: #333;
-              line-height: 1.3;
-              min-height: 12px;
+              line-height: 1.2;
+              min-height: 10px;
             }
             
             .notes-placeholder {
@@ -250,19 +248,13 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
               display: inline-block;
               background: #e3f2fd;
               color: #1976d2;
-              padding: 1px 4px;
+              padding: 1px 3px;
               margin: 1px;
-              border-radius: 8px;
-              font-size: 8px;
+              border-radius: 6px;
+              font-size: 6px;
               font-weight: 500;
             }
             
-            /* clearfix */
-            .content-area::after {
-              content: "";
-              display: table;
-              clear: both;
-            }
             
             /* 印刷時専用CSS */
             @media print {
@@ -271,60 +263,37 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
                 print-color-adjust: exact;
                 margin: 0;
                 padding: 8mm;
+                size: A4 landscape; /* 横向きA4指定 */
               }
               
               .print-container {
                 margin: 0;
+                page-break-inside: avoid;
               }
               
-              /* デバッグ境界線を印刷時は非表示 */
+              .content-area {
+                display: flex !important;
+                gap: 10mm !important;
+                align-items: flex-start !important;
+              }
+              
               .canvas-section {
-                border: none !important;
+                flex: 2 !important;
+                max-width: 200mm !important;
               }
               
               .notes-section {
-                outline: none !important;
-                /* 印刷時に確実に表示 */
-                float: right !important;
-                width: 35% !important;
+                flex: 1 !important;
+                max-width: 80mm !important;
                 background: #f8f9fa !important;
                 border: 2px solid #007bff !important;
                 page-break-inside: avoid;
               }
             }
             
-            /* デバッグ用スタイル（ブラウザプレビュー時のみ） */
-            ${!directPrint ? `
-              .debug-info {
-                position: fixed;
-                top: 10px;
-                left: 10px;
-                background: #ffffcc;
-                border: 2px solid #ffcc00;
-                padding: 10px;
-                font-size: 12px;
-                z-index: 1000;
-                max-width: 300px;
-              }
-              
-              .debug-info h3 {
-                margin-bottom: 5px;
-                color: #cc6600;
-              }
-            ` : ''}
           </style>
         </head>
         <body>
-          ${!directPrint ? `
-            <div class="debug-info">
-              <h3>🔍 デバッグ情報</h3>
-              <p><strong>タイトル:</strong> ${metadata.title || '(空)'}</p>
-              <p><strong>メモ項目数:</strong> ${textBoxEntries.length}個</p>
-              <p><strong>記入済み:</strong> ${textBoxEntries.filter(entry => entry.shortText || entry.longText).length}個</p>
-              <p style="color: green;">✅ 緑点線: キャンバスエリア</p>
-              <p style="color: red;">✅ 赤点線: メモエリア</p>
-            </div>
-          ` : ''}
           
           <div class="print-container">
             <div class="title-section">
@@ -344,19 +313,19 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
                   <div class="notes-item">
                     <div class="notes-item-label">${index + 1}</div>
                     <div class="notes-item-content">
-                      <div style="display: flex; gap: 8px;">
-                        <div style="min-width: 40px; font-weight: bold; color: #007bff;">
-                          ${entry.shortText || ''}
+                      <div style="display: flex; gap: 4px; align-items: flex-start;">
+                        <div style="min-width: 20px; font-weight: bold; color: #007bff; flex-shrink: 0;">
+                          ${entry.shortText?.trim() || ''}
                         </div>
-                        <div style="flex: 1;">
-                          ${entry.longText || '<span class="notes-placeholder">未記入</span>'}
+                        <div style="flex: 1; word-break: break-word;">
+                          ${entry.longText?.trim() || ''}
                         </div>
                       </div>
                     </div>
                   </div>
                 `).join('')}
                 
-                ${textBoxEntries.filter(entry => entry.shortText || entry.longText).length === 0 ? `
+                ${textBoxEntries.length === 0 ? `
                   <div class="notes-item">
                     <div class="notes-item-content">
                       <span class="notes-placeholder">メモが記入されていません</span>
@@ -387,21 +356,12 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
     
     console.log('🖨️ HTML書き込み完了')
 
-    if (directPrint) {
-      // 直接印刷モード：少し待ってから印刷ダイアログを開く
-      setTimeout(() => {
-        console.log('🖨️ 印刷ダイアログを開いています...')
-        printWindow.focus()
-        printWindow.print()
-      }, 1500) // 1.5秒待機で確実に読み込み完了
-    } else {
-      // ブラウザプレビューモード：印刷は実行しない
-      console.log('🖨️ ブラウザプレビューモード - 印刷は実行しません')
-      setTimeout(() => {
-        printWindow.focus()
-        alert('ブラウザプレビューを確認してください。\n\n緑の点線: キャンバスエリア\n赤の点線: メモエリア\n\nメモエリアが右側に表示されているかを確認し、問題がなければ再度印刷ボタンを押して「キャンセル」を選択してください。')
-      }, 500)
-    }
+    // 少し待ってから印刷ダイアログを開く
+    setTimeout(() => {
+      console.log('🖨️ 印刷ダイアログを開いています...')
+      printWindow.focus()
+      printWindow.print()
+    }, 1500) // 1.5秒待機で確実に読み込み完了
 
     console.log('🖨️ openPrintPreview完了')
   }
