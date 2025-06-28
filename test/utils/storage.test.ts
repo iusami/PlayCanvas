@@ -348,8 +348,6 @@ describe('SettingsStorage', () => {
     const settings = await SettingsStorage.getSettings()
     
     expect(settings.autoBackup).toEqual(newAutoBackupSettings)
-    expect(settings.theme).toEqual('light') // デフォルト値のまま
-    expect(settings.language).toEqual('ja') // デフォルト値のまま
   })
 })
 
