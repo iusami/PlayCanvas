@@ -157,6 +157,10 @@ type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 - テスト可能性を設計に組み込む
 - アサートファースト：期待結果から逆算
 
+## Playwright MCPについて
+Playwright MCP（Multi-Context Protocol）は、Playwrightを使用してブラウザの操作を自動化するためのプロトコルです。
+Playwright MCPを使用することで、ブラウザの操作をスクリプト化し、テストや自動化タスクを効率的に実行できます。
+したがってGUIに変更がある場合、Playwright MCPを使用してテストを行なってください。
 
 ## Deno の使い方について
 
