@@ -601,11 +601,6 @@ const App: React.FC = () => {
     <div className="h-screen w-screen flex flex-col bg-gray-50">
       <Header 
         onNewPlay={createNewPlay}
-        onSave={saveCurrentPlay}
-        onEditMetadata={() => setIsMetadataFormOpen(true)}
-        onDuplicatePlay={duplicateCurrentPlay}
-        onExportImage={handleExportImage}
-        onPrint={handlePrint}
         onOpenPlayLibrary={() => setIsPlayLibraryOpen(true)}
         onOpenPlaylistWorkspace={() => setIsPlaylistWorkspaceOpen(true)}
         onShowMessage={showMessage}
@@ -641,6 +636,11 @@ const App: React.FC = () => {
           lastSavedAt={lastSavedAt}
           onUndo={undo}
           onRedo={redo}
+          onSave={saveCurrentPlay}
+          onEditMetadata={() => setIsMetadataFormOpen(true)}
+          onDuplicatePlay={duplicateCurrentPlay}
+          onExportImage={handleExportImage}
+          onPrint={handlePrint}
         />
         
         <TextBoxPanel

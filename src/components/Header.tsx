@@ -10,11 +10,6 @@ type MessageType = 'success' | 'error' | 'info'
 
 interface HeaderProps {
   onNewPlay: () => void
-  onSave: () => void
-  onEditMetadata: () => void
-  onDuplicatePlay: () => void
-  onExportImage?: () => void
-  onPrint?: () => void
   onOpenPlayLibrary: () => void
   onOpenPlaylistWorkspace: () => void
   onShowMessage: (text: string, type?: MessageType) => void
@@ -23,11 +18,6 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ 
   onNewPlay, 
-  onSave, 
-  onEditMetadata, 
-  onDuplicatePlay,
-  onExportImage,
-  onPrint,
   onOpenPlayLibrary,
   onOpenPlaylistWorkspace,
   onShowMessage,
@@ -118,42 +108,6 @@ const Header: React.FC<HeaderProps> = ({
           プレイリスト管理
         </button>
         
-        {currentPlay && (
-          <>
-            <button 
-              onClick={onSave}
-              className="toolbar-button"
-            >
-              保存
-            </button>
-            <button 
-              onClick={onEditMetadata}
-              className="toolbar-button"
-            >
-              プレイ情報編集
-            </button>
-            <button 
-              onClick={onDuplicatePlay}
-              className="toolbar-button"
-            >
-              複製
-            </button>
-            <button 
-              onClick={onExportImage}
-              className="toolbar-button"
-              disabled={!onExportImage}
-            >
-              エクスポート
-            </button>
-            <button 
-              onClick={onPrint}
-              className="toolbar-button"
-              disabled={!onPrint}
-            >
-              印刷
-            </button>
-          </>
-        )}
       </div>
       
       {/* 右端: アカウントドロップダウン */}
