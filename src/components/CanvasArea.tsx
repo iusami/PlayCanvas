@@ -477,19 +477,23 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       </div>
 
       {/* Konvaベースのキャンバス */}
-      <FootballCanvas
-        play={appState.currentPlay}
-        appState={appState}
-        updateAppState={updateAppState}
-        onUpdatePlay={onUpdatePlay}
-        onUndo={onUndo}
-        onRedo={onRedo}
-        ref={stageRef}
-      />
+      <div className={`w-full h-full ${appState.currentPlay ? 'pt-20' : ''}`}>
+        <FootballCanvas
+          play={appState.currentPlay}
+          appState={appState}
+          updateAppState={updateAppState}
+          onUpdatePlay={onUpdatePlay}
+          onUndo={onUndo}
+          onRedo={onRedo}
+          ref={stageRef}
+        />
+      </div>
 
       {/* セグメント上限警告 */}
       {appState.segmentLimitWarning && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+        <div className={`absolute left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 ${
+          appState.currentPlay ? 'top-20' : 'top-4'
+        }`}>
           <div className="flex items-center space-x-2">
             <span>⚠️</span>
             <span className="text-sm">{appState.segmentLimitWarning}</span>
