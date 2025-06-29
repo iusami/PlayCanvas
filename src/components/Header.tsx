@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { PasswordChangeForm } from './Auth/PasswordChangeForm'
 import { BackupManager } from './Backup/BackupManager'
 import { SettingsModal } from './Settings/SettingsModal'
+import AccountDropdown from './AccountDropdown'
 
 type MessageType = 'success' | 'error' | 'info'
 
@@ -39,7 +40,7 @@ const Header: React.FC<HeaderProps> = ({
 
   // テスト環境ではモックユーザーを使用
   const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
-  const displayUser = isTestMode ? { email: 'test@example.com' } : user
+  const displayUser = isTestMode ? { email: 'test@example.com' } : (user ? { email: user.email || '' } : null)
 
   const handleSignOut = async () => {
     const { error } = await signOut()
@@ -155,43 +156,17 @@ const Header: React.FC<HeaderProps> = ({
         )}
       </div>
       
-      {/* 右端: ユーザー情報（既存のまま） */}
+      {/* 右端: アカウントドロップダウン */}
       <div className="flex items-center">
-        {/* ユーザー情報とログアウト */}
         {displayUser && (
-          <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-300">
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">{displayUser.email}</span>
-            </div>
-            {!isTestMode && (
-              <>
-                <button 
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 px-2 py-1 rounded transition-colors"
-                >
-                  設定
-                </button>
-                <button 
-                  onClick={() => setIsBackupManagerOpen(true)}
-                  className="text-sm text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded transition-colors"
-                >
-                  バックアップ
-                </button>
-                <button 
-                  onClick={() => setIsPasswordChangeOpen(true)}
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
-                >
-                  パスワード変更
-                </button>
-                <button 
-                  onClick={handleSignOut}
-                  className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                >
-                  ログアウト
-                </button>
-              </>
-            )}
-          </div>
+          <AccountDropdown
+            user={displayUser}
+            isTestMode={isTestMode}
+            onPasswordChange={() => setIsPasswordChangeOpen(true)}
+            onBackupManager={() => setIsBackupManagerOpen(true)}
+            onSettings={() => setIsSettingsOpen(true)}
+            onSignOut={handleSignOut}
+          />
         )}
       </div>
       

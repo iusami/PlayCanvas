@@ -246,11 +246,15 @@ describe('Header Component', () => {
 
 
   describe('ユーザー情報表示', () => {
-    it('ユーザーのメールアドレスが表示されること', () => {
+    it('アカウントボタンが表示されること', () => {
       renderWithAuth(<Header {...defaultProps} />)
       
-      // テストモードでのモックユーザーのメールアドレスが表示される
-      expect(screen.getByText('test@example.com')).toBeInTheDocument()
+      // テストモードでのアカウントボタンが表示される（メールアドレスの最初の文字「T」）
+      expect(screen.getByText('T')).toBeInTheDocument()
+      // アカウントドロップダウンボタンが存在することを確認
+      const buttons = screen.getAllByRole('button')
+      const accountButton = buttons.find(button => button.getAttribute('aria-haspopup') === 'true')
+      expect(accountButton).toBeInTheDocument()
     })
 
     it('プレイ名がある場合、タイトルと一緒に表示されること', () => {
@@ -302,11 +306,11 @@ describe('Header Component', () => {
       expect(screen.getByText('プレイリスト管理')).toBeInTheDocument()
     })
 
-    it('ユーザー情報が適切に表示されること', () => {
+    it('アカウント情報が適切に表示されること', () => {
       renderWithAuth(<Header {...defaultProps} />)
       
-      // テストモードでのユーザー表示
-      expect(screen.getByText('test@example.com')).toBeInTheDocument()
+      // テストモードでのアカウントボタン表示
+      expect(screen.getByText('T')).toBeInTheDocument()
     })
   })
 
@@ -444,9 +448,9 @@ describe('Header Component', () => {
       
       renderWithAuth(<Header {...defaultProps} />)
       
-      // テストモードでもモックユーザーが表示される（テストの設定上）
-      // 実際のテストでは、テストモードの設定により「test@example.com」が表示される
-      expect(screen.getByText('test@example.com')).toBeInTheDocument()
+      // テストモードでもアカウントボタンが表示される（テストの設定上）
+      // 実際のテストでは、テストモードの設定によりアバター「T」が表示される
+      expect(screen.getByText('T')).toBeInTheDocument()
       // 基本的なボタンは表示されることを確認
       expect(screen.getByText('新しいプレイ')).toBeInTheDocument()
     })
