@@ -42,7 +42,6 @@ const createMockPlay = (): Play => ({
 describe('Header Component', () => {
   const mockOnNewPlay = vi.fn()
   const mockOnSave = vi.fn()
-  const mockOnSaveAs = vi.fn()
   const mockOnEditMetadata = vi.fn()
   const mockOnDuplicatePlay = vi.fn()
   const mockOnExportImage = vi.fn()
@@ -54,7 +53,6 @@ describe('Header Component', () => {
   const defaultProps = {
     onNewPlay: mockOnNewPlay,
     onSave: mockOnSave,
-    onSaveAs: mockOnSaveAs,
     onEditMetadata: mockOnEditMetadata,
     onDuplicatePlay: mockOnDuplicatePlay,
     onExportImage: mockOnExportImage,
@@ -101,7 +99,6 @@ describe('Header Component', () => {
       
       // プレイがnullの場合、これらのボタンは表示されない
       expect(screen.queryByText('保存')).not.toBeInTheDocument()
-      expect(screen.queryByText('名前を付けて保存')).not.toBeInTheDocument()
       expect(screen.queryByText('プレイ情報編集')).not.toBeInTheDocument()
       expect(screen.queryByText('複製')).not.toBeInTheDocument()
       expect(screen.queryByText('エクスポート')).not.toBeInTheDocument()
@@ -125,7 +122,6 @@ describe('Header Component', () => {
       renderWithAuth(<Header {...propsWithPlay} />)
       
       expect(screen.getByText('保存')).toBeInTheDocument()
-      expect(screen.getByText('名前を付けて保存')).toBeInTheDocument()
       expect(screen.getByText('プレイ情報編集')).toBeInTheDocument()
       expect(screen.getByText('複製')).toBeInTheDocument()
       expect(screen.getByText('エクスポート')).toBeInTheDocument()
@@ -188,15 +184,6 @@ describe('Header Component', () => {
       expect(mockOnSave).toHaveBeenCalledTimes(1)
     })
 
-    it('名前を付けて保存ボタンをクリックするとonSaveAsが呼ばれること', async () => {
-      const user = userEvent.setup()
-      renderWithAuth(<Header {...propsWithPlay} />)
-      
-      const saveAsButton = screen.getByText('名前を付けて保存')
-      await user.click(saveAsButton)
-      
-      expect(mockOnSaveAs).toHaveBeenCalledTimes(1)
-    })
 
     it('プレイ情報編集ボタンをクリックするとonEditMetadataが呼ばれること', async () => {
       const user = userEvent.setup()
@@ -412,7 +399,6 @@ describe('Header Component', () => {
       
       // プレイ選択時のボタンが表示される
       expect(screen.getByText('保存')).toBeInTheDocument()
-      expect(screen.getByText('名前を付けて保存')).toBeInTheDocument()
       expect(screen.getByText('プレイ情報編集')).toBeInTheDocument()
       expect(screen.getByText('複製')).toBeInTheDocument()
       expect(screen.getByText('エクスポート')).toBeInTheDocument()

@@ -319,34 +319,6 @@ const App: React.FC = () => {
     }
   }
 
-  const saveAsNewPlay = async () => {
-    if (!appState.currentPlay) return
-    
-    const newPlay: Play = {
-      ...appState.currentPlay,
-      id: crypto.randomUUID(),
-      metadata: {
-        ...appState.currentPlay.metadata,
-        title: `${appState.currentPlay.metadata.title} (コピー)`,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      textBoxEntries: appState.currentPlay.textBoxEntries || createEmptyTextBoxEntries() // 既存のテキストボックスまたは空配列
-    }
-    
-    try {
-      await PlayStorage.savePlay(newPlay)
-      
-      // プレイリストを更新
-      const savedPlays = await PlayStorage.getAllPlays()
-      setPlays(savedPlays)
-      updateAppState({ currentPlay: newPlay })
-      
-      showMessage('新しいプレイとして保存されました', 'success')
-    } catch (error) {
-      showMessage('保存に失敗しました', 'error')
-    }
-  }
 
   const duplicateCurrentPlay = () => {
     if (!appState.currentPlay) return
@@ -630,7 +602,6 @@ const App: React.FC = () => {
       <Header 
         onNewPlay={createNewPlay}
         onSave={saveCurrentPlay}
-        onSaveAs={saveAsNewPlay}
         onEditMetadata={() => setIsMetadataFormOpen(true)}
         onDuplicatePlay={duplicateCurrentPlay}
         onExportImage={handleExportImage}

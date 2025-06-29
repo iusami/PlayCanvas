@@ -10,7 +10,6 @@ type MessageType = 'success' | 'error' | 'info'
 interface HeaderProps {
   onNewPlay: () => void
   onSave: () => void
-  onSaveAs: () => void
   onEditMetadata: () => void
   onDuplicatePlay: () => void
   onExportImage?: () => void
@@ -24,7 +23,6 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ 
   onNewPlay, 
   onSave, 
-  onSaveAs, 
   onEditMetadata, 
   onDuplicatePlay,
   onExportImage,
@@ -126,12 +124,6 @@ const Header: React.FC<HeaderProps> = ({
               className="toolbar-button"
             >
               保存
-            </button>
-            <button 
-              onClick={onSaveAs}
-              className="toolbar-button"
-            >
-              名前を付けて保存
             </button>
             <button 
               onClick={onEditMetadata}
