@@ -132,6 +132,11 @@ describe('CanvasArea Component', () => {
   const mockOnNewPlay = vi.fn()
   const mockOnUndo = vi.fn()
   const mockOnRedo = vi.fn()
+  const mockOnSave = vi.fn()
+  const mockOnEditMetadata = vi.fn()
+  const mockOnDuplicatePlay = vi.fn()
+  const mockOnExportImage = vi.fn()
+  const mockOnPrint = vi.fn()
 
   const defaultProps = {
     appState: createMockAppState(),
@@ -141,7 +146,12 @@ describe('CanvasArea Component', () => {
     isSaving: false,
     lastSavedAt: null,
     onUndo: mockOnUndo,
-    onRedo: mockOnRedo
+    onRedo: mockOnRedo,
+    onSave: mockOnSave,
+    onEditMetadata: mockOnEditMetadata,
+    onDuplicatePlay: mockOnDuplicatePlay,
+    onExportImage: mockOnExportImage,
+    onPrint: mockOnPrint
   }
 
   beforeEach(() => {
@@ -170,6 +180,28 @@ describe('CanvasArea Component', () => {
       expect(screen.getByText('新しいプレイを作成')).toBeInTheDocument()
     })
 
+    it('プレイが存在する場合、コンテキストツールバーが表示されること', () => {
+      render(<CanvasArea {...defaultProps} />)
+      
+      expect(screen.getByText('保存')).toBeInTheDocument()
+      expect(screen.getByText('プレイ情報編集')).toBeInTheDocument()
+      expect(screen.getByText('複製')).toBeInTheDocument()
+      expect(screen.getByText('エクスポート')).toBeInTheDocument()
+      expect(screen.getByText('印刷')).toBeInTheDocument()
+    })
+
+    it('プレイが存在しない場合、コンテキストツールバーが表示されないこと', () => {
+      const appStateWithoutPlay = { ...createMockAppState(), currentPlay: null }
+      
+      render(<CanvasArea {...defaultProps} appState={appStateWithoutPlay} />)
+      
+      expect(screen.queryByText('保存')).not.toBeInTheDocument()
+      expect(screen.queryByText('プレイ情報編集')).not.toBeInTheDocument()
+      expect(screen.queryByText('複製')).not.toBeInTheDocument()
+      expect(screen.queryByText('エクスポート')).not.toBeInTheDocument()
+      expect(screen.queryByText('印刷')).not.toBeInTheDocument()
+    })
+
     it('新しいプレイ作成ボタンをクリックするとonNewPlayが呼ばれること', async () => {
       const user = userEvent.setup()
       const appStateWithoutPlay = { ...createMockAppState(), currentPlay: null }
@@ -183,6 +215,94 @@ describe('CanvasArea Component', () => {
     })
   })
 
+
+  describe('コンテキストツールバーのボタンクリック', () => {
+    it('保存ボタンをクリックするとonSaveが呼ばれること', async () => {
+      const user = userEvent.setup()
+      
+      render(<CanvasArea {...defaultProps} />)
+      
+      const saveButton = screen.getByText('保存')
+      await user.click(saveButton)
+      
+      expect(mockOnSave).toHaveBeenCalledTimes(1)
+    })
+
+    it('プレイ情報編集ボタンをクリックするとonEditMetadataが呼ばれること', async () => {
+      const user = userEvent.setup()
+      
+      render(<CanvasArea {...defaultProps} />)
+      
+      const editButton = screen.getByText('プレイ情報編集')
+      await user.click(editButton)
+      
+      expect(mockOnEditMetadata).toHaveBeenCalledTimes(1)
+    })
+
+    it('複製ボタンをクリックするとonDuplicatePlayが呼ばれること', async () => {
+      const user = userEvent.setup()
+      
+      render(<CanvasArea {...defaultProps} />)
+      
+      const duplicateButton = screen.getByText('複製')
+      await user.click(duplicateButton)
+      
+      expect(mockOnDuplicatePlay).toHaveBeenCalledTimes(1)
+    })
+
+    it('エクスポートボタンをクリックするとonExportImageが呼ばれること', async () => {
+      const user = userEvent.setup()
+      
+      render(<CanvasArea {...defaultProps} />)
+      
+      const exportButton = screen.getByText('エクスポート')
+      await user.click(exportButton)
+      
+      expect(mockOnExportImage).toHaveBeenCalledTimes(1)
+    })
+
+    it('印刷ボタンをクリックするとonPrintが呼ばれること', async () => {
+      const user = userEvent.setup()
+      
+      render(<CanvasArea {...defaultProps} />)
+      
+      const printButton = screen.getByText('印刷')
+      await user.click(printButton)
+      
+      expect(mockOnPrint).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('コンテキストツールバーのボタン無効化', () => {
+    it('onSaveが未定義の場合、保存ボタンが無効になること', () => {
+      const propsWithoutSave = {
+        ...defaultProps,
+        onSave: undefined
+      }
+      
+      render(<CanvasArea {...propsWithoutSave} />)
+      
+      const saveButton = screen.getByText('保存')
+      expect(saveButton).toBeDisabled()
+    })
+
+    it('各ハンドラーが未定義の場合、対応するボタンが無効になること', () => {
+      const propsWithoutHandlers = {
+        ...defaultProps,
+        onEditMetadata: undefined,
+        onDuplicatePlay: undefined,
+        onExportImage: undefined,
+        onPrint: undefined
+      }
+      
+      render(<CanvasArea {...propsWithoutHandlers} />)
+      
+      expect(screen.getByText('プレイ情報編集')).toBeDisabled()
+      expect(screen.getByText('複製')).toBeDisabled()
+      expect(screen.getByText('エクスポート')).toBeDisabled()
+      expect(screen.getByText('印刷')).toBeDisabled()
+    })
+  })
 
   describe('Undo/Redo機能', () => {
     it('Undo/Redoボタンが表示されること', () => {

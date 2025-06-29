@@ -12,6 +12,11 @@ interface CanvasAreaProps {
   lastSavedAt?: Date | null
   onUndo?: () => void
   onRedo?: () => void
+  onSave?: () => void
+  onEditMetadata?: () => void
+  onDuplicatePlay?: () => void
+  onExportImage?: () => void
+  onPrint?: () => void
 }
 
 export interface CanvasAreaRef {
@@ -27,7 +32,12 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   isSaving,
   lastSavedAt,
   onUndo,
-  onRedo
+  onRedo,
+  onSave,
+  onEditMetadata,
+  onDuplicatePlay,
+  onExportImage,
+  onPrint
 }, ref) => {
   const stageRef = useRef<Konva.Stage>(null)
 
@@ -388,7 +398,63 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
 
   return (
     <div className="canvas-container">
-      {/* ツールバー */}
+      {/* コンテキストツールバー */}
+      {appState.currentPlay && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-white border border-gray-300 rounded-lg shadow-lg p-3">
+          <div className="flex items-center space-x-3">
+            {/* プライマリアクション: 保存 */}
+            <button
+              onClick={onSave}
+              disabled={!onSave}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              title="プレイを保存 (Ctrl+S)"
+            >
+              保存
+            </button>
+            
+            {/* セカンダリアクション */}
+            <div className="flex items-center space-x-2 border-l border-gray-200 pl-3">
+              <button
+                onClick={onEditMetadata}
+                disabled={!onEditMetadata}
+                className="px-3 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="プレイ情報編集"
+              >
+                プレイ情報編集
+              </button>
+              
+              <button
+                onClick={onDuplicatePlay}
+                disabled={!onDuplicatePlay}
+                className="px-3 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="プレイを複製"
+              >
+                複製
+              </button>
+              
+              <button
+                onClick={onExportImage}
+                disabled={!onExportImage}
+                className="px-3 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="画像としてエクスポート"
+              >
+                エクスポート
+              </button>
+              
+              <button
+                onClick={onPrint}
+                disabled={!onPrint}
+                className="px-3 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="印刷プレビュー"
+              >
+                印刷
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Undo/Redoツールバー */}
       <div className="absolute top-4 left-4 z-10 bg-white border border-gray-300 rounded-lg shadow-lg p-2">
         <div className="flex items-center space-x-2">
           <button
@@ -411,19 +477,23 @@ const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       </div>
 
       {/* Konvaベースのキャンバス */}
-      <FootballCanvas
-        play={appState.currentPlay}
-        appState={appState}
-        updateAppState={updateAppState}
-        onUpdatePlay={onUpdatePlay}
-        onUndo={onUndo}
-        onRedo={onRedo}
-        ref={stageRef}
-      />
+      <div className={`w-full h-full ${appState.currentPlay ? 'pt-20' : ''}`}>
+        <FootballCanvas
+          play={appState.currentPlay}
+          appState={appState}
+          updateAppState={updateAppState}
+          onUpdatePlay={onUpdatePlay}
+          onUndo={onUndo}
+          onRedo={onRedo}
+          ref={stageRef}
+        />
+      </div>
 
       {/* セグメント上限警告 */}
       {appState.segmentLimitWarning && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+        <div className={`absolute left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 ${
+          appState.currentPlay ? 'top-20' : 'top-4'
+        }`}>
           <div className="flex items-center space-x-2">
             <span>⚠️</span>
             <span className="text-sm">{appState.segmentLimitWarning}</span>

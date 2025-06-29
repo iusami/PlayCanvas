@@ -215,7 +215,7 @@ import {zod} from "zod";
 
 1 ファイルは 500 行以内を目安にする。
 
-モジュールをテストする時は、 `deno test -A modules/<name>/*.test.ts` で実行する。
+モジュールをテストする時は、 `npm test modules/<name>/*.test.ts` で実行する。
 
 ## Example: mod.ts
 
@@ -246,30 +246,6 @@ export function distance(p1: Point, p2: Point) {
   return Math.sqrt(
     (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2
   );
-}
-```
-
-## Example: deno.jsonc
-
-```jsonc
-{
-  "name": "@i/foo",
-  "exports": {
-    ".": "./mod.ts"
-  },
-  "lint": {
-    "exclude": ["**/**/wip*.ts"],
-    "rules": {
-      "tags": ["recommended"],
-      "include": ["no-unused-vars"]
-    }
-  },
-  "tasks": {
-    "unit": "deno test -A --parallel --doc",
-    "cov": "rm -r ./coverage && deno test -A --parallel --coverage --doc && deno coverage ./coverage",
-    "unused": "deno run -R --allow-env npm:tsr mod.ts examples/*.ts 'test/.*\\.test\\.ts$'",
-    "health": "deno check && deno lint && deno task cov && deno task unused"
-  }
 }
 ```
 
