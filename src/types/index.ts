@@ -147,8 +147,6 @@ export interface AutoBackupSettings {
 // アプリケーション設定
 export interface AppSettings {
   autoBackup: AutoBackupSettings
-  theme: 'light' | 'dark'
-  language: 'ja' | 'en'
 }
 
 // アプリケーションの状態

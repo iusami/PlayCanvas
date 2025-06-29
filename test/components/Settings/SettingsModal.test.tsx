@@ -42,9 +42,7 @@ describe('SettingsModal Component', () => {
       includeSettings: true,
       customFileName: undefined,
       lastBackupDate: undefined
-    },
-    theme: 'light' as const,
-    language: 'ja' as const
+    }
   }
 
   beforeEach(() => {
@@ -71,29 +69,14 @@ describe('SettingsModal Component', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { level: 2, name: /設定/i })).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: /一般設定/i })).toBeInTheDocument()
         expect(screen.getByText('自動バックアップ')).toBeInTheDocument()
       })
     })
   })
 
-  describe('タブ機能', () => {
-    it('デフォルトで一般設定タブが選択されていること', async () => {
+  describe('表示内容', () => {
+    it('デフォルトで自動バックアップ設定が表示されること', async () => {
       render(<SettingsModal {...defaultProps} />)
-
-      await waitFor(() => {
-        expect(screen.getByText('表示設定')).toBeInTheDocument()
-      })
-    })
-
-    it('自動バックアップタブに切り替えられること', async () => {
-      render(<SettingsModal {...defaultProps} />)
-
-      await waitFor(() => {
-        expect(screen.getByText('自動バックアップ')).toBeInTheDocument()
-      })
-
-      fireEvent.click(screen.getByText('自動バックアップ'))
 
       await waitFor(() => {
         expect(screen.getByText('自動バックアップ設定')).toBeInTheDocument()
@@ -101,37 +84,9 @@ describe('SettingsModal Component', () => {
     })
   })
 
-  describe('一般設定', () => {
-    it('テーマ設定を変更できること', async () => {
-      render(<SettingsModal {...defaultProps} />)
-
-      await waitFor(() => {
-        const themeSelect = screen.getByDisplayValue('ライト')
-        fireEvent.change(themeSelect, { target: { value: 'dark' } })
-        expect(themeSelect).toHaveValue('dark')
-      })
-    })
-
-    it('言語設定を変更できること', async () => {
-      render(<SettingsModal {...defaultProps} />)
-
-      await waitFor(() => {
-        const languageSelect = screen.getByDisplayValue('日本語')
-        fireEvent.change(languageSelect, { target: { value: 'en' } })
-        expect(languageSelect).toHaveValue('en')
-      })
-    })
-  })
-
   describe('自動バックアップ設定', () => {
     beforeEach(async () => {
       render(<SettingsModal {...defaultProps} />)
-      
-      await waitFor(() => {
-        expect(screen.getByText('自動バックアップ')).toBeInTheDocument()
-      })
-      
-      fireEvent.click(screen.getByText('自動バックアップ'))
       
       await waitFor(() => {
         expect(screen.getByText('自動バックアップ設定')).toBeInTheDocument()
